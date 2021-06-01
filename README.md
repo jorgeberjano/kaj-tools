@@ -1,9 +1,8 @@
 ![Logo](./src/main/resources/images/icon.png?at=refs%2Fheads%2Fdevelop)
 
-# TEST EVENT PRODUCER
+# KAJ-TOOLS
 
-Nombre del proyecto: test-event-producer
-Repositorio en Bitbucket: https://bitbucket.almeci.io/scm/~x28591be/test-event-producer.git
+Kafka-Avro-Json Tools
 
 
 
@@ -79,15 +78,15 @@ Lo primero que de debe hacer es agregar, en el archivo `.pom` del proyecto, la d
 
 ```java
 @Component
-public class PlpOfferIdProducer extends AbstractTestProducer<OfferIdKey, OfferIdEvent> {
+public class MyProducer extends AbstractTestProducer<MyKey, MyEvent> {
   @Getter
-  private final String defaultTopic = "QFI-000.PRODUCTS.FIREFLY_PLP.OFFER_ID_GOB.TOP";
+  private final String defaultTopic = "TOPIC-NAME";
 
   @Getter
-  private final String folder = "plp/offer-id";
+  private final String folder = "events/my-domain";
 
-  public PlpOfferIdProducer() {
-    super(OfferIdKey.class, OfferIdEvent.class);
+  public MyProducer() {
+    super(MyKey.class, MyEvent.class);
   }
 }
 ```
@@ -103,7 +102,7 @@ Opcionalmente se puede declarar una lista de topic si los mismos eventos pueden 
 ```java
 @Getter
   public List<String> availableTopics = Lists.newArrayList(defaultTopic,
-      "QFI-000.PRODUCTS.FIREFLY_PLP.PERSISTED_HIERARCHIES_GOB.TOP");
+      "ANOTHER-TOPIC-NAME");
 ```
 
 
@@ -174,20 +173,14 @@ A continuación se muestra un ejemplo simple de plantilla
 
 ``` 
 {
-  business_event_type: @file,
-  business_object: {
-    stored: @b(true, false, false, false)
-  },
-  event_id: @uuid,
-  event_type: @s(CREATE, UPDATE, DELETE),
-  metadata: [
-    {
-      date_created: @date(yyyy-MM-dd),
-      origin: $plp.origin,
-      trace_id: @s($i),
-      user: @file(users)
-    }
-  ]
+  value: @file,
+  flag: @b(true, false, false, false),
+  id: @uuid,
+  type: @s(A, B, C),
+  date: @date(yyyy-MM-dd),
+  origin: $origin,
+  number_string: @s($i),
+  user: @file(users)    
 }
 ```
 La plantilla de ejemplo podría generar el JSON:
@@ -195,30 +188,25 @@ La plantilla de ejemplo podría generar el JSON:
 
 ```
 {
-  "business_event_type" : "foo",
-  "business_object" : {
-    "stored" : false
-  },
-  "event_id" : "b3d2cf2d-6267-479c-8df2-4305491537e4",
-  "event_type" : "DELETE",
-  "metadata" : [
-    {
-      "date_created" : "2021-02-07",
-      "origin" : "FOOBAR",
-      "trace_id" : "1",
-      "user" : "miriam"
-    }
-  ]
+  "value": "foo",  
+  "flag": false,
+  "id": "b3d2cf2d-6267-479c-8df2-4305491537e4",
+  "type": "B",
+  "date": "2021-02-07",
+  "origin" : "FOOBAR",
+  "number_string" : "1",
+  "user" : "miriam"
+
 }
 ```
 
-- business_event_type: un valor de cadena  a partir de una línea aleatoria del archivo de texto almacenado en la carpeta de recursos de la aplicación `jsontemplate/default.txt`.
-- business_object.stored: valor booleano con un 75% de probabilidad de que sea false.
-- event_id: un identificador único universal.
-- event_type: una cadena aleatoria de entre CREATE, UPDATE y DELETE.
-- date_created: la fecha actual con formato año, mes y día separados por guión.
+- value: un valor de cadena  a partir de una línea aleatoria del archivo de texto almacenado en la carpeta de recursos de la aplicación `jsontemplate/default.txt`.
+- flag: valor booleano con un 75% de probabilidad de que sea false.
+- id: un identificador único universal.
+- type: una cadena aleatoria de entre A, B y C.
+- date: la fecha actual con formato año, mes y día separados por guión.
 - origin:  la cadena variable plp.origin definida en el 
-- trace_id: una cadena con el número de mensaje,
+- number_string: una cadena con el número de mensaje,
 - user: una de las líneas del archivo users.txt
 
 Para una referencia mas exhaustiva se puede consultar el manual y los ejemplos que hay en el mismo repositorio.
