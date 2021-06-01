@@ -8,7 +8,7 @@ Kafka-Avro-Json Tools
 
 ## Introducción
 
-Aplicación *Test Event Producer* proporciona algunas herramientas para facilitar las pruebas en entornos que usen *Kafka*, *Schema Registry* y serialización *AVRO*.
+La biblioteca de clases *KAJ Tools* proporciona un marco de trabajo para crear aplicaciones específicas que sirvan como herramienta para facilitar las pruebas en entornos que usen *Kafka*, *Schema Registry* y serialización *AVRO*.
 
 Permite realizar, fundamentalmente, las siguientes tareas:
 
