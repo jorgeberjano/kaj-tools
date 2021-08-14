@@ -1,10 +1,11 @@
-package es.jbp.kajtools;
+package es.jbp.kajtools.ui;
 
 import static org.fife.ui.rsyntaxtextarea.TokenTypes.LITERAL_STRING_DOUBLE_QUOTE;
 import static org.fife.ui.rsyntaxtextarea.TokenTypes.SEPARATOR;
 import static org.fife.ui.rsyntaxtextarea.TokenTypes.VARIABLE;
 
-import es.jbp.kajtools.InfoMessage.Type;
+import es.jbp.kajtools.ui.InfoMessage.Type;
+import es.jbp.kajtools.KajToolsApp;
 import es.jbp.kajtools.util.JsonUtils;
 import java.awt.Color;
 import java.awt.Font;

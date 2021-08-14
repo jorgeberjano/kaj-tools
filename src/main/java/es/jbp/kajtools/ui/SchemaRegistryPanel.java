@@ -1,10 +1,14 @@
-package es.jbp.kajtools;
+package es.jbp.kajtools.ui;
 
 import com.google.common.collect.Lists;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
-import es.jbp.kajtools.InfoMessage.Type;
+import es.jbp.kajtools.Environment;
+import es.jbp.kajtools.EnvironmentConfiguration;
+import es.jbp.kajtools.IProducer;
+import es.jbp.kajtools.ui.InfoMessage.Type;
+import es.jbp.kajtools.KajToolsApp;
 import es.jbp.kajtools.util.JsonUtils;
 import es.jbp.kajtools.util.SchemaRegistryService;
 import java.awt.BorderLayout;
@@ -112,8 +116,8 @@ public class SchemaRegistryPanel extends BasePanel {
     });
 
     // Combo Dominio
-    final List<TestProducer> producerList = KajToolsApp.getInstance().getProducerList();
-    producerList.stream().map(TestProducer::getDomain).distinct().forEach(comboDomain::addItem);
+    final List<IProducer> producerList = KajToolsApp.getInstance().getProducerList();
+    producerList.stream().map(IProducer::getDomain).distinct().forEach(comboDomain::addItem);
     comboDomain.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -225,10 +229,10 @@ public class SchemaRegistryPanel extends BasePanel {
     currentVersion = null;
 
     String domain = comboDomain.getSelectedItem().toString();
-    final List<TestProducer> producerList = KajToolsApp.getInstance().getProducerList();
+    final List<IProducer> producerList = KajToolsApp.getInstance().getProducerList();
     producerList.stream()
         .filter(p -> StringUtils.isBlank(domain) || domain.equals(p.getDomain()))
-        .map(TestProducer::getAvailableTopics)
+        .map(IProducer::getAvailableTopics)
         .flatMap(List::stream)
         .map(s -> Lists.newArrayList(s + "-key", s + "-value"))
         .flatMap(List::stream)

@@ -1,4 +1,4 @@
-package es.jbp.kajtools;
+package es.jbp.kajtools.ui;
 
 import java.awt.Color;
 import lombok.AllArgsConstructor;

@@ -1,4 +1,4 @@
-package es.jbp.kajtools;
+package es.jbp.kajtools.util;
 
 import java.util.Comparator;
 

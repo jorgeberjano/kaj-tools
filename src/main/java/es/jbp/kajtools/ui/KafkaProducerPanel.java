@@ -1,10 +1,16 @@
-package es.jbp.kajtools;
+package es.jbp.kajtools.ui;
 
 import com.google.common.collect.Maps;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
-import es.jbp.kajtools.InfoMessage.Type;
+import es.jbp.kajtools.Environment;
+import es.jbp.kajtools.EnvironmentConfiguration;
+import es.jbp.kajtools.GenericProducer;
+import es.jbp.kajtools.IProducer;
+import es.jbp.kajtools.ui.InfoMessage.Type;
+import es.jbp.kajtools.KajToolsApp;
+import es.jbp.kajtools.util.JsonFirstComparator;
 import es.jbp.kajtools.util.JsonUtils;
 import es.jbp.kajtools.util.ResourceUtil;
 import es.jbp.kajtools.util.SchemaRegistryService;
@@ -14,8 +20,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -47,7 +51,7 @@ import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
 import org.springframework.web.client.HttpClientErrorException.NotFound;
 
-public class KafkaTestPanel extends BasePanel {
+public class KafkaProducerPanel extends BasePanel {
 
   private static final int MAXIMUM_QUANTITY = 10;
 
@@ -85,7 +89,7 @@ public class KafkaTestPanel extends BasePanel {
   private RSyntaxTextArea jsonEditorEvent;
   private RSyntaxTextArea jsonEditorKey;
 
-  public KafkaTestPanel() {
+  public KafkaProducerPanel() {
 
     $$$setupUI$$$();
 
@@ -102,88 +106,35 @@ public class KafkaTestPanel extends BasePanel {
 
     dangerLabel.setVisible(false);
 
-    buttonSend.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        asyncSendEvent();
-      }
-    });
+    buttonSend.addActionListener(e -> asyncSendEvent());
 
     // Combo Entorno
-    EnvironmentConfiguration.ENVIRONMENT_LIST.stream().forEach(comboEnvironment::addItem);
-    comboEnvironment.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        boolean local = ((Environment) comboEnvironment.getSelectedItem()).getName()
-            .contains("local");
-        dangerLabel.setVisible(!local);
-      }
+    EnvironmentConfiguration.ENVIRONMENT_LIST.forEach(comboEnvironment::addItem);
+    comboEnvironment.addActionListener(e -> {
+      boolean local = ((Environment) comboEnvironment.getSelectedItem()).getName()
+          .contains("local");
+      dangerLabel.setVisible(!local);
     });
 
     // Combo Dominio
-    final List<TestProducer> producerList = KajToolsApp.getInstance().getProducerList();
-    producerList.stream().map(TestProducer::getDomain).distinct().forEach(comboDomain::addItem);
-    comboDomain.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        updateProducers();
-      }
-    });
+    final List<IProducer> producerList = KajToolsApp.getInstance().getProducerList();
+    producerList.stream().map(IProducer::getDomain).distinct().forEach(comboDomain::addItem);
+    comboDomain.addActionListener(e -> updateProducers());
 
     // Combo Productores
-    comboProducer.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        updateTopicsEventsAndKeys();
-      }
-    });
+    comboProducer.addActionListener(e -> updateTopicsEventsAndKeys());
     updateProducers();
 
     // Combos Topics, Events y Keys
     updateTopicsEventsAndKeys();
 
-    buttonCompareSchemas.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        asyncCheckSchema();
-      }
-    });
-    comboKey.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        loadResourceForKey();
-      }
-    });
-    comboEvent.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        loadResourceForEvent();
-      }
-    });
-    buttonOpenFileKey.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        openFileForKey();
-      }
-    });
-    buttonOpenFileEvent.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        openFileForEvent();
-      }
-    });
-    cleanButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        cleanEditor();
-      }
-    });
-    copyButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        copyToClipboard();
-      }
-    });
+    buttonCompareSchemas.addActionListener(e -> asyncCheckSchema());
+    comboKey.addActionListener(e -> loadResourceForKey());
+    comboEvent.addActionListener(e -> loadResourceForEvent());
+    buttonOpenFileKey.addActionListener(e -> openFileForKey());
+    buttonOpenFileEvent.addActionListener(e -> openFileForEvent());
+    cleanButton.addActionListener(e -> cleanEditor());
+    copyButton.addActionListener(e -> copyToClipboard());
 
     IntStream.rangeClosed(1, MAXIMUM_QUANTITY).forEach(quantityComboBox::addItem);
 
@@ -193,7 +144,7 @@ public class KafkaTestPanel extends BasePanel {
   private void updateProducers() {
     comboProducer.removeAllItems();
     String domain = comboDomain.getSelectedItem().toString();
-    final List<TestProducer> producerList = KajToolsApp.getInstance().getProducerList();
+    final List<IProducer> producerList = KajToolsApp.getInstance().getProducerList();
     producerList.stream()
         .filter(p -> StringUtils.isBlank(domain) || domain.equals(p.getDomain()))
         .forEach(comboProducer::addItem);
@@ -203,7 +154,7 @@ public class KafkaTestPanel extends BasePanel {
     comboTopic.removeAllItems();
     comboEvent.removeAllItems();
     comboKey.removeAllItems();
-    TestProducer producer = (TestProducer) comboProducer.getSelectedItem();
+    IProducer producer = (IProducer) comboProducer.getSelectedItem();
     if (producer == null) {
       return;
     }
@@ -279,7 +230,7 @@ public class KafkaTestPanel extends BasePanel {
 
   private void asyncSendEvent() {
     Environment environment = (Environment) comboEnvironment.getSelectedItem();
-    TestProducer producer = (TestProducer) comboProducer.getSelectedItem();
+    IProducer producer = (IProducer) comboProducer.getSelectedItem();
     String topic = comboTopic.getEditor().getItem().toString();
 
     SchemaCheckStatus status = checkedSchemaTopics.get(topic);
@@ -322,7 +273,7 @@ public class KafkaTestPanel extends BasePanel {
     return response == JOptionPane.YES_OPTION;
   }
 
-  private Void sendEvent(Environment environment, TestProducer producer, String topic, String key,
+  private Void sendEvent(Environment environment, IProducer producer, String topic, String key,
       String event, int quantity) {
     for (int i = 1; i <= quantity; i++) {
       templateVariables.put("i", i);
@@ -332,7 +283,7 @@ public class KafkaTestPanel extends BasePanel {
     return null;
   }
 
-  private void sendEvent(Environment environment, TestProducer producer, String topic, String key,
+  private void sendEvent(Environment environment, IProducer producer, String topic, String key,
       String event) {
     TemplateExecutor templateExecutor = new TemplateExecutor(templateVariables);
     String jsonKey = getJson(templateExecutor, key, "KEY");
@@ -383,8 +334,8 @@ public class KafkaTestPanel extends BasePanel {
 
 
   private void asyncCheckSchema() {
-    TestProducer producer = (TestProducer) comboProducer.getSelectedItem();
-    if (producer instanceof GenericTestProducer) {
+    IProducer producer = (IProducer) comboProducer.getSelectedItem();
+    if (producer instanceof GenericProducer) {
       printError(
           "No es posible comparar los esquemas con el " + producer.getClass().getSimpleName());
       return;
@@ -397,7 +348,7 @@ public class KafkaTestPanel extends BasePanel {
     executeAsyncTask(() -> checkSchema(producer, topic, environment));
   }
 
-  private Void checkSchema(TestProducer producer, String topic, Environment environment) {
+  private Void checkSchema(IProducer producer, String topic, Environment environment) {
     SchemaCheckStatus keySchemaOk = checkSchema(producer, topic, environment, true);
     SchemaCheckStatus eventSchemaOk = checkSchema(producer, topic, environment, false);
 
@@ -421,7 +372,7 @@ public class KafkaTestPanel extends BasePanel {
     }
   }
 
-  private SchemaCheckStatus checkSchema(TestProducer producer, String topic,
+  private SchemaCheckStatus checkSchema(IProducer producer, String topic,
       Environment environment,
       boolean isKey) {
     String registeredSchema, avroSchema;

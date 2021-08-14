@@ -1,5 +1,6 @@
 package es.jbp.kajtools.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,6 +24,10 @@ public class JsonUtils {
 
     public static <T> T createFromJson(String json, TypeReference<T> valueType) throws IOException {
         return getObjectMapper().readValue(json, valueType);
+    }
+
+    public static String toJson(Object object) throws JsonProcessingException {
+        return getObjectMapper().writeValueAsString(object);
     }
 
     public static String jsonToTemplate(String json) {

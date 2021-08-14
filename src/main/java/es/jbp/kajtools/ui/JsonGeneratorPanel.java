@@ -1,4 +1,4 @@
-package es.jbp.kajtools;
+package es.jbp.kajtools.ui;
 
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;

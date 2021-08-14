@@ -2,6 +2,8 @@ package es.jbp.kajtools;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatLightLaf;
+import es.jbp.kajtools.ui.KafkaProducerPanel;
+import es.jbp.kajtools.ui.MainForm;
 import es.jbp.kajtools.util.SchemaRegistryService;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,23 +15,26 @@ import javax.swing.JFrame;
 import javax.swing.UIManager;
 import lombok.Getter;
 import org.fife.ui.rsyntaxtextarea.Theme;
-import org.springframework.beans.factory.annotation.Autowired;
 
 public class KajToolsApp {
 
     @Getter
     private static KajToolsApp instance;
     @Getter
-    private List<TestProducer> producerList;
+    private List<IProducer> producerList;
+    @Getter
+    private List<IConsumer> consumerList;
     @Getter
     private final SchemaRegistryService schemaRegistryService;
     @Getter
     private Theme theme;
 
-    public KajToolsApp(List<TestProducer> producerList,
+    public KajToolsApp(List<IProducer> producerList,
+        List<IConsumer> consumerList,
         SchemaRegistryService schemaRegistryService) {
         this.instance  = this;
         this.producerList = producerList;
+        this.consumerList = consumerList;
         this.schemaRegistryService = schemaRegistryService;
     }
 
@@ -57,7 +62,7 @@ public class KajToolsApp {
 
         ImageIcon icono = null;
         try {
-            URL url = KafkaTestPanel.class.getResource("/images/icon.png");
+            URL url = KafkaProducerPanel.class.getResource("/images/icon.png");
             if (url != null) {
                 icono = new ImageIcon(ImageIO.read(url));
             }
@@ -65,7 +70,7 @@ public class KajToolsApp {
         }
 
         JFrame frame = new JFrame("MainForm");
-        frame.setTitle("Test event producer");
+        frame.setTitle("KAJ Tools");
         if (icono != null) {
             frame.setIconImage(icono.getImage());
         }

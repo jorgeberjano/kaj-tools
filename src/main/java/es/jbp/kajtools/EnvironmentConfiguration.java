@@ -16,7 +16,6 @@ public class EnvironmentConfiguration {
 
   public static void loadEnvironmentConfig() throws IOException {
     ENVIRONMENT_LIST = new ObjectMapper(new YAMLFactory())
-        //.setPropertyNamingStrategy(PropertyNamingStrategy.KEBAB_CASE)
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         .readValue(EnvironmentConfiguration.class.getResourceAsStream("/environments.yml"),
             new TypeReference<List<Environment>>() {
