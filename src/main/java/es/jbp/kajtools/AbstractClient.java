@@ -2,38 +2,30 @@ package es.jbp.kajtools;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Lists;
-import es.jbp.kajtools.tabla.RecordItem;
 import es.jbp.kajtools.util.AvroUtils;
 import es.jbp.kajtools.util.JsonUtils;
 import es.jbp.kajtools.util.ResourceUtil;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.TimeZone;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
-public abstract class AbstractClient<K, E> implements IProducer, IConsumer<K, E> {
+public abstract class AbstractClient<K, V> implements IProducer, IConsumer<K, V> {
 
   private final Class<K> keyType;
-  private final Class<E> eventType;
+  private final Class<V> valueType;
 
-  protected AbstractClient(Class<K> keyType, Class<E> eventType) {
+  protected AbstractClient(Class<K> keyType, Class<V> valueType) {
     this.keyType = keyType;
-    this.eventType = eventType;
+    this.valueType = valueType;
   }
 
   @Override
@@ -42,56 +34,56 @@ public abstract class AbstractClient<K, E> implements IProducer, IConsumer<K, E>
   }
 
   @Override
-  public String getEventClassName() {
-    return eventType.getName();
+  public String getValueClassName() {
+    return valueType.getName();
   }
 
   @Override
-  public void sendFromJson(Environment environment, String topic, String keyJson, String eventJson)
+  public void sendFromJson(Environment environment, String topic, String keyJson, String valueJson)
       throws KajException {
 
-    try (Producer<K, E> producer = createProducer(environment)) {
-      sendDataFromJson(producer, topic, keyJson, eventJson);
+    try (Producer<K, V> producer = createProducer(environment)) {
+      sendDataFromJson(producer, topic, keyJson, valueJson);
     } catch (Throwable ex) {
       throw new KajException("No se ha podido realizar el envío. " + ex.getLocalizedMessage());
     }
   }
 
-  private Producer<K, E> createProducer(Environment environment) {
+  private Producer<K, V> createProducer(Environment environment) {
     return new KafkaProducer<>(createProducerProperties(environment));
   }
 
-  private void sendDataFromJson(Producer<K, E> producer, String topic, String keyJson,
-      String eventJson) throws KajException {
+  private void sendDataFromJson(Producer<K, V> producer, String topic, String keyJson,
+      String valueJson) throws KajException {
     List<K> keyList;
     if (JsonUtils.isArray(keyJson)) {
       keyList = buildKeyListFromJson(keyJson);
     } else {
       keyList = Collections.singletonList(buildKeyFromJson(keyJson));
     }
-    List<E> eventList;
+    List<V> valueList;
     if (JsonUtils.isArray(keyJson)) {
-      eventList = buildEventListFromJson(eventJson);
+      valueList = buildValueListFromJson(valueJson);
     } else {
-      eventList = Collections.singletonList(buildEventFromJson(eventJson));
+      valueList = Collections.singletonList(buildValueFromJson(valueJson));
     }
 
-    sendDataList(producer, topic, keyList, eventList);
+    sendDataList(producer, topic, keyList, valueList);
   }
 
-  protected void sendDataList(Producer<K, E> producer, String topic, List<K> keyList, List<E> eventList)
+  protected void sendDataList(Producer<K, V> producer, String topic, List<K> keyList, List<V> valueList)
       throws KajException {
-    int n = Math.min(keyList.size(), eventList.size());
+    int n = Math.min(keyList.size(), valueList.size());
 
     for (int i = 0; i < n; i++) {
-      sendData(producer, topic, keyList.get(i), eventList.get(i));
+      sendData(producer, topic, keyList.get(i), valueList.get(i));
     }
   }
 
-  private void sendData(Producer<K, E> producer, String topic, K key, E event)
+  private void sendData(Producer<K, V> producer, String topic, K key, V value)
       throws KajException {
-    final ProducerRecord<K, E> producerRecord = new ProducerRecord<>(topic, key, event);
-    producerRecord.headers().add("app.name", "test-event-producer".getBytes(StandardCharsets.UTF_8));
+    final ProducerRecord<K, V> producerRecord = new ProducerRecord<>(topic, key, value);
+    producerRecord.headers().add("app.name", "kaj-tools".getBytes(StandardCharsets.UTF_8));
     producerRecord.headers()
         .add("user.name", System.getProperty("user.name").getBytes(StandardCharsets.UTF_8));
     Future<RecordMetadata> futureResponse = producer.send(producerRecord);
@@ -107,8 +99,8 @@ public abstract class AbstractClient<K, E> implements IProducer, IConsumer<K, E>
 
 
   @Override
-  public String getEventSchema(String json) throws KajException {
-    return AvroUtils.extractAvroSchema(buildEvent(json));
+  public String getValueSchema(String json) throws KajException {
+    return AvroUtils.extractAvroSchema(buildValue(json));
   }
 
   @Override
@@ -120,8 +112,8 @@ public abstract class AbstractClient<K, E> implements IProducer, IConsumer<K, E>
     return buildKeyFromJson(json);
   }
 
-  protected E buildEvent(String json) throws KajException {
-    return buildEventFromJson(json);
+  protected V buildValue(String json) throws KajException {
+    return buildValueFromJson(json);
   }
 
   protected K buildKeyFromJson(String keyJson) throws KajException {
@@ -142,21 +134,21 @@ public abstract class AbstractClient<K, E> implements IProducer, IConsumer<K, E>
     }
   }
 
-  private E buildEventFromJson(String eventJson) throws KajException {
+  private V buildValueFromJson(String valueJson) throws KajException {
     try {
-      return JsonUtils.stubFromJson(eventJson, eventType);
+      return JsonUtils.stubFromJson(valueJson, valueType);
     } catch (Exception ex) {
-      throw new KajException("No se puede generar el Event desde el JSON. Causa: " + ex.getMessage());
+      throw new KajException("No se puede generar el Value desde el JSON. Causa: " + ex.getMessage());
     }
   }
 
-  protected List<E> buildEventListFromJson(String eventArrayJson) throws KajException {
+  protected List<V> buildValueListFromJson(String valueArrayJson) throws KajException {
     try {
-      return JsonUtils.createFromJson(eventArrayJson, new TypeReference<List<E>>() {
+      return JsonUtils.createFromJson(valueArrayJson, new TypeReference<List<V>>() {
       });
     } catch (Exception ex) {
       throw new KajException(
-          "No se puede generar la lista de Events desde el JSON. Causa: " + ex.getMessage());
+          "No se puede generar la lista de Values desde el JSON. Causa: " + ex.getMessage());
     }
   }
 
@@ -176,8 +168,8 @@ public abstract class AbstractClient<K, E> implements IProducer, IConsumer<K, E>
           Collectors.toList());
 
   @Getter(lazy = true)
-  private final List<String> availableEvents = ResourceUtil.getResourceFileNames(getFolder())
-      .stream().filter(s -> s.toLowerCase().contains("event.")).collect(
+  private final List<String> availableValues = ResourceUtil.getResourceFileNames(getFolder())
+      .stream().filter(s -> s.toLowerCase().contains("value.")).collect(
           Collectors.toList());
 
   public String getFolder() {
@@ -192,47 +184,9 @@ public abstract class AbstractClient<K, E> implements IProducer, IConsumer<K, E>
 
   // CONSUMER
 
-  private Consumer<K, E> createConsumer(Environment environment) {
+  protected Consumer<K, V> createConsumer(Environment environment) {
     return new KafkaConsumer<>(createConsumerProperties(environment));
   }
-
-
-
-//  public List<RecordItem> consumeJsonEvents(Environment environment, String topic) {
-//
-//    try (Consumer<K, E> consumer = createConsumer(environment)) {
-//
-//      List<RecordItem> list = new ArrayList<>();
-//      consumer.subscribe(Collections.singletonList(topic));
-//
-//      for (int i = 0; i < 10; i++) {
-//        ConsumerRecords<K, E> records = consumer.poll(Duration.ofMillis(500));
-//        for (ConsumerRecord<K, E> rec : records) {
-//          RecordItem item = createRecordTableItem(rec);
-//          if (item != null) {
-//            list.add(item);
-//          }
-//        }
-//      }
-//      return list;
-//    }
-//  }
-
-//  private RecordItem createRecordTableItem(ConsumerRecord<K, E> rec) {
-//    String jsonKey = String.valueOf(rec.key());
-//    String jsonEvent = String.valueOf(rec.value());
-//
-//    LocalDateTime dateTime =
-//        LocalDateTime.ofInstant(Instant.ofEpochMilli(rec.timestamp()),
-//            TimeZone.getDefault().toZoneId());
-//
-//    return RecordItem.builder()
-//        .partition(rec.partition())
-//        .offset(rec.offset())
-//        .dateTime(dateTime)
-//        .key(jsonKey)
-//        .event(jsonEvent).build();
-//  }
 
 
 

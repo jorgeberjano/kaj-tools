@@ -25,7 +25,7 @@ public class SchemaRegistryService {
     return getLatestTopicSchema(topic, true, environment);
   }
 
-  public String getTopicEventSchema(String topic, Environment environment)
+  public String getTopicValueSchema(String topic, Environment environment)
       throws JsonProcessingException {
     return getLatestTopicSchema(topic, false, environment);
   }

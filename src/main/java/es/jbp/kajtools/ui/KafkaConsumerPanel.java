@@ -28,6 +28,7 @@ import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -66,16 +67,17 @@ public class KafkaConsumerPanel extends BasePanel {
   private JTextPane infoTextPane;
   private JPanel tabKey;
   private RTextScrollPane keyScrollPane;
-  private JPanel tabEvent;
-  private RTextScrollPane eventScrollPane;
+  private JPanel tabValue;
+  private RTextScrollPane valueScrollPane;
   private JTextField searchTextField;
-  private JTextField fieldMaxRecords;
+  private JTextField fieldRewindRecords;
   private JPanel tabFilter;
   private RTextScrollPane filterScrollPane;
   private JButton cleanButton;
   private JButton copyButton;
+  private JCheckBox checkFilter;
 
-  private RSyntaxTextArea jsonEditorEvent;
+  private RSyntaxTextArea jsonEditorValue;
   private RSyntaxTextArea jsonEditorKey;
   private RSyntaxTextArea scriptEditorFilter;
 
@@ -108,7 +110,7 @@ public class KafkaConsumerPanel extends BasePanel {
     cleanButton.addActionListener(e -> cleanEditor());
     copyButton.addActionListener(e -> copyToClipboard());
 
-    enableTextSearch(searchTextField, jsonEditorEvent, jsonEditorKey);
+    enableTextSearch(searchTextField, jsonEditorValue, jsonEditorKey);
   }
 
   private void recordSelected(ListSelectionEvent e) {
@@ -119,8 +121,8 @@ public class KafkaConsumerPanel extends BasePanel {
     }
     jsonEditorKey.setText(JsonUtils.formatJson(selected.getKey()));
     jsonEditorKey.setCaretPosition(0);
-    jsonEditorEvent.setText(JsonUtils.formatJson(selected.getEvent()));
-    jsonEditorEvent.setCaretPosition(0);
+    jsonEditorValue.setText(JsonUtils.formatJson(selected.getValue()));
+    jsonEditorValue.setCaretPosition(0);
   }
 
   private void updateTopics() {
@@ -152,13 +154,14 @@ public class KafkaConsumerPanel extends BasePanel {
       printError("Se debe seleccionar un consumidor antes de consumir mensajes");
       return;
     }
-    IConsumer<?, ?> consumer = (IConsumer<?, ?>) consumerSelectedItem;
+    long maxRecordsPerPartition = NumberUtils.toLong(fieldRewindRecords.getText(), 50);
+    boolean thereIsFiltrer = checkFilter.isSelected();
 
-    long maxRecordsPerPartition = NumberUtils.toLong(fieldMaxRecords.getText(), 50);
+    IConsumer<?, ?> consumer = (IConsumer<?, ?>) consumerSelectedItem;
 
     String script = scriptEditorFilter.getText().trim();
     MessageFilter filter;
-    if (StringUtils.isBlank(script)) {
+    if (StringUtils.isBlank(script) || !thereIsFiltrer) {
       filter = (k, v) -> true;
     } else {
       try {
@@ -169,7 +172,7 @@ public class KafkaConsumerPanel extends BasePanel {
       }
     }
 
-    printAction("Consumiendo eventos del topic " + topic);
+    printAction("Consumiendo mensajes del topic " + topic);
 
     futureRecords = this.<List<RecordItem>>executeAsyncTask(
         () -> requestRecords(environment, topic, consumer, filter, maxRecordsPerPartition),
@@ -181,7 +184,7 @@ public class KafkaConsumerPanel extends BasePanel {
 
     try {
       List<RecordItem> records = consumer.consumeLastRecords(environment, topic, filter, maxRecordsPerPartition);
-      enqueueSuccessful("Consumidos " + records.size() + " eventos");
+      enqueueSuccessful("Consumidos " + records.size() + " mensajes");
       return records;
     } catch (KajException ex) {
       //enqueueError("No se ha podido consumir ningún registro");
@@ -309,10 +312,10 @@ public class KafkaConsumerPanel extends BasePanel {
     tabKey.setLayout(new BorderLayout(0, 0));
     tabbedPane.addTab("Key", tabKey);
     tabKey.add(keyScrollPane, BorderLayout.CENTER);
-    tabEvent = new JPanel();
-    tabEvent.setLayout(new BorderLayout(0, 0));
-    tabbedPane.addTab("Event", tabEvent);
-    tabEvent.add(eventScrollPane, BorderLayout.CENTER);
+    tabValue = new JPanel();
+    tabValue.setLayout(new BorderLayout(0, 0));
+    tabbedPane.addTab("Value", tabValue);
+    tabValue.add(valueScrollPane, BorderLayout.CENTER);
     final JPanel panel3 = new JPanel();
     panel3.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
     contentPane.add(panel3,
@@ -361,8 +364,8 @@ public class KafkaConsumerPanel extends BasePanel {
 
   private void createUIComponents() {
 
-    jsonEditorEvent = createJsonEditor();
-    eventScrollPane = createEditorScroll(jsonEditorEvent);
+    jsonEditorValue = createJsonEditor();
+    valueScrollPane = createEditorScroll(jsonEditorValue);
     jsonEditorKey = createJsonEditor();
     keyScrollPane = createEditorScroll(jsonEditorKey);
 
@@ -374,7 +377,7 @@ public class KafkaConsumerPanel extends BasePanel {
     recordTableModel.agregarColumna("offset", "Offset", 20);
     recordTableModel.agregarColumna("dateTime", "Timestamp", 50);
     recordTableModel.agregarColumna("key", "Key", 200);
-    recordTableModel.agregarColumna("event", "Event", 200);
+    recordTableModel.agregarColumna("value", "Value", 200);
     tablaGenerica.setModel(recordTableModel);
     recordTable = tablaGenerica;
   }
@@ -399,7 +402,7 @@ public class KafkaConsumerPanel extends BasePanel {
     } else if (index == 2) {
       return Optional.of(jsonEditorKey);
     } else if (index == 3) {
-      return Optional.of(jsonEditorEvent);
+      return Optional.of(jsonEditorValue);
     } else {
       return Optional.empty();
     }

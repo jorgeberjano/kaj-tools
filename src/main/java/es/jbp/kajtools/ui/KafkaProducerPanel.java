@@ -65,20 +65,20 @@ public class KafkaProducerPanel extends BasePanel {
   private JPanel contentPane;
   private JButton buttonSend;
   private JComboBox comboTopic;
-  private JComboBox comboEvent;
+  private JComboBox comboValue;
   private JComboBox comboKey;
   private JComboBox comboEnvironment;
   private JButton buttonCompareSchemas;
   private JTabbedPane tabbedPane;
   private JPanel tabInfo;
-  private JPanel tabEvent;
+  private JPanel tabValue;
   private JPanel tabKey;
-  private RTextScrollPane eventScrollPane;
+  private RTextScrollPane valueScrollPane;
   private RTextScrollPane keyScrollPane;
   @Getter
   private JTextPane infoTextPane;
   private JComboBox comboProducer;
-  private JButton buttonOpenFileEvent;
+  private JButton buttonOpenFileValue;
   private JButton buttonOpenFileKey;
   private JButton cleanButton;
   private JButton copyButton;
@@ -86,7 +86,7 @@ public class KafkaProducerPanel extends BasePanel {
   private JTextField searchTextField;
   private JLabel dangerLabel;
   private JComboBox comboDomain;
-  private RSyntaxTextArea jsonEditorEvent;
+  private RSyntaxTextArea jsonEditorValue;
   private RSyntaxTextArea jsonEditorKey;
 
   public KafkaProducerPanel() {
@@ -125,20 +125,20 @@ public class KafkaProducerPanel extends BasePanel {
     comboProducer.addActionListener(e -> updateTopicsEventsAndKeys());
     updateProducers();
 
-    // Combos Topics, Events y Keys
+    // Combos Topics, Values y Keys
     updateTopicsEventsAndKeys();
 
     buttonCompareSchemas.addActionListener(e -> asyncCheckSchema());
     comboKey.addActionListener(e -> loadResourceForKey());
-    comboEvent.addActionListener(e -> loadResourceForEvent());
+    comboValue.addActionListener(e -> loadResourceForValue());
     buttonOpenFileKey.addActionListener(e -> openFileForKey());
-    buttonOpenFileEvent.addActionListener(e -> openFileForEvent());
+    buttonOpenFileValue.addActionListener(e -> openFileForEvent());
     cleanButton.addActionListener(e -> cleanEditor());
     copyButton.addActionListener(e -> copyToClipboard());
 
     IntStream.rangeClosed(1, MAXIMUM_QUANTITY).forEach(quantityComboBox::addItem);
 
-    enableTextSearch(searchTextField, jsonEditorEvent, jsonEditorKey);
+    enableTextSearch(searchTextField, jsonEditorValue, jsonEditorKey);
   }
 
   private void updateProducers() {
@@ -152,7 +152,7 @@ public class KafkaProducerPanel extends BasePanel {
 
   private void updateTopicsEventsAndKeys() {
     comboTopic.removeAllItems();
-    comboEvent.removeAllItems();
+    comboValue.removeAllItems();
     comboKey.removeAllItems();
     IProducer producer = (IProducer) comboProducer.getSelectedItem();
     if (producer == null) {
@@ -161,16 +161,16 @@ public class KafkaProducerPanel extends BasePanel {
     producer.getAvailableTopics().forEach(comboTopic::addItem);
     comboTopic.setSelectedItem(producer.getDefaultTopic());
 
-    producer.getAvailableEvents().stream()
+    producer.getAvailableValues().stream()
         .sorted(new JsonFirstComparator())
-        .forEach(comboEvent::addItem);
+        .forEach(comboValue::addItem);
 
     producer.getAvailableKeys().stream()
         .sorted(new JsonFirstComparator())
         .forEach(comboKey::addItem);
 
     loadResourceForKey();
-    loadResourceForEvent();
+    loadResourceForValue();
   }
 
   private void openFileForKey() {
@@ -183,7 +183,7 @@ public class KafkaProducerPanel extends BasePanel {
   private void openFileForEvent() {
     File file = chooseAndReadFile();
     if (file != null) {
-      loadJsonFromFile(file, jsonEditorEvent);
+      loadJsonFromFile(file, jsonEditorValue);
     }
   }
 
@@ -205,10 +205,10 @@ public class KafkaProducerPanel extends BasePanel {
     loadJsonFromResource(path, jsonEditorKey);
   }
 
-  private void loadResourceForEvent() {
-    String path = Optional.ofNullable(comboEvent.getSelectedItem()).map(Object::toString)
+  private void loadResourceForValue() {
+    String path = Optional.ofNullable(comboValue.getSelectedItem()).map(Object::toString)
         .orElse("");
-    loadJsonFromResource(path, jsonEditorEvent);
+    loadJsonFromResource(path, jsonEditorValue);
   }
 
   private void loadJsonFromResource(String path, RSyntaxTextArea jsonEditor) {
@@ -244,7 +244,7 @@ public class KafkaProducerPanel extends BasePanel {
 
     printAction("Enviando evento a " + topic);
     String key = jsonEditorKey.getText();
-    String event = jsonEditorEvent.getText();
+    String event = jsonEditorValue.getText();
     int quantity = (int) quantityComboBox.getSelectedItem();
     executeAsyncTask(() -> sendEvent(environment, producer, topic, key, event, quantity));
   }
@@ -395,16 +395,16 @@ public class KafkaProducerPanel extends BasePanel {
 
     try {
       avroSchema = isKey ? producer.getKeySchema(jsonEditorKey.getText())
-          : producer.getEventSchema(jsonEditorEvent.getText());
+          : producer.getValueSchema(jsonEditorValue.getText());
     } catch (Exception e) {
       enqueueError("Error obteniendo esquema AVRO de " +
-          (isKey ? producer.getKeyClassName() : producer.getEventClassName()));
+          (isKey ? producer.getKeyClassName() : producer.getValueClassName()));
       enqueueInfo(e.getMessage());
       return SchemaCheckStatus.NOT_CHECKED;
     }
 
     enqueueInfo("Comparando con el esquema AVRO de " +
-        (isKey ? producer.getKeyClassName() : producer.getEventClassName()));
+        (isKey ? producer.getKeyClassName() : producer.getValueClassName()));
     return compareSchemas(registeredSchema, avroSchema, objectName);
   }
 
@@ -437,8 +437,8 @@ public class KafkaProducerPanel extends BasePanel {
   }
 
   private void createUIComponents() {
-    jsonEditorEvent = createJsonEditor();
-    eventScrollPane = createEditorScroll(jsonEditorEvent);
+    jsonEditorValue = createJsonEditor();
+    valueScrollPane = createEditorScroll(jsonEditorValue);
     jsonEditorKey = createJsonEditor();
     keyScrollPane = createEditorScroll(jsonEditorKey);
   }
@@ -457,7 +457,7 @@ public class KafkaProducerPanel extends BasePanel {
     } else if (index == 1) {
       return Optional.of(jsonEditorKey);
     } else if (index == 2) {
-      return Optional.of(jsonEditorEvent);
+      return Optional.of(jsonEditorValue);
     } else {
       return Optional.empty();
     }
@@ -552,10 +552,10 @@ public class KafkaProducerPanel extends BasePanel {
         new GridConstraints(5, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
             GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0,
             false));
-    comboEvent = new JComboBox();
+    comboValue = new JComboBox();
     final DefaultComboBoxModel defaultComboBoxModel2 = new DefaultComboBoxModel();
-    comboEvent.setModel(defaultComboBoxModel2);
-    panel2.add(comboEvent, new GridConstraints(5, 1, 1, 1, GridConstraints.ANCHOR_WEST,
+    comboValue.setModel(defaultComboBoxModel2);
+    panel2.add(comboValue, new GridConstraints(5, 1, 1, 1, GridConstraints.ANCHOR_WEST,
         GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_GROW,
         GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     final JLabel label3 = new JLabel();
@@ -583,15 +583,15 @@ public class KafkaProducerPanel extends BasePanel {
     panel2.add(comboProducer, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_WEST,
         GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_GROW,
         GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-    buttonOpenFileEvent = new JButton();
-    Font buttonOpenFileEventFont = this.$$$getFont$$$(null, -1, -1, buttonOpenFileEvent.getFont());
+    buttonOpenFileValue = new JButton();
+    Font buttonOpenFileEventFont = this.$$$getFont$$$(null, -1, -1, buttonOpenFileValue.getFont());
     if (buttonOpenFileEventFont != null) {
-      buttonOpenFileEvent.setFont(buttonOpenFileEventFont);
+      buttonOpenFileValue.setFont(buttonOpenFileEventFont);
     }
-    buttonOpenFileEvent.setIcon(new ImageIcon(getClass().getResource("/images/folder.png")));
-    buttonOpenFileEvent.setText("");
-    buttonOpenFileEvent.setToolTipText("Abrir archivo event");
-    panel2.add(buttonOpenFileEvent,
+    buttonOpenFileValue.setIcon(new ImageIcon(getClass().getResource("/images/folder.png")));
+    buttonOpenFileValue.setText("");
+    buttonOpenFileValue.setToolTipText("Abrir archivo event");
+    panel2.add(buttonOpenFileValue,
         new GridConstraints(5, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
             GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED,
             new Dimension(24, 24), new Dimension(24, 24), new Dimension(24, 24), 0, false));
@@ -653,10 +653,10 @@ public class KafkaProducerPanel extends BasePanel {
     tabKey.setLayout(new BorderLayout(0, 0));
     tabbedPane.addTab("Key", tabKey);
     tabKey.add(keyScrollPane, BorderLayout.CENTER);
-    tabEvent = new JPanel();
-    tabEvent.setLayout(new BorderLayout(0, 0));
-    tabbedPane.addTab("Event", tabEvent);
-    tabEvent.add(eventScrollPane, BorderLayout.CENTER);
+    tabValue = new JPanel();
+    tabValue.setLayout(new BorderLayout(0, 0));
+    tabbedPane.addTab("Event", tabValue);
+    tabValue.add(valueScrollPane, BorderLayout.CENTER);
     final JPanel panel3 = new JPanel();
     panel3.setLayout(new BorderLayout(0, 0));
     contentPane.add(panel3,

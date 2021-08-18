@@ -27,9 +27,9 @@ public class GenericProducer implements IProducer {
   }
 
   @Override
-  public List<String> getAvailableEvents() {
+  public List<String> getAvailableValues() {
     return Stream.concat(Stream.of(""),
-        producerList.stream().map(IProducer::getAvailableEvents).flatMap(Collection::stream))
+        producerList.stream().map(IProducer::getAvailableValues).flatMap(Collection::stream))
         .collect(Collectors.toList());
   }
 
@@ -51,7 +51,7 @@ public class GenericProducer implements IProducer {
   }
 
   @Override
-  public String getEventSchema(String json) throws KajException {
+  public String getValueSchema(String json) throws KajException {
     return "";
   }
 
@@ -61,10 +61,10 @@ public class GenericProducer implements IProducer {
   }
 
   @Override
-  public void sendFromJson(Environment environment, String topic, String keyJson, String eventJson)
+  public void sendFromJson(Environment environment, String topic, String keyJson, String valueJson)
       throws KajException {
 
-    String keySchema, eventSchema;
+    String keySchema, valueSchema;
 
     try {
       keySchema = schemaRegistryService.getTopicKeySchema(topic, environment);
@@ -72,21 +72,21 @@ public class GenericProducer implements IProducer {
       throw new KajException("Error al obtener el esquema de la Key. Causa: " + ex.getMessage());
     }
     try {
-      eventSchema = schemaRegistryService.getTopicEventSchema(topic, environment);
+      valueSchema = schemaRegistryService.getTopicValueSchema(topic, environment);
     } catch (Exception ex) {
-      throw new KajException("Error al obtener el esquema del Event. Causa: " + ex.getMessage());
+      throw new KajException("Error al obtener el esquema del Value. Causa: " + ex.getMessage());
     }
 
-    GenericRecord key, event;
+    GenericRecord key, value;
     try {
       key = composeRecord(keySchema, keyJson);
     } catch (Exception ex) {
       throw new KajException("Error al crear el GenericRecord de la Key. Causa: " + ex.getMessage());
     }
     try {
-      event = composeRecord(eventSchema, eventJson);
+      value = composeRecord(valueSchema, valueJson);
     } catch (Exception ex) {
-      throw new KajException("Error al crear el GenericRecord del Event. Causa: " + ex.getMessage());
+      throw new KajException("Error al crear el GenericRecord del Value. Causa: " + ex.getMessage());
     }
 
     KafkaTemplate<GenericRecord, GenericRecord> senderTemplate;
@@ -96,9 +96,9 @@ public class GenericProducer implements IProducer {
       throw new KajException("Error al crear el Template de Kafka. Causa: " + ex.getMessage());
     }
     try {
-      senderTemplate.send(topic, key, event);
+      senderTemplate.send(topic, key, value);
     } catch (Exception ex) {
-      throw new KajException("Error al enviar el evento al topic. Causa: " + ex.getMessage());
+      throw new KajException("Error al enviar el mensaje al topic. Causa: " + ex.getMessage());
     }
   }
 
@@ -108,7 +108,7 @@ public class GenericProducer implements IProducer {
   }
 
   @Override
-  public String getEventClassName() {
+  public String getValueClassName() {
     return "";
   }
 

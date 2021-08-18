@@ -114,10 +114,10 @@
               <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Event:"/>
+              <text value="Value:"/>
             </properties>
           </component>
-          <component id="f8f36" class="javax.swing.JComboBox" binding="comboEvent">
+          <component id="f8f36" class="javax.swing.JComboBox" binding="comboValue">
             <constraints>
               <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -158,7 +158,7 @@
               <model/>
             </properties>
           </component>
-          <component id="8b646" class="javax.swing.JButton" binding="buttonOpenFileEvent">
+          <component id="8b646" class="javax.swing.JButton" binding="buttonOpenFileValue">
             <constraints>
               <grid row="5" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false">
                 <minimum-size width="24" height="24"/>
@@ -271,14 +271,14 @@
               </scrollpane>
             </children>
           </grid>
-          <grid id="36f05" binding="tabEvent" layout-manager="BorderLayout" hgap="0" vgap="0">
+          <grid id="36f05" binding="tabValue" layout-manager="BorderLayout" hgap="0" vgap="0">
             <constraints>
-              <tabbedpane title="Event"/>
+              <tabbedpane title="Value"/>
             </constraints>
             <properties/>
             <border type="none"/>
             <children>
-              <scrollpane id="c118a" class="org.fife.ui.rtextarea.RTextScrollPane" binding="eventScrollPane" custom-create="true">
+              <scrollpane id="c118a" class="org.fife.ui.rtextarea.RTextScrollPane" binding="valueScrollPane" custom-create="true">
                 <constraints border-constraint="Center"/>
                 <properties/>
                 <border type="none"/>
