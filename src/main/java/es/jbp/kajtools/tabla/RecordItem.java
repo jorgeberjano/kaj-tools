@@ -11,5 +11,5 @@ public class RecordItem {
   private long offset;
   private LocalDateTime dateTime;
   private String key;
-  private String event;
+  private String value;
 }

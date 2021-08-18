@@ -79,7 +79,7 @@ public interface IConsumer<K, E> extends KafkaBase {
 
   default RecordItem createRecordItem(ConsumerRecord<K, E> rec) {
     String jsonKey = String.valueOf(rec.key());
-    String jsonEvent = String.valueOf(rec.value());
+    String jsonValue = String.valueOf(rec.value());
 
     LocalDateTime dateTime =
         LocalDateTime.ofInstant(Instant.ofEpochMilli(rec.timestamp()),
@@ -90,7 +90,7 @@ public interface IConsumer<K, E> extends KafkaBase {
         .offset(rec.offset())
         .dateTime(dateTime)
         .key(jsonKey)
-        .event(jsonEvent).build();
+        .value(jsonValue).build();
   }
 
   default MessageFilter createScriptFilter(String script) throws KajException {

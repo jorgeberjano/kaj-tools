@@ -13,7 +13,7 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 
 public interface IProducer extends KafkaBase {
 
-  List<String> getAvailableEvents();
+  List<String> getAvailableValues();
 
   List<String> getAvailableKeys();
 
@@ -21,16 +21,16 @@ public interface IProducer extends KafkaBase {
 
   List<String> getAvailableTopics();
 
-  String getEventSchema(String json) throws KajException;
+  String getValueSchema(String json) throws KajException;
 
   String getKeySchema(String json) throws KajException;
 
-  void sendFromJson(Environment environment, String topic, String keyJson, String eventJson)
+  void sendFromJson(Environment environment, String topic, String keyJson, String valueJson)
       throws KajException;
 
   String getKeyClassName();
 
-  String getEventClassName();
+  String getValueClassName();
 
   String getFolder();
 
