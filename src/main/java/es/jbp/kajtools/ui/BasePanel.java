@@ -4,6 +4,7 @@ import static org.fife.ui.rsyntaxtextarea.TokenTypes.LITERAL_STRING_DOUBLE_QUOTE
 import static org.fife.ui.rsyntaxtextarea.TokenTypes.SEPARATOR;
 import static org.fife.ui.rsyntaxtextarea.TokenTypes.VARIABLE;
 
+import es.jbp.kajtools.KajException;
 import es.jbp.kajtools.ui.InfoMessage.Type;
 import es.jbp.kajtools.KajToolsApp;
 import es.jbp.kajtools.util.JsonUtils;
@@ -70,6 +71,13 @@ public abstract class BasePanel {
     messages.add(new InfoMessage(message, type));
   }
 
+  protected void enqueueException(KajException ex) {
+    enqueueError(ex.getMessage());
+    if (ex.getCause() != null) {
+      enqueueInfo(ex.getCause().getMessage());
+    }
+  }
+
   protected void flushMessages() {
     messages.forEach(m -> printText(m.getMensaje(), m.getType()));
     messages.clear();
@@ -97,6 +105,13 @@ public abstract class BasePanel {
 
   protected void printSuccessful(String message) {
     printText(message + "\n", Type.SUCCESS);
+  }
+
+  protected void printException(KajException ex) {
+    printError(ex.getMessage());
+    if (ex.getCause() != null) {
+      printInfo(ex.getCause().getMessage());
+    }
   }
 
   protected void printText(String message, Type type) {
@@ -159,6 +174,40 @@ public abstract class BasePanel {
     });
     return jsonEditor;
   }
+
+  protected RSyntaxTextArea createScriptEditor() {
+    final RSyntaxTextArea jsonEditor = new RSyntaxTextArea();
+    jsonEditor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVASCRIPT);
+    jsonEditor.setCodeFoldingEnabled(true);
+    jsonEditor.setAlignmentX(0.0F);
+    Font font = new Font("Courier New", Font.PLAIN, 12);
+    jsonEditor.setFont(font);
+    Theme theme = KajToolsApp.getInstance().getTheme();
+    if (theme != null) {
+      theme.apply(jsonEditor);
+    } else {
+      SyntaxScheme scheme = jsonEditor.getSyntaxScheme();
+      scheme.getStyle(SEPARATOR).foreground = Color.black;
+      scheme.getStyle(VARIABLE).foreground = Color.blue;
+      scheme.getStyle(LITERAL_STRING_DOUBLE_QUOTE).foreground = Color.green.darker();
+    }
+    jsonEditor.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_L && e.isControlDown() && e.isAltDown()) {
+          String text = jsonEditor.getText();
+          if (!JsonUtils.isTemplate(text)) {
+            int position = jsonEditor.getCaretPosition();
+            jsonEditor.setText(JsonUtils.formatJson(text));
+            jsonEditor.setCaretPosition(position);
+          }
+        }
+        super.keyPressed(e);
+      }
+    });
+    return jsonEditor;
+  }
+
 
   protected interface AsyncTask<T> {
 

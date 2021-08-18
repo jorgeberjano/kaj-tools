@@ -18,6 +18,7 @@
   <properties>
     <maven.javadoc.skip>true</maven.javadoc.skip>
     <confluent.version>5.5.3</confluent.version>
+    <graalvm.version>21.2.0</graalvm.version>
   </properties>
 
   <dependencies>
@@ -150,7 +151,17 @@
       <version>6.6</version>
     </dependency>
 
-
-
+    <!-- Graalvm -->
+    <dependency>
+      <groupId>org.graalvm.js</groupId>
+      <artifactId>js</artifactId>
+      <version>${graalvm.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.graalvm.js</groupId>
+      <artifactId>js-scriptengine</artifactId>
+      <version>${graalvm.version}</version>
+    </dependency>
   </dependencies>
 </project>

@@ -8,10 +8,10 @@ import es.jbp.kajtools.IConsumer;
 import es.jbp.kajtools.IProducer;
 import es.jbp.kajtools.KajException;
 import es.jbp.kajtools.KajToolsApp;
+import es.jbp.kajtools.filter.MessageFilter;
 import es.jbp.kajtools.tabla.ModeloTablaGenerico;
 import es.jbp.kajtools.tabla.RecordItem;
 import es.jbp.kajtools.tabla.TablaGenerica;
-import es.jbp.kajtools.ui.BasePanel;
 import es.jbp.kajtools.util.JsonUtils;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -21,6 +21,7 @@ import java.awt.Insets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Future;
 import javax.swing.BorderFactory;
@@ -69,9 +70,14 @@ public class KafkaConsumerPanel extends BasePanel {
   private RTextScrollPane eventScrollPane;
   private JTextField searchTextField;
   private JTextField fieldMaxRecords;
+  private JPanel tabFilter;
+  private RTextScrollPane filterScrollPane;
+  private JButton cleanButton;
+  private JButton copyButton;
 
   private RSyntaxTextArea jsonEditorEvent;
   private RSyntaxTextArea jsonEditorKey;
+  private RSyntaxTextArea scriptEditorFilter;
 
   ModeloTablaGenerico<RecordItem> recordTableModel = new ModeloTablaGenerico<>();
   private Future<List<RecordItem>> futureRecords;
@@ -99,11 +105,13 @@ public class KafkaConsumerPanel extends BasePanel {
     ListSelectionModel selectionModel = recordTable.getSelectionModel();
     selectionModel.addListSelectionListener(this::recordSelected);
 
+    cleanButton.addActionListener(e -> cleanEditor());
+    copyButton.addActionListener(e -> copyToClipboard());
+
     enableTextSearch(searchTextField, jsonEditorEvent, jsonEditorKey);
   }
 
   private void recordSelected(ListSelectionEvent e) {
-    int index2 = e.getFirstIndex();
     int index = recordTable.getSelectionModel().getMinSelectionIndex();
     RecordItem selected = recordTableModel.getFila(index);
     if (selected == null) {
@@ -117,7 +125,7 @@ public class KafkaConsumerPanel extends BasePanel {
 
   private void updateTopics() {
     comboTopic.removeAllItems();
-    IConsumer consumer = (IConsumer) comboConsumer.getSelectedItem();
+    IConsumer<?, ?> consumer = (IConsumer<?, ?>) comboConsumer.getSelectedItem();
     if (consumer == null) {
       return;
     }
@@ -127,8 +135,8 @@ public class KafkaConsumerPanel extends BasePanel {
 
   private void updateConsumers() {
     comboConsumer.removeAllItems();
-    String domain = comboDomain.getSelectedItem().toString();
-    final List<IConsumer> consumerList = KajToolsApp.getInstance().getConsumerList();
+    String domain = Objects.toString(comboDomain.getSelectedItem());
+    final List<IConsumer<?, ?>> consumerList = KajToolsApp.getInstance().getConsumerList();
     consumerList.stream()
         .filter(c -> StringUtils.isBlank(domain) || domain.equals(c.getDomain()))
         .forEach(comboConsumer::addItem);
@@ -138,21 +146,46 @@ public class KafkaConsumerPanel extends BasePanel {
 
     Environment environment = (Environment) comboEnvironment.getSelectedItem();
     String topic = comboTopic.getEditor().getItem().toString();
-    IConsumer consumer = (IConsumer) comboConsumer.getSelectedItem();
 
+    Object consumerSelectedItem = comboConsumer.getSelectedItem();
+    if (consumerSelectedItem == null) {
+      printError("Se debe seleccionar un consumidor antes de consumir mensajes");
+      return;
+    }
+    IConsumer<?, ?> consumer = (IConsumer<?, ?>) consumerSelectedItem;
 
     long maxRecordsPerPartition = NumberUtils.toLong(fieldMaxRecords.getText(), 50);
 
+    String script = scriptEditorFilter.getText().trim();
+    MessageFilter filter;
+    if (StringUtils.isBlank(script)) {
+      filter = (k, v) -> true;
+    } else {
+      try {
+        filter = consumer.createScriptFilter(script);
+      } catch (KajException ex) {
+        printException(ex);
+        return;
+      }
+    }
+
+    printAction("Consumiendo eventos del topic " + topic);
+
     futureRecords = this.<List<RecordItem>>executeAsyncTask(
-        () -> requestRecords(environment, topic, consumer, maxRecordsPerPartition), this::recordsReceived);
+        () -> requestRecords(environment, topic, consumer, filter, maxRecordsPerPartition),
+        this::recordsReceived);
   }
 
-  private List<RecordItem> requestRecords(Environment environment, String topic, IConsumer consumer, long maxRecordsPerPartition) {
+  private List<RecordItem> requestRecords(Environment environment, String topic, IConsumer<?, ?> consumer,
+      MessageFilter filter, long maxRecordsPerPartition) {
+
     try {
-      return consumer.consumeLastRecords(environment, topic, maxRecordsPerPartition);
+      List<RecordItem> records = consumer.consumeLastRecords(environment, topic, filter, maxRecordsPerPartition);
+      enqueueSuccessful("Consumidos " + records.size() + " eventos");
+      return records;
     } catch (KajException ex) {
-      enqueueError("No se ha podido consumir ningún registro");
-      enqueueInfo(ex.getMessage());
+      //enqueueError("No se ha podido consumir ningún registro");
+      enqueueException(ex);
     }
     return Collections.emptyList();
   }
@@ -333,6 +366,9 @@ public class KafkaConsumerPanel extends BasePanel {
     jsonEditorKey = createJsonEditor();
     keyScrollPane = createEditorScroll(jsonEditorKey);
 
+    scriptEditorFilter = createScriptEditor();
+    filterScrollPane = createEditorScroll(scriptEditorFilter);
+
     TablaGenerica tablaGenerica = new TablaGenerica();
     recordTableModel.agregarColumna("partition", "Partition", 20);
     recordTableModel.agregarColumna("offset", "Offset", 20);
@@ -359,8 +395,10 @@ public class KafkaConsumerPanel extends BasePanel {
     if (index == 0) {
       return Optional.of(infoTextPane);
     } else if (index == 1) {
-      return Optional.of(jsonEditorKey);
+      return Optional.of(scriptEditorFilter);
     } else if (index == 2) {
+      return Optional.of(jsonEditorKey);
+    } else if (index == 3) {
       return Optional.of(jsonEditorEvent);
     } else {
       return Optional.empty();

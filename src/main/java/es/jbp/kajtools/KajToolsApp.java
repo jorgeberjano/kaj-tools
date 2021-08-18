@@ -21,16 +21,16 @@ public class KajToolsApp {
     @Getter
     private static KajToolsApp instance;
     @Getter
-    private List<IProducer> producerList;
+    private final List<IProducer> producerList;
     @Getter
-    private List<IConsumer> consumerList;
+    private final List<IConsumer<?, ?>> consumerList;
     @Getter
     private final SchemaRegistryService schemaRegistryService;
     @Getter
     private Theme theme;
 
     public KajToolsApp(List<IProducer> producerList,
-        List<IConsumer> consumerList,
+        List<IConsumer<?, ?>> consumerList,
         SchemaRegistryService schemaRegistryService) {
         this.instance  = this;
         this.producerList = producerList;
