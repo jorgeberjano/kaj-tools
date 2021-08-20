@@ -337,7 +337,7 @@ return value.facturas && value.facturas.some(factura => factura.importe > 90);
 Si se quiere implementar con JavaScript un filtro similar al que consigue seleccionando la opción `Contiene texto` se puede hacer de la siguiente forma:
 
 ````javascript
-return jsonKey.contains("El texto a buscar") || jsonValue.contains("El texto a buscar");
+return jsonKey.includes("El texto a buscar") || jsonValue.includes("El texto a buscar");
 ````
 
 
