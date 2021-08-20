@@ -12,81 +12,101 @@ La biblioteca de clases *KAJ Tools* proporciona un marco de trabajo para crear a
 
 Permite realizar, fundamentalmente, las siguientes tareas:
 
-- Producir eventos de prueba por un *topic* partiendo simplemente de contenidos JSON.
-
-- Producir eventos de prueba a partir de *JSON* que se cargan en las clases *AVRO* definidas en nuestras bibliotecas de clases.
-
-- Producir eventos de prueba a partir de plantillas.
-
+- Producir mensajes de prueba por un *topic* partiendo simplemente de contenidos JSON.
+- Producir mensajes de prueba a partir de *JSON* que se cargan en las clases *AVRO* definidas en nuestras bibliotecas de clases.
+- Producir mensajes de prueba a partir de plantillas.
+- Consumir  mensajes que se han enviado a un *topic* y visualizarlos en formato JSON.
+- Consumir  mensajes que se han enviado a un *topic*, cargarlos en las clases *AVRO* definidas en nuestras bibliotecas de clases y visualizarlos en formato JSON.
 - Comparar los esquemas de las clases *AVRO* con las almacenadas en el *Schema Regristry* y mostrar sus diferencias.
-
--Consultar esquemas del *Schema Regristry* y mostrar las diferencias con esquemas anteriores.
+- Consultar esquemas del *Schema Regristry* y mostrar las diferencias con esquemas anteriores.
+- Borrar esquemas del *Schema Regristry*.
 
 - Generar *JSO*N de ejemplo a partir de clases *AVRO* o de cualquier clase *Java Bean* en general.
-
 - Generar plantillas a partir de contenido JSON.
 
-  
 
-## Producción de eventos Kafka
+
+## Entornos
+
+Los entornos se definen en el fichero de recursos `environments.yml` dentro de la aplicación específica.
+
+Para cada entorno se definen las siguientes propiedades:
+
+```
+- name: nombre del entorno
+  bootstrapServers: kafkaserver1:9092, kafkaserver2:9092
+  urlSchemaRegistry: http://schemaregistryserver/
+  userSchemaRegistry: userName1
+  passwordSchemaRegistry: password1
+  autoRegisterSchemas: true
+  securityProtocol: SASL_SSL
+  saslMechanism: SCRAM-SHA-512
+  sslTruststoreLocation: jks/truststore.jks
+  sslTruststorePassword: truststore_password
+  saslJaasConfig: org.apache.kafka.common.security.scram.ScramLoginModule required username="userName2" password="password2";
+```
+
+
+
+## Producción de mensaje Kafka
 
 ![Kafka](./src/main/resources/images/kafka.png?at=refs%2Fheads%2Fdevelop)
 
-La inyección de eventos al ecosistema Kafka se realiza desde el panel que muestra la pestaña lateral *Kafka*.
+La inyección de menasajes al ecosistema Kafka se realiza desde el panel que muestra la pestaña lateral Producer.
 
-Para simplificar se usa el término *EVENT* para referirse al valor del evento (*event value*) y el término *KEY* para referirse a la clave del evento (*event key*).
+Para simplificar se usa el término *VALUE* para referirse al valor del mensaje y el término *KEY* para referirse a la clave del mensaje.
 
-Lo primero que de debe  seleccionar es el entorno en el que vamos a operar (LOCAL o DESARROLLO). Seleccionando el entorno se selecciona internamente tanto la URL del broker Kafka como la URL del SchemaRegistry. De momento estos valores se asignan en el código.
+Se debe seleccionar el entorno en el que vamos a operar antes de enviar un mensaje.
 
-Para simplificar la localización e un productor determinado se puede seleccionar previamente un dominio, de tal manera que las opciones para elegir un productor se reducen a los productores de eventos de dicho dominio.
+Para simplificar la localización e un productor determinado se puede seleccionar previamente un dominio, de tal manera que las opciones para elegir un productor se reducen a los productores de mensajes de dicho dominio. Si no se selecciona ningún dominio se puede seleccionar el productor genérico.
 
 
 
-### GenericTestProducer
+### GenericProducer
 
-Normalmente las clases de los objetos productores deben ser declarados dentro del código de la aplicación para que estén disponibles, sin embargo hay un objeto productor genérico que permite inyectar eventos creados a partir de contenido *JSON* sin conocimiento de las clases AVRO, completamente agnóstico a nuestras librerías. Este productor se llama `GenericTestProducer`.
+Normalmente las clases de los objetos productores deben ser declarados dentro del código de la aplicación para que estén disponibles, sin embargo hay un objeto productor genérico que permite inyectar mensajes creados a partir de contenido *JSON* sin conocimiento de las clases AVRO, completamente agnóstico a nuestras librerías. Este productor se llama `GenericProducer`.
 
-Para enviar eventos, en primer lugar, hay que seleccionar el entorno al que van dirigidos los eventos. 
+Para enviar mensajes, en primer lugar, hay que seleccionar el entorno al que van dirigidos los mensajes. 
 
-Luego hay que seleccionar el productor `GenericTestProducer`.
+Luego hay que seleccionar el productor `GenericProducer`.
 
-A continuación, seleccionar o introducir directamente el nombre del *topic* por el que se desean inyectar los eventos. Con el productor genérico en el combo se muestran todos los *topics* declarados por los productores específicos. Pero no hay que limitarse a ese conjunto, por el contrario, se puede usar cualquiera escribiendo su nombre directamente en el campo de edición.
+A continuación, seleccionar o introducir directamente el nombre del *topic* por el que se desean inyectar los mensajes. Con el productor genérico en el combo se muestran todos los *topics* declarados por los productores específicos. Pero no hay que limitarse a ese conjunto, por el contrario, se puede usar cualquiera escribiendo su nombre directamente en el campo de edición.
 
-También hay que indicar el KEY y EVENT a enviar. Esto se puede hacer de varias formas:
+También hay que indicar el KEY y VALUE a enviar. Esto se puede hacer de varias formas:
 
 - Seleccionando con los *combo boxes* una archivo de recurso.
 - Pulsando el botón ![folder](./src/main/resources/images/folder.png?at=refs%2Fheads%2Fdevelop)y seleccionar un archivo del sistema de archivos locales.
 - Introducirlos directamente en el editor correspondiente.
 
-De cualquier forma siempre se puede modificar el contenido de estos antes de ser enviados ya que lo que se envía es lo que hay en los editores de Key y Event.
+De cualquier forma siempre se puede modificar el contenido de estos antes de ser enviados ya que lo que se envía es lo que hay en los editores de Key y Value.
 
 El contenido de se puede especificar en formato *JSON* o en forma de plantilla, que se describirán mas adelante.
 
-También es posible seleccionar la cantidad de eventos a enviar.
+También es posible seleccionar la cantidad de mensajes a enviar.
 
-Por último para realizar el envío del evento por el *topic* del entorno que se haya seleccionado hay que pulsar el botón ![comparar esquemas](./src/main/resources/images/enviar.png?at=refs%2Fheads%2Fdevelop)`Enviar`.
+Por último para realizar el envío del mensaje por el *topic* del entorno que se haya seleccionado hay que pulsar el botón ![comparar esquemas](./src/main/resources/images/enviar.png?at=refs%2Fheads%2Fdevelop)`Enviar`.
 
 
 
 ### Productores concretos
 
-Los productores concreto se deben implementar en el código.
+Los productores concreto se deben implementar en el código creando una clase que extendienda de la clase genérica AbstractClient e indicando las clase AVRO correspondientes al KEY y al VALUE
 
-Lo primero que de debe hacer es agregar, en el archivo `.pom` del proyecto, la dependencia Maven de la biblioteca de clases (*library*) donde se encuentran definidas las clases AVRO *Key* y *Event* .
+Por supuesto, antes hay que agregar al archivo `.pom` del proyecto, la dependencia Maven de la biblioteca de clases (*library*) donde se encuentran definidas las clases AVRO.
 
  Luego hay que crear una clase como la que sigue.
 
 ```java
 @Component
-public class MyProducer extends AbstractTestProducer<MyKey, MyEvent> {
+public class MyClient extends AbstractClient<MyKey, MyValue> {
   @Getter
   private final String defaultTopic = "TOPIC-NAME";
 
   @Getter
-  private final String folder = "events/my-domain";
+  private final String folder = "my-domain/mytopic";
 
   public MyProducer() {
-    super(MyKey.class, MyEvent.class);
+    super(MyKey.class, MyValue.class);
   }
 }
 ```
@@ -95,13 +115,13 @@ Como se aprecia, en la clase hay que especificar:
 
 - El *topic* por defecto (`defaultTopic`)
 - La carpeta de recursos donde se almacenan los archivos `.json ` y `.template` que queremos que estén accesibles desde el combo box
-- Las clases *Key* y *Event* en el constructor.
+- Las clases *Key* y *Value* en el constructor.
 
-Opcionalmente se puede declarar una lista de topic si los mismos eventos pueden ser inyectados en mas de un topic.
+Opcionalmente se puede declarar una lista de topic si los mismos mensajes pueden ser inyectados en mas de un topic.
 
 ```java
 @Getter
-  public List<String> availableTopics = Lists.newArrayList(defaultTopic,
+public List<String> availableTopics = Lists.newArrayList(defaultTopic,
       "ANOTHER-TOPIC-NAME");
 ```
 
@@ -111,9 +131,9 @@ También hay que crear los archivos `.json` o `.template` en la carpeta de recur
 
 Una vez compilada la aplicación  al ser ejecutada muestra en el combo box el nombre de la clase productora. Es importante no repetir los nombres de las clases para poder distinguirlas. Se recomienda prefijar el nombre del dominio en el nombre de la clase, aparte de crearla en el paquete de su dominio.
 
-Cuando se selecciona una clase productora en el *combo box* en los respectivos del *KEY* y del *EVENT* estarán accesibles los archivos `.json `y `.template` que se hayan declarado en dicha clase.
+Cuando se selecciona una clase productora en el *combo box* en los respectivos del *KEY* y del *VALUE* estarán accesibles los archivos `.json `y `.template` que se hayan declarado en dicha clase.
 
-Uno de los beneficios de crear productores concretos es que permiten que se pueda comparar los esquemas AVRO de las clases *Key* y *Event* que utilizan con las que están registradas en el *Schema Regristry*.
+Uno de los beneficios de crear productores concretos es que permiten que se pueda comparar los esquemas AVRO de las clases *Key* y *Value* que utilizan con las que están registradas en el *Schema Regristry*.
 
 
 
@@ -131,7 +151,7 @@ Para facilitar la inyección de datos aleatorios o preprogramados se ha usado la
 
 Las plantillas proporcionan un leguaje específico de dominio para crear plantillas a partir de las cuales se genera contenido *JSON*.
 
-Para la producción mensajes la aplicación permite especificar los contenidos *JSON* del *Key* y el *Event* tanto directamente en formato *JSON* o con la sintaxis que proporciona *JsonTemplate*.
+Para la producción mensajes la aplicación permite especificar los contenidos *JSON* del *Key* y el *Value* tanto directamente en formato *JSON* o con la sintaxis que proporciona *JsonTemplate*.
 
 La sintaxis es parecida a la de un *JSON* normal pero:
 
@@ -155,9 +175,9 @@ Los productores personalizados son los siguientes:
 | productor de valor | descripción                                                  |
 | ------------------ | ------------------------------------------------------------ |
 | @date              | produce la fecha actual en un formato determinado o uno por defecto. Para especificar un formato determinado se usa el mismo patrón que usa la clase de Java SimpleDateFormat. |
-| @uuid              | produce un UUID o [Identificador único universal](https://es.wikipedia.org/wiki/Identificador_único_universal#:~:text=UUID se utilizó originalmente en,Open Software Foundation (OSF) .). Si se le suministra un parámetro indica la clave para compartir el valor entre diferentes atributos del JSON o entre atributos de los JSON de la Key y el Event. |
+| @uuid              | produce un UUID o [Identificador único universal](https://es.wikipedia.org/wiki/Identificador_único_universal#:~:text=UUID se utilizó originalmente en,Open Software Foundation (OSF) .). Si se le suministra un parámetro indica la clave para compartir el valor entre diferentes atributos del JSON o entre atributos de los JSON de la Key y el Value. |
 | @file              | produce una cadena elegida de forma aleatoria de entre todas las líneas de un fichero de texto. |
-| @gs                | produce cadenas con valores aleatorios globales que pueden compartirse entre varios atributos del JSON o entre atributos de los JSON de la Key y el Event. |
+| @gs                | produce cadenas con valores aleatorios globales que pueden compartirse entre varios atributos del JSON o entre atributos de los JSON de la Key y el Value. |
 
 Hay algunas variable predefinidas por la aplicación que tiene un significado especial:
 
@@ -213,13 +233,95 @@ Para una referencia mas exhaustiva se puede consultar el manual y los ejemplos q
 
 
 
+## Consumición de mensajes Kafka
+
+![json](./src/main/resources/images/akfak.png?at=refs%2Fheads%2Fdevelop)
+
+La lectura de mensajes del ecosistema Kafka se realiza desde el panel que muestra la pestaña lateral Consumer.
+
+Se debe seleccionar el entorno en el que vamos a operar antes de iniciar la recepción de mensajes.
+
+Para simplificar la localización e un consumidor determinado se puede seleccionar previamente un dominio, de tal manera que las opciones para elegir un consumidor se reducen a los consumidores de mensajes de dicho dominio. Si no se selecciona ningún dominio se puede seleccionar el consumidor genérico.
+
+La lectura de los mensajes se realiza posicionando los offsets de cada partición en el último mensaje recibido y rebobinando un número determinado de mensajes, por defecto 50. 
+
+En la pestaña Filtro se puede especificar un código JavaScript que devuelva true si el mensaje debe ser visualizado en la tabla o false en caso contrario. Para implementar el filtro se pueden usar las variables ya definidas:
+
+| Variable  | Descripción                                                  |
+| --------- | ------------------------------------------------------------ |
+| key       | objeto javascript que contiene la estructura de datos de la clave del mensaje. |
+| value     | objeto javascript que contiene la estructura de datos del valor del mensaje. |
+| jsonKey   | string que contiene el JSON de la clave del mensaje.         |
+| jsonValue | string que contiene el JSON del valor del mensaje.           |
+
+Ejemplos de filtro:
+
+Supongamos que la clave de los mensajes es del tipo:
+
+````json
+{
+	"id": "001"
+}
+````
+
+Y el valor de los mensajes es del tipo:
+
+````json
+{
+	"name": "pepe",
+	"telefono": "666666666",
+	"grupo": "A",
+	"facturas": {
+		"F001": {
+			"importe": 100
+		}
+	}
+}
+````
+
+
+
+Para filtrar los mensajes del grupo "A" se podría usar el filtro:
+
+```javascript
+return value.grupo == 'A';
+```
+
+Para filtrar los mensajes que tengan facturas cuyo importe sea mayor que 90:
+
+````javascript
+if (!value.facturas) {
+	return false;
+}
+for (var[idFactura, factura] of Object.entries(value.facturas)) {
+  if (factura.importe > 90) {
+      return true;
+  }
+}
+return false;
+````
+
+
+
+### GenericConsumer
+
+Normalmente las clases de los objetos cliente deben ser declarados dentro del código de la aplicación para que estén disponibles los consumidores específicos, sin embargo hay un objeto consumidor genérico que permite leer mensajes creados a partir de contenido *JSON* sin conocimiento de las clases AVRO. Este consumidor se llama `GenericConsumer`.
+
+Para enviar mensajes, en primer lugar, hay que seleccionar el entorno al que van dirigidos los mensajes. 
+
+Luego hay que seleccionar el productor `GenericProducer`.
+
+A continuación, seleccionar o introducir directamente el nombre del *topic* del que se desean leer los mensajes. Seleccionando el consumidor genérico en el combo se muestran todos los *topics* declarados por los consumidores específicos. Pero no hay que limitarse a ese conjunto, por el contrario, se puede usar cualquiera escribiendo su nombre directamente en el campo de edición.
+
+
+
 ## Schema Registry
 
 ![json](./src/main/resources/images/schemaregistry.png?at=refs%2Fheads%2Fdevelop)
 
 La interacción con el Schema Registry se hace desde el panel que muestra la pestaña lateral titulada Schema.
 
-Este panel permite consultar los esquemas registrados en un sujeto determinado. Cada *topic* consta de dos sujetos, uno cuyo nombre termina en `-key` para la KEY y otro terminado en `-value` para el EVENT.
+Este panel permite consultar los esquemas registrados en un sujeto determinado. Cada *topic* consta de dos sujetos, uno cuyo nombre termina en `-key` para la KEY y otro terminado en `-value` para el VALUE.
 
 Para obtener todas las versiones de esquemas que contiene un sujeto se debe selecciona el entorno y el sujeto en los combo box correspondientes. A continuación pulsar el botón `Obtener esquemas`
 
@@ -241,11 +343,11 @@ Desde esta panel se puede generar contenido JSON de prueba de cualquier clase qu
 
 Hay una selección de clases que se muestran en el combo box para facilitar la búsqueda. Las clases que aparecen son las que coinciden con alguna de las expresiones indicadas en el archivo `classes.txt` dentro de la carpeta de recursos.
 
-Para facilitar la búsqueda de clases, dentro de las que están disponibles en el combo box, se puede usar el filtro teniendo en cuenta que el nombre completo de la clases que se muestren como opciones en el combo box serán las que contengan cada una de las palabras que se indiquen en el combo. Por ejemplo, si se pone `offer key`  todas las clases que se muestren tendrán esas dos palabras pero no tiene por qué ser de forma consecutiva.
+Para facilitar la búsqueda de clases, dentro de las que están disponibles en el combo box, se puede usar el filtro teniendo en cuenta que el nombre completo de la clases que se muestren como opciones en el combo box serán las que contengan cada una de las palabras que se indiquen en el combo sin tener que ser de forma consecutiva.
 
-Es posible editar el nombre de la clase o pegarla directamente en el editor del combo box.
+Es posible seleccionar el nombre de la clase o escribirla, directamente, en el editor del combo box.
 
-Una vez seleccionada la clase se creará, en profundidad, una instancia con valores de ejemplo de dicha clase.
+Una vez seleccionada la clase se creará, en profundidad, una instancia con valores de ejemplo de dicha clase. Si se detecta recursividad (clases que se contengan a sí mismas o a clases en las cuales están contenidas,  se dejan de generar valores para no entrar en un bucle infinito).
 
 A partir de la instancia generada se genera un contenido JSON que se mostrará en la pestaña correspondiente. 
 
