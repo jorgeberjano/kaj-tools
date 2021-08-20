@@ -76,6 +76,8 @@ public class KafkaConsumerPanel extends BasePanel {
   private JButton cleanButton;
   private JButton copyButton;
   private JCheckBox checkFilter;
+  private JComboBox comboFilterType;
+  private JTextField textFieldFilter;
 
   private RSyntaxTextArea jsonEditorValue;
   private RSyntaxTextArea jsonEditorKey;
@@ -102,6 +104,10 @@ public class KafkaConsumerPanel extends BasePanel {
     // Combo Consumidores
     comboConsumer.addActionListener(e -> updateTopics());
     updateTopics();
+
+    // Combo tipo de filtro
+    comboFilterType.addActionListener(e -> textFieldFilter.setEnabled(comboFilterType.getSelectedIndex() == 1));
+    textFieldFilter.setEnabled(false);
 
     // Tabla de registros
     ListSelectionModel selectionModel = recordTable.getSelectionModel();
@@ -155,21 +161,24 @@ public class KafkaConsumerPanel extends BasePanel {
       return;
     }
     long maxRecordsPerPartition = NumberUtils.toLong(fieldRewindRecords.getText(), 50);
-    boolean thereIsFiltrer = checkFilter.isSelected();
+    int filterType = comboFilterType.getSelectedIndex();
+    String textFilter = textFieldFilter.getText().trim();
+    String script = scriptEditorFilter.getText().trim();
 
     IConsumer<?, ?> consumer = (IConsumer<?, ?>) consumerSelectedItem;
-
-    String script = scriptEditorFilter.getText().trim();
     MessageFilter filter;
-    if (StringUtils.isBlank(script) || !thereIsFiltrer) {
-      filter = (k, v) -> true;
-    } else {
+
+    if (filterType == 1 && StringUtils.isNotBlank(textFilter)) {
+      filter = (k, v) -> k.contains(textFilter) || v.contains(textFilter);
+    } else if (filterType == 2 && StringUtils.isNotBlank(script)) {
       try {
         filter = consumer.createScriptFilter(script);
       } catch (KajException ex) {
         printException(ex);
         return;
       }
+    } else {
+      filter = (k, v) -> true;
     }
 
     printAction("Consumiendo mensajes del topic " + topic);

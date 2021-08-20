@@ -243,9 +243,19 @@ Se debe seleccionar el entorno en el que vamos a operar antes de iniciar la rece
 
 Para simplificar la localización e un consumidor determinado se puede seleccionar previamente un dominio, de tal manera que las opciones para elegir un consumidor se reducen a los consumidores de mensajes de dicho dominio. Si no se selecciona ningún dominio se puede seleccionar el consumidor genérico.
 
-La lectura de los mensajes se realiza posicionando los offsets de cada partición en el último mensaje recibido y rebobinando un número determinado de mensajes, por defecto 50. 
+La lectura de los mensajes se realiza posicionando los offsets de cada partición en el último mensaje recibido y rebobinando un número determinado de mensajes, por defecto 50.
 
-En la pestaña Filtro se puede especificar un código JavaScript que devuelva true si el mensaje debe ser visualizado en la tabla o false en caso contrario. Para implementar el filtro se pueden usar las variables ya definidas:
+Los mensajes que se lean serán mostrados en una tabla, al seleccionar cada una de las filas se mostrará el contenido de la clave y el valor de cada mensaje en las pestañas `Key` y `Value`.
+
+Es posible filtrar los mensajes que se van a mostrar en la tabla Seleccionado en el combo box o bien la opción `Contiene texto` o la opción `Filtro Javascript`.
+
+### Filtro Contiene texto
+
+Se mostraran los mensajes que contengan un texto determinado en el JSON del key o value. La comparación se hace directamente contra el texto del JSON.
+
+### Filtro Javascript
+
+Para especificar un filtro usando Javascript, se debe introducir en la pestaña `Filtro` un código JavaScript que devuelva true si el mensaje debe ser visualizado en la tabla o false en caso contrario. Para implementar el filtro se pueden usar las variables ya definidas:
 
 | Variable  | Descripción                                                  |
 | --------- | ------------------------------------------------------------ |
@@ -271,11 +281,22 @@ Y el valor de los mensajes es del tipo:
 	"name": "pepe",
 	"telefono": "666666666",
 	"grupo": "A",
-	"facturas": {
-		"F001": {
+    "direcciones": {
+        "Oficina": {
+			"via": "C/ Principal"            
+        }, 
+        "Taller": {
+            "via": "Carretera N4"
+        }
+    },
+	"facturas": [ {
+        	"id": "F001",
 			"importe": 100
-		}
-	}
+		}, {
+            "id": "F002",
+            "importe": 50
+        }
+	]
 }
 ````
 
@@ -287,18 +308,36 @@ Para filtrar los mensajes del grupo "A" se podría usar el filtro:
 return value.grupo == 'A';
 ```
 
-Para filtrar los mensajes que tengan facturas cuyo importe sea mayor que 90:
+
+
+Para filtrar mensajes que tengan alguna dirección con la vía "Carretera N4" :
 
 ````javascript
-if (!value.facturas) {
+if (!value.direcciones) {
 	return false;
 }
-for (var[idFactura, factura] of Object.entries(value.facturas)) {
-  if (factura.importe > 90) {
+for (var[nombre, direccion] of Object.entries(value.direcciones)) {
+  if (direccion.via == "Carretera N4") {
       return true;
   }
 }
 return false;
+````
+
+
+
+Para filtrar los mensajes que tengan facturas cuyo importe sea mayor que 90:
+
+````javascript
+return value.facturas && value.facturas.some(factura => factura.importe > 90);
+````
+
+
+
+Si se quiere implementar con JavaScript un filtro similar al que consigue seleccionando la opción `Contiene texto` se puede hacer de la siguiente forma:
+
+````javascript
+return jsonKey.contains("El texto a buscar") || jsonValue.contains("El texto a buscar");
 ````
 
 

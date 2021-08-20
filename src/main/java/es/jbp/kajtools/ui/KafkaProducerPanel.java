@@ -111,7 +111,7 @@ public class KafkaProducerPanel extends BasePanel {
     // Combo Entorno
     EnvironmentConfiguration.ENVIRONMENT_LIST.forEach(comboEnvironment::addItem);
     comboEnvironment.addActionListener(e -> {
-      boolean local = ((Environment) comboEnvironment.getSelectedItem()).getName()
+      boolean local = ((Environment) comboEnvironment.getSelectedItem()).getName().toLowerCase()
           .contains("local");
       dangerLabel.setVisible(!local);
     });
