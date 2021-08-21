@@ -6,6 +6,7 @@ import es.jbp.kajtools.tabla.ModeloTablaGenerico;
 import es.jbp.kajtools.tabla.TablaGenerica;
 import java.awt.Dimension;
 import java.awt.Insets;
+import java.util.Locale;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -53,8 +54,8 @@ public class TableSelectorPanel<T> {
   }
 
   private void applyFilter() {
-    String filterText = textFieldFilter.getText();
-    tableModel.filtrarPorPredicado(t -> t.toString().contains(filterText));
+    String filterText = textFieldFilter.getText().toLowerCase();
+    tableModel.filtrarPorPredicado(t -> t.toString().toLowerCase().contains(filterText));
   }
 
   public void bindDialog(JDialog dialog) {
