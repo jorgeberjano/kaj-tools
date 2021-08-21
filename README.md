@@ -52,7 +52,7 @@ Para cada entorno se definen las siguientes propiedades:
 
 ![Kafka](./src/main/resources/images/kafka.png?at=refs%2Fheads%2Fdevelop)
 
-La inyección de menasajes al ecosistema Kafka se realiza desde el panel que muestra la pestaña lateral Producer.
+La inyección de mensajes al ecosistema Kafka se realiza desde el panel que muestra la pestaña lateral Producer.
 
 Para simplificar se usa el término *VALUE* para referirse al valor del mensaje y el término *KEY* para referirse a la clave del mensaje.
 
@@ -70,7 +70,9 @@ Para enviar mensajes, en primer lugar, hay que seleccionar el entorno al que van
 
 Luego hay que seleccionar el productor `GenericProducer`.
 
-A continuación, seleccionar o introducir directamente el nombre del *topic* por el que se desean inyectar los mensajes. Con el productor genérico en el combo se muestran todos los *topics* declarados por los productores específicos. Pero no hay que limitarse a ese conjunto, por el contrario, se puede usar cualquiera escribiendo su nombre directamente en el campo de edición.
+A continuación, seleccionar o introducir directamente el nombre del *topic* por el que se desean inyectar los mensajes. Con el productor genérico en el combo se muestran todos los *topics* declarados por los productores específicos. Pero no hay que limitarse a ese conjunto, por el contrario, se puede usar cualquiera escribiendo su nombre directamente en el campo de edición. También se puede seleccionar con el botón  ![folder](./src/main/resources/images/glasses.png?at=refs%2Fheads%2Fdevelop) de la lista de topic creados en el ecosistema Kafka que corresponda al entorno seleccionado.
+
+
 
 También hay que indicar el KEY y VALUE a enviar. Esto se puede hacer de varias formas:
 
@@ -342,15 +344,23 @@ return jsonKey.includes("El texto a buscar") || jsonValue.includes("El texto a b
 
 
 
+Este otro filtro permite determinar si algún teléfono contiene espacios aplicando una expresión regular:
+
+````
+return /\s/.test(value.telefono);
+````
+
+
+
 ### GenericConsumer
 
-Normalmente las clases de los objetos cliente deben ser declarados dentro del código de la aplicación para que estén disponibles los consumidores específicos, sin embargo hay un objeto consumidor genérico que permite leer mensajes creados a partir de contenido *JSON* sin conocimiento de las clases AVRO. Este consumidor se llama `GenericConsumer`.
+Normalmente las clases de los objetos cliente deben ser declarados dentro del código de la aplicación para que estén disponibles los consumidores específicos, sin embargo hay un objeto consumidor genérico que permite leer mensajes creados a partir de contenido *JSON* sin conocimiento de las clases AVRO. Este consumidor se llama `GenericConsumer`, el cual debe ser seleccionado en el combo de consumidores.
 
-Para enviar mensajes, en primer lugar, hay que seleccionar el entorno al que van dirigidos los mensajes. 
+Antes de consumir mensajes hay que seleccionar el entorno al que van dirigidos los mensajes e indicar el nombre del *topic* del que se van a leer los mensajes de la misma forma que se hace al producir eventos.
 
-Luego hay que seleccionar el productor `GenericProducer`.
+La única diferencia entre usar consumidores específicos y el genérico es que, en los específicos, la KEY y el VALUE se va a deserializar en un objeto AVRO antes de ser mostrado como JSON, de esa manera si la KEY o el VALUE de algún mensaje que se lea del topic no es compatible con el AVRO correspondiente se producirá un error y se mostrará en la pestaña de información.
 
-A continuación, seleccionar o introducir directamente el nombre del *topic* del que se desean leer los mensajes. Seleccionando el consumidor genérico en el combo se muestran todos los *topics* declarados por los consumidores específicos. Pero no hay que limitarse a ese conjunto, por el contrario, se puede usar cualquiera escribiendo su nombre directamente en el campo de edición.
+
 
 
 

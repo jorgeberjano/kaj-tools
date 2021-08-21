@@ -1,4 +1,4 @@
-package es.jbp.kajtools.tabla;
+package es.jbp.kajtools.tabla.entities;
 
 import java.time.LocalDateTime;
 import lombok.Builder;

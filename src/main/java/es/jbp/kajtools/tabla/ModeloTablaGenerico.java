@@ -3,6 +3,8 @@ package es.jbp.kajtools.tabla;
 import es.jbp.kajtools.reflexion.Reflexion;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Modelo genérico para tablas.
@@ -148,6 +150,12 @@ public class ModeloTablaGenerico<T> extends ModeloTablaAbstracto {
         }
         actualizar();
     }
+
+    public void filtrarPorPredicado(Predicate<T> filtro) {
+        listaActual = listaCompleta.stream().filter(filtro).collect(Collectors.toList());
+        actualizar();
+    }
+
 
     public void actualizar() {
         fireTableDataChanged();

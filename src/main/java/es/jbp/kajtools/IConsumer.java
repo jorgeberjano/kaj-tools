@@ -2,7 +2,7 @@ package es.jbp.kajtools;
 
 import es.jbp.kajtools.filter.MessageFilter;
 import es.jbp.kajtools.filter.ScriptMessageFilter;
-import es.jbp.kajtools.tabla.RecordItem;
+import es.jbp.kajtools.tabla.entities.RecordItem;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import java.time.Duration;
 import java.time.Instant;
@@ -26,20 +26,6 @@ public interface IConsumer<K, E> extends KafkaBase {
   List<String> getAvailableTopics();
 
   String getDomain();
-
-  default Map<String, Object> createConsumerProperties(Environment environment) {
-    Map<String, Object> props = KafkaBase.super.createProperties(environment);
-
-    props.put(ConsumerConfig.GROUP_ID_CONFIG, "kaj-tools");
-
-    putNotNull(props, ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class.getName());
-    putNotNull(props, ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class.getName());
-
-    props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
-    props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-
-    return props;
-  }
 
   default List<RecordItem> consumeLastRecords(Environment environment, String topic,
       MessageFilter filter,  long maxRecordsPerPartition) throws KajException {

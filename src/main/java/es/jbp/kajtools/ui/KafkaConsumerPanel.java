@@ -2,6 +2,7 @@ package es.jbp.kajtools.ui;
 
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
 import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.EnvironmentConfiguration;
 import es.jbp.kajtools.IConsumer;
@@ -10,8 +11,9 @@ import es.jbp.kajtools.KajException;
 import es.jbp.kajtools.KajToolsApp;
 import es.jbp.kajtools.filter.MessageFilter;
 import es.jbp.kajtools.tabla.ModeloTablaGenerico;
-import es.jbp.kajtools.tabla.RecordItem;
+import es.jbp.kajtools.tabla.entities.RecordItem;
 import es.jbp.kajtools.tabla.TablaGenerica;
+import es.jbp.kajtools.tabla.entities.TopicItem;
 import es.jbp.kajtools.util.JsonUtils;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -78,12 +80,13 @@ public class KafkaConsumerPanel extends BasePanel {
   private JCheckBox checkFilter;
   private JComboBox comboFilterType;
   private JTextField textFieldFilter;
+  private JButton buttonFindTopic;
 
   private RSyntaxTextArea jsonEditorValue;
   private RSyntaxTextArea jsonEditorKey;
   private RSyntaxTextArea scriptEditorFilter;
 
-  ModeloTablaGenerico<RecordItem> recordTableModel = new ModeloTablaGenerico<>();
+  private ModeloTablaGenerico<RecordItem> recordTableModel = new ModeloTablaGenerico<>();
   private Future<List<RecordItem>> futureRecords;
 
   public KafkaConsumerPanel() {
@@ -113,10 +116,20 @@ public class KafkaConsumerPanel extends BasePanel {
     ListSelectionModel selectionModel = recordTable.getSelectionModel();
     selectionModel.addListSelectionListener(this::recordSelected);
 
+    buttonFindTopic.addActionListener(e -> findTopic());
+
     cleanButton.addActionListener(e -> cleanEditor());
     copyButton.addActionListener(e -> copyToClipboard());
 
     enableTextSearch(searchTextField, jsonEditorValue, jsonEditorKey);
+  }
+
+  private void findTopic() {
+    Environment environment = (Environment) comboEnvironment.getSelectedItem();
+    TopicItem topicItem = selectTopic(environment);
+    if (topicItem != null) {
+      comboTopic.getEditor().setItem(topicItem.getName());
+    }
   }
 
   private void recordSelected(ListSelectionEvent e) {
@@ -224,14 +237,14 @@ public class KafkaConsumerPanel extends BasePanel {
   private void $$$setupUI$$$() {
     createUIComponents();
     contentPane = new JPanel();
-    contentPane.setLayout(new GridLayoutManager(4, 2, new Insets(0, 0, 0, 0), -1, -1));
+    contentPane.setLayout(new GridLayoutManager(4, 1, new Insets(10, 10, 10, 10), -1, -1));
     contentPane.setBorder(BorderFactory
         .createTitledBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), null, TitledBorder.DEFAULT_JUSTIFICATION,
             TitledBorder.DEFAULT_POSITION, null, null));
     final JPanel panel1 = new JPanel();
-    panel1.setLayout(new GridLayoutManager(4, 2, new Insets(0, 0, 0, 0), -1, -1));
+    panel1.setLayout(new GridLayoutManager(4, 3, new Insets(0, 0, 0, 0), -1, -1));
     contentPane.add(panel1,
-        new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+        new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
             GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     comboTopic = new JComboBox();
@@ -274,9 +287,21 @@ public class KafkaConsumerPanel extends BasePanel {
     panel1.add(comboDomain,
         new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
             GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+    buttonFindTopic = new JButton();
+    Font buttonFindTopicFont = this.$$$getFont$$$(null, -1, -1, buttonFindTopic.getFont());
+    if (buttonFindTopicFont != null) {
+      buttonFindTopic.setFont(buttonFindTopicFont);
+    }
+    buttonFindTopic.setIcon(new ImageIcon(getClass().getResource("/images/glasses.png")));
+    buttonFindTopic.setText("");
+    buttonFindTopic.setToolTipText("Buscar en todos los topics");
+    panel1.add(buttonFindTopic,
+        new GridConstraints(3, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+            GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, new Dimension(24, 24),
+            new Dimension(24, 24), new Dimension(24, 24), 0, false));
     final JPanel panel2 = new JPanel();
     panel2.setLayout(new BorderLayout(0, 0));
-    contentPane.add(panel2, new GridConstraints(3, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+    contentPane.add(panel2, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
         null, null, null, 0, false));
     final JLabel label5 = new JLabel();
@@ -290,7 +315,7 @@ public class KafkaConsumerPanel extends BasePanel {
     splitPane1.setDividerLocation(120);
     splitPane1.setOrientation(0);
     contentPane.add(splitPane1,
-        new GridConstraints(2, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+        new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(200, 200),
             null, 0, false));
@@ -317,6 +342,10 @@ public class KafkaConsumerPanel extends BasePanel {
     infoTextPane.setForeground(new Color(-1));
     infoTextPane.putClientProperty("charset", "");
     scrollPane2.setViewportView(infoTextPane);
+    tabFilter = new JPanel();
+    tabFilter.setLayout(new BorderLayout(0, 0));
+    tabbedPane.addTab("Filtro", tabFilter);
+    tabFilter.add(filterScrollPane, BorderLayout.CENTER);
     tabKey = new JPanel();
     tabKey.setLayout(new BorderLayout(0, 0));
     tabbedPane.addTab("Key", tabKey);
@@ -326,16 +355,61 @@ public class KafkaConsumerPanel extends BasePanel {
     tabbedPane.addTab("Value", tabValue);
     tabValue.add(valueScrollPane, BorderLayout.CENTER);
     final JPanel panel3 = new JPanel();
-    panel3.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+    panel3.setLayout(new GridLayoutManager(1, 9, new Insets(0, 0, 0, 0), -1, -1));
     contentPane.add(panel3,
         new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, 1, null, null, null, 0,
             false));
     consumeButtom = new JButton();
     consumeButtom.setText("Consumir");
-    panel3.add(consumeButtom, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+    panel3.add(consumeButtom, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+    fieldRewindRecords = new JTextField();
+    fieldRewindRecords.setText("50");
+    panel3.add(fieldRewindRecords,
+        new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+            GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(40, -1), null, 0,
+            false));
+    final JLabel label6 = new JLabel();
+    label6.setText("Rebobinar:");
+    label6.setToolTipText("Número registros por partición a rebobinar");
+    panel3.add(label6, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+        GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+    cleanButton = new JButton();
+    cleanButton.setIcon(new ImageIcon(getClass().getResource("/images/rubber.png")));
+    cleanButton.setText("");
+    cleanButton.setToolTipText("Limpiar");
+    panel3.add(cleanButton, new GridConstraints(0, 7, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+        GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+    copyButton = new JButton();
+    copyButton.setIcon(new ImageIcon(getClass().getResource("/images/copy.png")));
+    copyButton.setText("");
+    copyButton.setToolTipText("Copiar al portapapeles");
+    panel3.add(copyButton, new GridConstraints(0, 8, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
+        null, null, null, 0, false));
+    final Spacer spacer1 = new Spacer();
+    panel3.add(spacer1, new GridConstraints(0, 6, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+        GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+    final Spacer spacer2 = new Spacer();
+    panel3.add(spacer2, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+        GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+    comboFilterType = new JComboBox();
+    final DefaultComboBoxModel defaultComboBoxModel4 = new DefaultComboBoxModel();
+    defaultComboBoxModel4.addElement("Sin filtro");
+    defaultComboBoxModel4.addElement("Contiene texto");
+    defaultComboBoxModel4.addElement("Filtro JavaScript");
+    comboFilterType.setModel(defaultComboBoxModel4);
+    panel3.add(comboFilterType,
+        new GridConstraints(0, 4, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+            GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(80, -1), null, 0,
+            false));
+    textFieldFilter = new JTextField();
+    panel3.add(textFieldFilter,
+        new GridConstraints(0, 5, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+            GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null,
+            0, false));
   }
 
   /**

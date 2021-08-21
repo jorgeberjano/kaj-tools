@@ -4,11 +4,16 @@ import static org.fife.ui.rsyntaxtextarea.TokenTypes.LITERAL_STRING_DOUBLE_QUOTE
 import static org.fife.ui.rsyntaxtextarea.TokenTypes.SEPARATOR;
 import static org.fife.ui.rsyntaxtextarea.TokenTypes.VARIABLE;
 
+import es.jbp.kajtools.Environment;
+import es.jbp.kajtools.KafkaInvestigator;
 import es.jbp.kajtools.KajException;
+import es.jbp.kajtools.tabla.ModeloTablaGenerico;
+import es.jbp.kajtools.tabla.entities.TopicItem;
 import es.jbp.kajtools.ui.InfoMessage.Type;
 import es.jbp.kajtools.KajToolsApp;
 import es.jbp.kajtools.util.JsonUtils;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -23,6 +28,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Future;
+import javax.swing.JDialog;
+import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.SwingWorker;
@@ -328,4 +335,32 @@ public abstract class BasePanel {
     result.forEach(p -> enqueueText(p.getLeft(), p.getRight()));
     enqueueInfo("");
   }
+
+  protected TopicItem selectTopic(Environment environment) {
+
+    KafkaInvestigator kafkaInvestigator = new KafkaInvestigator();
+    List<TopicItem> topics = kafkaInvestigator.getTopics(environment);
+
+    ModeloTablaGenerico<TopicItem> tableModel = new ModeloTablaGenerico<>();
+    tableModel.agregarColumna("name", "Topic", 200);
+    tableModel.agregarColumna("partitions", "Particiones", 20);
+    tableModel.setListaObjetos(topics);
+    TableSelectorPanel<TopicItem> tableSelectorPanel = new TableSelectorPanel<>(tableModel);
+
+    JPanel panel = tableSelectorPanel.getContentPane();
+    panel.setBounds(0, 0, 400, 450);
+    JDialog dialog = new JDialog();
+    dialog.setTitle("Topics");
+    dialog.setSize(800, 450);
+    dialog.setLocationRelativeTo(getContentPane());
+    dialog.setContentPane(panel);
+    tableSelectorPanel.bindDialog(dialog);
+    dialog.setModal(true);
+    dialog.setVisible(true);
+
+    return tableSelectorPanel.getSelectedItem();
+  }
+
+  protected abstract Component getContentPane();
+
 }

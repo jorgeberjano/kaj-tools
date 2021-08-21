@@ -36,19 +36,4 @@ public interface IProducer extends KafkaBase {
 
   String getDomain();
 
-  default Map<String, Object> createProducerProperties(Environment environment) {
-    Map<String, Object> props = KafkaBase.super.createProperties(environment);
-
-    putNotNull(props, ProducerConfig.ACKS_CONFIG, "all");
-    putNotNull(props, ProducerConfig.RETRIES_CONFIG, 0);
-    putNotNull(props, ProducerConfig.BATCH_SIZE_CONFIG, 16384);
-    putNotNull(props, ProducerConfig.LINGER_MS_CONFIG, 0);
-    putNotNull(props, ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432);
-
-    putNotNull(props, ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
-    putNotNull(props, ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
-
-    return props;
-  }
-
 }
