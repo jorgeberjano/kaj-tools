@@ -120,7 +120,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
       dangerLabel.setVisible(!local);
     });
 
-    buttonCheckEnvironment.addActionListener(e -> retrieveTopics());
+    buttonCheckEnvironment.addActionListener(e -> asyncRetrieveTopics());
 
     // Combo Dominio
     final List<IProducer> producerList = KajToolsApp.getInstance().getProducerList();

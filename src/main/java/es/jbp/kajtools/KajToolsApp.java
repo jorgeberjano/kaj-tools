@@ -14,6 +14,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.UIManager;
 import lombok.Getter;
+import org.apache.avro.generic.GenericRecord;
 import org.fife.ui.rsyntaxtextarea.Theme;
 
 public class KajToolsApp {
@@ -23,14 +24,14 @@ public class KajToolsApp {
     @Getter
     private final List<IProducer> producerList;
     @Getter
-    private final List<IConsumer<?, ?>> consumerList;
+    private final List<IConsumer<? extends GenericRecord, ? extends GenericRecord>> consumerList;
     @Getter
     private final SchemaRegistryService schemaRegistryService;
     @Getter
     private Theme theme;
 
     public KajToolsApp(List<IProducer> producerList,
-        List<IConsumer<?, ?>> consumerList,
+        List<IConsumer<? extends GenericRecord, ? extends GenericRecord>> consumerList,
         SchemaRegistryService schemaRegistryService) {
         this.instance  = this;
         this.producerList = producerList;

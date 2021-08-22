@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.http.HttpEntity;
@@ -111,5 +113,22 @@ public class SchemaRegistryService {
           environment.getPasswordSchemaRegistry());
     }
     return headers;
+  }
+
+  @Data
+  @AllArgsConstructor
+  private static class PostSchemaBody {
+    private String schema;
+  }
+
+  public void writeSubjectSchema(String subjectName, Environment environment, String jsonSchema) {
+    RestTemplate restTemplate = new RestTemplate();
+    StringBuilder urlBuilder = new StringBuilder(environment.getUrlSchemaRegistry());
+    urlBuilder.append(SUBJECT_PATH);
+    urlBuilder.append(subjectName);
+    urlBuilder.append("/versions");
+
+    HttpEntity request = new HttpEntity<PostSchemaBody>(new PostSchemaBody(jsonSchema), createHeaders(environment));
+    restTemplate.exchange(urlBuilder.toString(), HttpMethod.POST, request, String.class);
   }
 }

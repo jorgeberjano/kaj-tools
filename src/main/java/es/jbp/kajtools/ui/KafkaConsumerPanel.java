@@ -10,9 +10,10 @@ import es.jbp.kajtools.IProducer;
 import es.jbp.kajtools.KajException;
 import es.jbp.kajtools.KajToolsApp;
 import es.jbp.kajtools.filter.MessageFilter;
+import es.jbp.kajtools.filter.ScriptMessageFilter;
 import es.jbp.kajtools.tabla.ModeloTablaGenerico;
-import es.jbp.kajtools.tabla.entities.RecordItem;
 import es.jbp.kajtools.tabla.TablaGenerica;
+import es.jbp.kajtools.tabla.entities.RecordItem;
 import es.jbp.kajtools.tabla.entities.TopicItem;
 import es.jbp.kajtools.util.JsonUtils;
 import java.awt.BorderLayout;
@@ -48,6 +49,7 @@ import javax.swing.plaf.FontUIResource;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.StyleContext;
 import lombok.Getter;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
@@ -97,7 +99,7 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     // Combo Entorno
     EnvironmentConfiguration.ENVIRONMENT_LIST.forEach(comboEnvironment::addItem);
 
-    buttonCheckEnvironment.addActionListener(e -> retrieveTopics());
+    buttonCheckEnvironment.addActionListener(e -> asyncRetrieveTopics());
 
     // Combo Dominio
     final List<IProducer> producerList = KajToolsApp.getInstance().getProducerList();
@@ -153,7 +155,8 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
 
   private void updateTopics() {
     comboTopic.removeAllItems();
-    IConsumer<?, ?> consumer = (IConsumer<?, ?>) comboConsumer.getSelectedItem();
+    IConsumer<? extends GenericRecord, ? extends GenericRecord> consumer =
+        (IConsumer<? extends GenericRecord, ? extends GenericRecord>) comboConsumer.getSelectedItem();
     if (consumer == null) {
       return;
     }
@@ -164,7 +167,8 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
   private void updateConsumers() {
     comboConsumer.removeAllItems();
     String domain = Objects.toString(comboDomain.getSelectedItem());
-    final List<IConsumer<?, ?>> consumerList = KajToolsApp.getInstance().getConsumerList();
+    final List<IConsumer<? extends GenericRecord, ? extends GenericRecord>> consumerList = KajToolsApp.getInstance()
+        .getConsumerList();
     consumerList.stream()
         .filter(c -> StringUtils.isBlank(domain) || domain.equals(c.getDomain()))
         .forEach(comboConsumer::addItem);
@@ -184,14 +188,15 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     String textFilter = textFieldFilter.getText().trim();
     String script = scriptEditorFilter.getText().trim();
 
-    IConsumer<?, ?> consumer = (IConsumer<?, ?>) consumerSelectedItem;
+    IConsumer<? extends GenericRecord, ? extends GenericRecord> consumer =
+        (IConsumer<? extends GenericRecord, ? extends GenericRecord>) consumerSelectedItem;
     MessageFilter filter;
 
     if (filterType == 1 && StringUtils.isNotBlank(textFilter)) {
       filter = (k, v) -> k.contains(textFilter) || v.contains(textFilter);
     } else if (filterType == 2 && StringUtils.isNotBlank(script)) {
       try {
-        filter = consumer.createScriptFilter(script);
+        filter = new ScriptMessageFilter(script);
       } catch (KajException ex) {
         printException(ex);
         return;
@@ -207,8 +212,9 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
         this::recordsReceived);
   }
 
-  private List<RecordItem> requestRecords(Environment environment, String topic, IConsumer<?, ?> consumer,
-      MessageFilter filter, long maxRecordsPerPartition) {
+  private List<RecordItem> requestRecords(Environment environment, String topic,
+      IConsumer<? extends GenericRecord, ? extends GenericRecord> consumer, MessageFilter filter,
+      long maxRecordsPerPartition) {
 
     try {
       List<RecordItem> records = consumer.consumeLastRecords(environment, topic, filter, maxRecordsPerPartition);

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import lombok.Getter;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -18,7 +19,7 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
-public abstract class AbstractClient<K, V> implements IProducer, IConsumer<K, V> {
+public abstract class AbstractClient<K extends GenericRecord, V extends GenericRecord> implements IProducer, IConsumer<K, V> {
 
   private final Class<K> keyType;
   private final Class<V> valueType;
@@ -94,6 +95,7 @@ public abstract class AbstractClient<K, V> implements IProducer, IConsumer<K, V>
     } catch (Exception e) {
       throw new KajException(e.getMessage());
     }
+    // TODO: hacer algo con los metadatos
     System.out.println(recordMetadata);
   }
 
