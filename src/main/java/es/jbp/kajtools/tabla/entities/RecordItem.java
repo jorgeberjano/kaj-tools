@@ -12,4 +12,6 @@ public class RecordItem {
   private LocalDateTime dateTime;
   private String key;
   private String value;
+  private String keyError;
+  private String valueError;
 }

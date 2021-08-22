@@ -10,6 +10,7 @@ import es.jbp.kajtools.util.ResourceUtil;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -24,7 +25,6 @@ import java.util.TimeZone;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import lombok.Getter;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -139,7 +139,7 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
 
   protected K buildKeyFromJson(String keyJson) throws KajException {
     try {
-      return JsonUtils.stubFromJson(keyJson, keyType);
+      return JsonUtils.createFromJson(keyJson, keyType);
     } catch (Exception ex) {
       throw new KajException("No se puede generar el Key desde el JSON. Causa: " + ex.getMessage());
     }
@@ -157,7 +157,7 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
 
   private V buildValueFromJson(String valueJson) throws KajException {
     try {
-      return JsonUtils.stubFromJson(valueJson, valueType);
+      return JsonUtils.createFromJson(valueJson, valueType);
     } catch (Exception ex) {
       throw new KajException("No se puede generar el Value desde el JSON. Causa: " + ex.getMessage());
     }
@@ -305,8 +305,21 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
   }
 
   private RecordItem createRecordItem(ConsumerRecord<K, V> rec) {
+
     String jsonKey = String.valueOf(rec.key());
     String jsonValue = String.valueOf(rec.value());
+
+    String keyError = null, valueError = null;
+    try {
+      K key = JsonUtils.createFromJson(jsonKey, keyType);
+    } catch (IOException e) {
+      keyError = e.getMessage();
+    }
+    try {
+      V value = JsonUtils.createFromJson(jsonValue, valueType);
+    } catch (IOException e) {
+      valueError = e.getMessage();
+    }
 
     LocalDateTime dateTime =
         LocalDateTime.ofInstant(Instant.ofEpochMilli(rec.timestamp()),
@@ -317,8 +330,9 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
         .offset(rec.offset())
         .dateTime(dateTime)
         .key(jsonKey)
-        .value(jsonValue).build();
+        .keyError(keyError)
+        .value(jsonValue)
+        .valueError(valueError)
+        .build();
   }
-
-
 }

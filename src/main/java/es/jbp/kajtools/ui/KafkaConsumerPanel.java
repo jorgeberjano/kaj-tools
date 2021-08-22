@@ -10,6 +10,7 @@ import es.jbp.kajtools.KajException;
 import es.jbp.kajtools.KajToolsApp;
 import es.jbp.kajtools.filter.MessageFilter;
 import es.jbp.kajtools.filter.ScriptMessageFilter;
+import es.jbp.kajtools.tabla.ColoreadorFila;
 import es.jbp.kajtools.tabla.ModeloTablaGenerico;
 import es.jbp.kajtools.tabla.TablaGenerica;
 import es.jbp.kajtools.tabla.entities.RecordItem;
@@ -233,6 +234,24 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     }
     if (records != null) {
       recordTableModel.setListaObjetos(records);
+    }
+
+    records.forEach(this::printRecordErrors);
+
+  }
+
+  private void printRecordErrors(RecordItem recordItem) {
+    if (recordItem.getKeyError() != null) {
+      printError(
+          "Error en el Key del mensaje de la partición " + recordItem.getPartition() + " con offset " + recordItem
+              .getOffset());
+      printInfo(recordItem.getKeyError());
+    }
+    if (recordItem.getValueError() != null) {
+      printError(
+          "Error en el Value del mensaje de la partición " + recordItem.getPartition() + " con offset " + recordItem
+              .getOffset());
+      printInfo(recordItem.getValueError());
     }
   }
 
@@ -482,6 +501,25 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     recordTableModel.agregarColumna("key", "Key", 200);
     recordTableModel.agregarColumna("value", "Value", 200);
     tablaGenerica.setModel(recordTableModel);
+    tablaGenerica.setColoreador(new ColoreadorFila<RecordItem>() {
+      @Override
+      public Color determinarColorTexto(RecordItem entidad) {
+        if (entidad.getKeyError() != null || entidad.getValueError() != null) {
+          return Color.white;
+        } else {
+          return null;
+        }
+      }
+
+      @Override
+      public Color determinarColorFondo(RecordItem entidad) {
+        if (entidad.getKeyError() != null || entidad.getValueError() != null) {
+          return Color.red.darker();
+        } else {
+          return null;
+        }
+      }
+    });
     recordTable = tablaGenerica;
   }
 
