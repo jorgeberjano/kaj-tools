@@ -6,7 +6,7 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.EnvironmentConfiguration;
-import es.jbp.kajtools.IProducer;
+import es.jbp.kajtools.IMessageClient;
 import es.jbp.kajtools.ui.InfoMessage.Type;
 import es.jbp.kajtools.KajToolsApp;
 import es.jbp.kajtools.util.JsonUtils;
@@ -18,8 +18,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.Point;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -46,8 +44,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.StyleContext;
@@ -113,8 +109,8 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     });
 
     // Combo Dominio
-    final List<IProducer> producerList = KajToolsApp.getInstance().getProducerList();
-    producerList.stream().map(IProducer::getDomain).distinct().forEach(comboDomain::addItem);
+    final List<IMessageClient> clientList = KajToolsApp.getInstance().getClientList();
+    clientList.stream().map(IMessageClient::getDomain).distinct().forEach(comboDomain::addItem);
     comboDomain.addActionListener(e -> updateSchemaSubjects());
 
     // Lista de subjects
@@ -190,10 +186,10 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     currentVersion = null;
 
     String domain = Objects.toString(comboDomain.getSelectedItem());
-    final List<IProducer> producerList = KajToolsApp.getInstance().getProducerList();
-    producerList.stream()
+    final List<IMessageClient> clientList = KajToolsApp.getInstance().getClientList();
+    clientList.stream()
         .filter(p -> StringUtils.isBlank(domain) || domain.equals(p.getDomain()))
-        .map(IProducer::getAvailableTopics)
+        .map(IMessageClient::getAvailableTopics)
         .flatMap(List::stream)
         .map(s -> Lists.newArrayList(s + "-key", s + "-value"))
         .flatMap(List::stream)

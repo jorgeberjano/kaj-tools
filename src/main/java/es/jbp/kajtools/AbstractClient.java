@@ -2,23 +2,41 @@ package es.jbp.kajtools;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Lists;
+import es.jbp.kajtools.filter.MessageFilter;
+import es.jbp.kajtools.tabla.entities.RecordItem;
 import es.jbp.kajtools.util.AvroUtils;
 import es.jbp.kajtools.util.JsonUtils;
 import es.jbp.kajtools.util.ResourceUtil;
+import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
+import io.confluent.kafka.serializers.KafkaAvroDeserializer;
+import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.TimeZone;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.TopicPartition;
 
-public abstract class AbstractClient<K, V> implements IProducer, IConsumer<K, V> {
+public abstract class AbstractClient<K, V> implements IMessageClient {
 
   private final Class<K> keyType;
   private final Class<V> valueType;
@@ -188,6 +206,116 @@ public abstract class AbstractClient<K, V> implements IProducer, IConsumer<K, V>
     return new KafkaConsumer<>(createConsumerProperties(environment));
   }
 
+  public static Map<String, Object> createProducerProperties(Environment environment) {
+    Map<String, Object> props = createCommonProperties(environment);
+
+    putNotNull(props, ProducerConfig.ACKS_CONFIG, "all");
+    putNotNull(props, ProducerConfig.RETRIES_CONFIG, 0);
+    putNotNull(props, ProducerConfig.BATCH_SIZE_CONFIG, 16384);
+    putNotNull(props, ProducerConfig.LINGER_MS_CONFIG, 0);
+    putNotNull(props, ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432);
+
+    putNotNull(props, ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
+    putNotNull(props, ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
+
+    return props;
+  }
+
+  public static Map<String, Object> createConsumerProperties(Environment environment) {
+    Map<String, Object> props = createCommonProperties(environment);
+
+    props.put(ConsumerConfig.GROUP_ID_CONFIG, "kaj-tools");
+
+    putNotNull(props, ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class.getName());
+    putNotNull(props, ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class.getName());
+
+    props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+    props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+
+    return props;
+  }
+
+  public static Map<String, Object> createCommonProperties(Environment environment) {
+    Map<String, Object> props = new HashMap<>();
+
+    putNotNull(props, ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, environment.getBootstrapServers());
+
+    putNotNull(props, AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
+        environment.getUrlSchemaRegistry());
+    putNotNull(props, AbstractKafkaSchemaSerDeConfig.AUTO_REGISTER_SCHEMAS,
+        environment.isAutoRegisterSchemas());
+
+    if (!Objects.isNull(environment.getUserSchemaRegistry())) {
+      putNotNull(props, AbstractKafkaSchemaSerDeConfig.BASIC_AUTH_CREDENTIALS_SOURCE, "USER_INFO");
+      putNotNull(props, AbstractKafkaSchemaSerDeConfig.USER_INFO_CONFIG,
+          environment.getUserSchemaRegistry() + ":" + environment.getPasswordSchemaRegistry());
+    }
+    putNotNull(props, "security.protocol", environment.getSecurityProtocol());
+    putNotNull(props, "sasl.mechanism", environment.getSaslMechanism());
+    putNotNull(props, "sasl.jaas.config", environment.getSaslJaasConfig());
+    putNotNull(props, "ssl.truststore.password", environment.getSslTruststorePassword());
+    putNotNull(props, "ssl.truststore.location", ResourceUtil.getResourcePath(environment.getSslTruststoreLocation()));
+
+    return props;
+  }
+
+  private static void putNotNull(Map<String, Object> props, String key, Object value) {
+    if (value != null) {
+      props.put(key, value);
+    }
+  }
+
+  public List<RecordItem> consumeLastRecords(Environment environment, String topic,
+      MessageFilter filter,  long maxRecordsPerPartition) throws KajException {
+    try (KafkaConsumer<K, V> consumer = new KafkaConsumer<>(createConsumerProperties(environment))) {
+      consumer.subscribe(Collections.singletonList(topic));
+
+      consumer.poll(Duration.ofSeconds(5));
+
+      List<RecordItem> latestRecords = new ArrayList<>();
+
+      Map<TopicPartition, Long> offsets = consumer.endOffsets(consumer.assignment());
+
+      for (Map.Entry<TopicPartition, Long> offsetEntry : offsets.entrySet()) {
+        TopicPartition topicPartition = offsetEntry.getKey();
+        Long offset = offsetEntry.getValue();
+        final long newOffset = offset - maxRecordsPerPartition;
+        consumer.seek(topicPartition, newOffset < 0 ? 0 : newOffset);
+
+        ConsumerRecords<K, V> records;
+        do {
+          records = consumer.poll(Duration.ofSeconds(1));
+          for (ConsumerRecord<K, V> r : records) {
+            if (filter.satisfyCondition(Objects.toString(r.key()), Objects.toString(r.value()))) {
+              latestRecords.add(createRecordItem(r));
+            }
+          }
+        } while (!records.isEmpty());
+      }
+
+      return latestRecords;
+    } catch (KajException ex) {
+      throw ex;
+    } catch (Exception ex) {
+      throw new KajException("Error al consumir mensajes", ex);
+    }
+  }
+
+  private RecordItem createRecordItem(ConsumerRecord<K, V> rec) {
+    String jsonKey = String.valueOf(rec.key());
+    String jsonValue = String.valueOf(rec.value());
+
+    LocalDateTime dateTime =
+        LocalDateTime.ofInstant(Instant.ofEpochMilli(rec.timestamp()),
+            TimeZone.getDefault().toZoneId());
+
+    return RecordItem.builder()
+        .partition(rec.partition())
+        .offset(rec.offset())
+        .dateTime(dateTime)
+        .key(jsonKey)
+        .value(jsonValue).build();
+  }
 
 
 }

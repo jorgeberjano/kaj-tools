@@ -5,11 +5,11 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.EnvironmentConfiguration;
-import es.jbp.kajtools.IConsumer;
-import es.jbp.kajtools.IProducer;
+import es.jbp.kajtools.IMessageClient;
 import es.jbp.kajtools.KajException;
 import es.jbp.kajtools.KajToolsApp;
 import es.jbp.kajtools.filter.MessageFilter;
+import es.jbp.kajtools.filter.ScriptMessageFilter;
 import es.jbp.kajtools.tabla.ModeloTablaGenerico;
 import es.jbp.kajtools.tabla.entities.RecordItem;
 import es.jbp.kajtools.tabla.TablaGenerica;
@@ -100,8 +100,8 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     buttonCheckEnvironment.addActionListener(e -> retrieveTopics());
 
     // Combo Dominio
-    final List<IProducer> producerList = KajToolsApp.getInstance().getProducerList();
-    producerList.stream().map(IProducer::getDomain).distinct().forEach(comboDomain::addItem);
+    final List<IMessageClient> clientList = KajToolsApp.getInstance().getClientList();
+    clientList.stream().map(IMessageClient::getDomain).distinct().forEach(comboDomain::addItem);
     comboDomain.addActionListener(e -> updateConsumers());
     updateConsumers();
 
@@ -153,18 +153,18 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
 
   private void updateTopics() {
     comboTopic.removeAllItems();
-    IConsumer<?, ?> consumer = (IConsumer<?, ?>) comboConsumer.getSelectedItem();
-    if (consumer == null) {
+    IMessageClient client = (IMessageClient) comboConsumer.getSelectedItem();
+    if (client == null) {
       return;
     }
-    consumer.getAvailableTopics().forEach(comboTopic::addItem);
-    comboTopic.setSelectedItem(consumer.getDefaultTopic());
+    client.getAvailableTopics().forEach(comboTopic::addItem);
+    comboTopic.setSelectedItem(client.getDefaultTopic());
   }
 
   private void updateConsumers() {
     comboConsumer.removeAllItems();
     String domain = Objects.toString(comboDomain.getSelectedItem());
-    final List<IConsumer<?, ?>> consumerList = KajToolsApp.getInstance().getConsumerList();
+    final List<IMessageClient> consumerList = KajToolsApp.getInstance().getClientList();
     consumerList.stream()
         .filter(c -> StringUtils.isBlank(domain) || domain.equals(c.getDomain()))
         .forEach(comboConsumer::addItem);
@@ -179,19 +179,21 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
       printError("Se debe seleccionar un consumidor antes de consumir mensajes");
       return;
     }
+    IMessageClient client = (IMessageClient) consumerSelectedItem;
+
     long maxRecordsPerPartition = NumberUtils.toLong(fieldRewindRecords.getText(), 50);
     int filterType = comboFilterType.getSelectedIndex();
     String textFilter = textFieldFilter.getText().trim();
     String script = scriptEditorFilter.getText().trim();
 
-    IConsumer<?, ?> consumer = (IConsumer<?, ?>) consumerSelectedItem;
+
     MessageFilter filter;
 
     if (filterType == 1 && StringUtils.isNotBlank(textFilter)) {
       filter = (k, v) -> k.contains(textFilter) || v.contains(textFilter);
     } else if (filterType == 2 && StringUtils.isNotBlank(script)) {
       try {
-        filter = consumer.createScriptFilter(script);
+        filter = new ScriptMessageFilter(script);
       } catch (KajException ex) {
         printException(ex);
         return;
@@ -203,15 +205,15 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     printAction("Consumiendo mensajes del topic " + topic);
 
     futureRecords = this.<List<RecordItem>>executeAsyncTask(
-        () -> requestRecords(getEnvironment(), topic, consumer, filter, maxRecordsPerPartition),
+        () -> requestRecords(getEnvironment(), topic, client, filter, maxRecordsPerPartition),
         this::recordsReceived);
   }
 
-  private List<RecordItem> requestRecords(Environment environment, String topic, IConsumer<?, ?> consumer,
+  private List<RecordItem> requestRecords(Environment environment, String topic, IMessageClient client,
       MessageFilter filter, long maxRecordsPerPartition) {
 
     try {
-      List<RecordItem> records = consumer.consumeLastRecords(environment, topic, filter, maxRecordsPerPartition);
+      List<RecordItem> records = client.consumeLastRecords(environment, topic, filter, maxRecordsPerPartition);
       enqueueSuccessful("Consumidos " + records.size() + " mensajes");
       return records;
     } catch (KajException ex) {
