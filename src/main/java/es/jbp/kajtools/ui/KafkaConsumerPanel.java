@@ -11,8 +11,8 @@ import es.jbp.kajtools.KajToolsApp;
 import es.jbp.kajtools.filter.MessageFilter;
 import es.jbp.kajtools.filter.ScriptMessageFilter;
 import es.jbp.kajtools.tabla.ModeloTablaGenerico;
-import es.jbp.kajtools.tabla.entities.RecordItem;
 import es.jbp.kajtools.tabla.TablaGenerica;
+import es.jbp.kajtools.tabla.entities.RecordItem;
 import es.jbp.kajtools.tabla.entities.TopicItem;
 import es.jbp.kajtools.util.JsonUtils;
 import java.awt.BorderLayout;
@@ -48,6 +48,7 @@ import javax.swing.plaf.FontUIResource;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.StyleContext;
 import lombok.Getter;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
@@ -97,7 +98,7 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     // Combo Entorno
     EnvironmentConfiguration.ENVIRONMENT_LIST.forEach(comboEnvironment::addItem);
 
-    buttonCheckEnvironment.addActionListener(e -> retrieveTopics());
+    buttonCheckEnvironment.addActionListener(e -> asyncRetrieveTopics());
 
     // Combo Dominio
     final List<IMessageClient> clientList = KajToolsApp.getInstance().getClientList();
@@ -186,7 +187,6 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     String textFilter = textFieldFilter.getText().trim();
     String script = scriptEditorFilter.getText().trim();
 
-
     MessageFilter filter;
 
     if (filterType == 1 && StringUtils.isNotBlank(textFilter)) {
@@ -209,9 +209,9 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
         this::recordsReceived);
   }
 
+
   private List<RecordItem> requestRecords(Environment environment, String topic, IMessageClient client,
       MessageFilter filter, long maxRecordsPerPartition) {
-
     try {
       List<RecordItem> records = client.consumeLastRecords(environment, topic, filter, maxRecordsPerPartition);
       enqueueSuccessful("Consumidos " + records.size() + " mensajes");

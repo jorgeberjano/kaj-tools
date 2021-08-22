@@ -14,6 +14,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.UIManager;
 import lombok.Getter;
+import org.apache.avro.generic.GenericRecord;
 import org.fife.ui.rsyntaxtextarea.Theme;
 
 public class KajToolsApp {
@@ -21,6 +22,7 @@ public class KajToolsApp {
     @Getter
     private static KajToolsApp instance;
     @Getter
+
     private final List<IMessageClient> clientList;
     @Getter
     private final SchemaRegistryService schemaRegistryService;

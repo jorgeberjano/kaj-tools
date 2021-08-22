@@ -71,6 +71,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   private JPanel contentPane;
   private JButton getSchemasButton;
   private JLabel dangerLabel;
+  private JButton writeSchemaButton;
   private RSyntaxTextArea schemaEditor;
   private JPopupMenu versionsPopupMenu;
 
@@ -147,6 +148,8 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
 
     // Botón Obtener esquemas
     getSchemasButton.addActionListener(e -> asyncRequestVersions());
+
+    writeSchemaButton.addActionListener(e -> asyncWriteSchema());
 
     enableTextSearch(searchTextField, schemaEditor);
   }
@@ -333,27 +336,25 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   }
 
   // Borrado de esquemas
-
   private void asyncDeleteSelectedSchemaVersion() {
 
-    Object selectedVersion = versionsList.getSelectedValue();
-    if (selectedVersion == null) {
+    String version =  Objects.toString(versionsList.getSelectedValue());
+    if (StringUtils.isBlank(version)) {
       return;
     }
 
     Environment environment = getEnvironment();
-    String schemaSubject = comboSchemaSubject.getSelectedItem().toString();
-    String version = selectedVersion.toString();
+    String schemaSubject = Objects.toString(comboSchemaSubject.getSelectedItem());
 
     int response = JOptionPane.showConfirmDialog(contentPane,
-        "!CUIDADO! Se va a borrar el esquema de " + schemaSubject + "\n" +
+        "!CUIDADO! Se va a borrar la versión " + version + " del esquema de " + schemaSubject + "\n" +
             "¿Esta seguro de lo que lo quiere borrar?",
         "Atención", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
     if (response != JOptionPane.YES_OPTION) {
       return;
     }
 
-    printAction("Borrando la versión " + selectedVersion);
+    printAction("Borrando la versión " + version + " de " + schemaSubject);
     executeAsyncTask(() -> deleteSelectedSchemaVersion(environment, schemaSubject, version),
         this::updateVersionList);
   }
@@ -366,6 +367,47 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
 
     enqueueSuccessful("Se ha borrado correctamente la versión " + version);
     versions.remove(version);
+    return null;
+  }
+
+  // Escritura de esquemas
+  private void asyncWriteSchema() {
+
+    Environment environment = getEnvironment();
+    String schemaSubject = comboSchemaSubject.getSelectedItem().toString();
+    if (StringUtils.isBlank(schemaSubject)) {
+      JOptionPane.showMessageDialog(contentPane, "No ha especificado ningún sujeto", "Atención",
+          JOptionPane.ERROR_MESSAGE);
+      return;
+    }
+
+    String jsonSchema = schemaEditor.getText();
+    if (StringUtils.isBlank(jsonSchema)) {
+      JOptionPane.showMessageDialog(contentPane, "No ha especificado ningún esquema", "Atención",
+          JOptionPane.ERROR_MESSAGE);
+      return;
+    }
+
+    int response = JOptionPane.showConfirmDialog(contentPane,
+        "!CUIDADO! Se va a escribir una nueva versión del esquema de " + schemaSubject + "\n" +
+            "¿Esta seguro de que quiere substituir la versión actual?",
+        "Atención", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+    if (response != JOptionPane.YES_OPTION) {
+      return;
+    }
+
+
+
+    printAction("Escritura de nueva versión esquema de " + schemaSubject);
+    executeAsyncTask(() -> writeSchema(environment, schemaSubject, jsonSchema),
+        this::updateVersionList);
+  }
+
+  private Void writeSchema(Environment environment, String schemaSubject, String jsonSchema) {
+    SchemaRegistryService schemaRegistryService = KajToolsApp.getInstance().getSchemaRegistryService();
+    schemaRegistryService.writeSubjectSchema(schemaSubject, environment, jsonSchema);
+
+    enqueueSuccessful("Se ha escrito correctamente la nueva versión ");
     return null;
   }
 
@@ -468,7 +510,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     versionsList = new JList();
     scrollPane2.setViewportView(versionsList);
     final JPanel panel5 = new JPanel();
-    panel5.setLayout(new GridLayoutManager(1, 6, new Insets(0, 0, 0, 0), -1, -1));
+    panel5.setLayout(new GridLayoutManager(1, 7, new Insets(0, 0, 0, 0), -1, -1));
     contentPane.add(panel5, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
         null, null, null, 0, false));
@@ -479,18 +521,18 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     cleanButton.setToolTipText("Limpiar");
     cleanButton.putClientProperty("html.disable", Boolean.TRUE);
     panel5.add(cleanButton,
-        new GridConstraints(0, 4, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+        new GridConstraints(0, 5, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
             GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     final Spacer spacer1 = new Spacer();
-    panel5.add(spacer1, new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+    panel5.add(spacer1, new GridConstraints(0, 4, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
         GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
     copyButton = new JButton();
     copyButton.setHorizontalTextPosition(0);
     copyButton.setIcon(new ImageIcon(getClass().getResource("/images/copy.png")));
     copyButton.setText("");
     copyButton.setToolTipText("Copiar al portapapeles");
-    panel5.add(copyButton, new GridConstraints(0, 5, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+    panel5.add(copyButton, new GridConstraints(0, 6, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
     getSchemasButton = new JButton();
@@ -509,6 +551,12 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     dangerLabel.setToolTipText("Cuidado, no estas en el entorno local");
     panel5.add(dangerLabel, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+    writeSchemaButton = new JButton();
+    writeSchemaButton.setText("Escribir esquema");
+    panel5.add(writeSchemaButton,
+        new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+            GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
   }
 
   /**
@@ -578,7 +626,6 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
 
   private void createUIComponents() {
     schemaEditor = createJsonEditor();
-    schemaEditor.setEditable(false);
     schemaScrollPane = createEditorScroll(schemaEditor);
   }
 }

@@ -24,6 +24,7 @@ import java.util.TimeZone;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import lombok.Getter;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -35,6 +36,7 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.TopicPartition;
+
 
 public abstract class AbstractClient<K, V> implements IMessageClient {
 
@@ -112,6 +114,7 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
     } catch (Exception e) {
       throw new KajException(e.getMessage());
     }
+    // TODO: hacer algo con los metadatos
     System.out.println(recordMetadata);
   }
 
