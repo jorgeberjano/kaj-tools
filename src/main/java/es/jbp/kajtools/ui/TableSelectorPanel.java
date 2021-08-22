@@ -5,8 +5,10 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 import es.jbp.kajtools.tabla.ModeloTablaGenerico;
 import es.jbp.kajtools.tabla.TablaGenerica;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Insets;
 import java.util.Locale;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -16,6 +18,8 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.plaf.FontUIResource;
+import javax.swing.text.StyleContext;
 import lombok.Getter;
 
 public class TableSelectorPanel<T> {
@@ -25,13 +29,21 @@ public class TableSelectorPanel<T> {
   private JPanel contentPane;
   private JTextField textFieldFilter;
   private JButton buttonOk;
+  private JButton buttonUpdate;
   private boolean okButtonPressed;
 
-  private final ModeloTablaGenerico<T> tableModel;
+  public interface ModelProvider<T> {
+
+    ModeloTablaGenerico<T> getModel(boolean update);
+  }
+
+  private ModeloTablaGenerico<T> tableModel;
+  private ModelProvider<T> modelProvider;
 
   public TableSelectorPanel(
-      ModeloTablaGenerico<T> tableModel) {
-    this.tableModel = tableModel;
+      ModelProvider<T> modelProvider) {
+    this.modelProvider = modelProvider;
+    tableModel = modelProvider.getModel(false);
 
     $$$setupUI$$$();
 
@@ -51,6 +63,13 @@ public class TableSelectorPanel<T> {
         applyFilter();
       }
     });
+
+    buttonUpdate.addActionListener(e -> updateModel());
+  }
+
+  private void updateModel() {
+    tableModel = modelProvider.getModel(true);
+    table.setModel(tableModel);
   }
 
   private void applyFilter() {
@@ -69,10 +88,8 @@ public class TableSelectorPanel<T> {
 
 
   private void createUIComponents() {
-
-    TablaGenerica tablaGenerica = new TablaGenerica();
-    tablaGenerica.setModel(tableModel);
-    table = tablaGenerica;
+    table = new TablaGenerica();
+    table.setModel(tableModel);
   }
 
   /**
@@ -84,10 +101,10 @@ public class TableSelectorPanel<T> {
   private void $$$setupUI$$$() {
     createUIComponents();
     contentPane = new JPanel();
-    contentPane.setLayout(new GridLayoutManager(3, 1, new Insets(8, 8, 8, 8), -1, -1));
+    contentPane.setLayout(new GridLayoutManager(3, 2, new Insets(8, 8, 8, 8), -1, -1));
     final JScrollPane scrollPane1 = new JScrollPane();
     contentPane.add(scrollPane1,
-        new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+        new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
     scrollPane1.setViewportView(table);
@@ -101,6 +118,44 @@ public class TableSelectorPanel<T> {
     contentPane.add(buttonOk, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
         null, null, null, 0, false));
+    buttonUpdate = new JButton();
+    Font buttonUpdateFont = this.$$$getFont$$$(null, -1, -1, buttonUpdate.getFont());
+    if (buttonUpdateFont != null) {
+      buttonUpdate.setFont(buttonUpdateFont);
+    }
+    buttonUpdate.setIcon(new ImageIcon(getClass().getResource("/images/update.png")));
+    buttonUpdate.setText("");
+    buttonUpdate.setToolTipText("Actualizar");
+    contentPane.add(buttonUpdate,
+        new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+            GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, new Dimension(24, 24),
+            new Dimension(24, 24), new Dimension(24, 24), 0, false));
+  }
+
+  /**
+   * @noinspection ALL
+   */
+  private Font $$$getFont$$$(String fontName, int style, int size, Font currentFont) {
+    if (currentFont == null) {
+      return null;
+    }
+    String resultName;
+    if (fontName == null) {
+      resultName = currentFont.getName();
+    } else {
+      Font testFont = new Font(fontName, Font.PLAIN, 10);
+      if (testFont.canDisplay('a') && testFont.canDisplay('1')) {
+        resultName = fontName;
+      } else {
+        resultName = currentFont.getName();
+      }
+    }
+    Font font = new Font(resultName, style >= 0 ? style : currentFont.getStyle(),
+        size >= 0 ? size : currentFont.getSize());
+    boolean isMac = System.getProperty("os.name", "").toLowerCase(Locale.ENGLISH).startsWith("mac");
+    Font fontWithFallback = isMac ? new Font(font.getFamily(), font.getStyle(), font.getSize())
+        : new StyleContext().getFont(font.getFamily(), font.getStyle(), font.getSize());
+    return fontWithFallback instanceof FontUIResource ? fontWithFallback : new FontUIResource(fontWithFallback);
   }
 
   /**

@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Future;
 import java.util.function.Function;
@@ -56,7 +57,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
-public class SchemaRegistryPanel extends BasePanel {
+public class SchemaRegistryPanel extends KafkaBasePanel {
 
   private JComboBox comboSchemaSubject;
   private JComboBox comboEnvironment;
@@ -106,48 +107,26 @@ public class SchemaRegistryPanel extends BasePanel {
 
     // Combo Entorno
     EnvironmentConfiguration.ENVIRONMENT_LIST.stream().forEach(comboEnvironment::addItem);
-    comboEnvironment.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        boolean local = ((Environment) comboEnvironment.getSelectedItem()).getName()
-            .contains("local");
-        dangerLabel.setVisible(!local);
-      }
+    comboEnvironment.addActionListener(e -> {
+      boolean local = getEnvironment().getName().toLowerCase().contains("local");
+      dangerLabel.setVisible(!local);
     });
 
     // Combo Dominio
     final List<IProducer> producerList = KajToolsApp.getInstance().getProducerList();
     producerList.stream().map(IProducer::getDomain).distinct().forEach(comboDomain::addItem);
-    comboDomain.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        updateSchemaSubjects();
-      }
-    });
+    comboDomain.addActionListener(e -> updateSchemaSubjects());
 
     // Lista de subjects
     updateSchemaSubjects();
-    comboSchemaSubject.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        versions = null;
-        schemas = null;
-        clearVersionList();
-      }
+    comboSchemaSubject.addActionListener(e -> {
+      versions = null;
+      schemas = null;
+      clearVersionList();
     });
 
-    cleanButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        cleanEditor();
-      }
-    });
-    copyButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        copyToClipboard();
-      }
-    });
+    cleanButton.addActionListener(e -> cleanEditor());
+    copyButton.addActionListener(e -> copyToClipboard());
 
     // Lista de versiones
     versionsPopupMenu = new JPopupMenu() {
@@ -162,34 +141,16 @@ public class SchemaRegistryPanel extends BasePanel {
     };
 
     JMenuItem deleteActionListener = new JMenuItem("Borrar");
-    deleteActionListener.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        asyncDeleteSelectedSchemaVersion();
-      }
-    });
+    deleteActionListener.addActionListener(e -> asyncDeleteSelectedSchemaVersion());
     JMenuItem compareActionListener = new JMenuItem("Comparar con anterior");
-    compareActionListener.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        compareSelectedSchemaVersionWithPrevious();
-      }
-    });
+    compareActionListener.addActionListener(e -> compareSelectedSchemaVersionWithPrevious());
     versionsPopupMenu.add(deleteActionListener);
     versionsPopupMenu.add(compareActionListener);
     versionsList.setComponentPopupMenu(versionsPopupMenu);
-    versionsList.addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        showSelectedSchemaVersion();
-      }
-    });
+    versionsList.addListSelectionListener(e -> showSelectedSchemaVersion());
 
     // Botón Obtener esquemas
-    getSchemasButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        asyncRequestVersions();
-      }
-    });
+    getSchemasButton.addActionListener(e -> asyncRequestVersions());
 
     enableTextSearch(searchTextField, schemaEditor);
   }
@@ -228,7 +189,7 @@ public class SchemaRegistryPanel extends BasePanel {
     comboSchemaSubject.removeAllItems();
     currentVersion = null;
 
-    String domain = comboDomain.getSelectedItem().toString();
+    String domain = Objects.toString(comboDomain.getSelectedItem());
     final List<IProducer> producerList = KajToolsApp.getInstance().getProducerList();
     producerList.stream()
         .filter(p -> StringUtils.isBlank(domain) || domain.equals(p.getDomain()))
@@ -244,11 +205,10 @@ public class SchemaRegistryPanel extends BasePanel {
   private void asyncRequestVersions() {
     clearVersionList();
 
-    Environment environment = (Environment) comboEnvironment.getSelectedItem();
-    String schemaSubject = comboSchemaSubject.getSelectedItem().toString();
+    String schemaSubject = Objects.toString(comboSchemaSubject.getSelectedItem());
     printAction("Obteniendo las versiones de los esquemas de " + schemaSubject);
     futureVersions = this.<List<String>>executeAsyncTask(
-        () -> requestVersions(environment, schemaSubject), this::versionsReceived);
+        () -> requestVersions(getEnvironment(), schemaSubject), this::versionsReceived);
   }
 
   private void clearVersionList() {
@@ -259,19 +219,19 @@ public class SchemaRegistryPanel extends BasePanel {
   private List<String> requestVersions(Environment environment, String schemaSubject) {
     SchemaRegistryService schemaRegistryService = KajToolsApp.getInstance().getSchemaRegistryService();
 
-    List<String> versions;
+    List<String> versionList;
     try {
-      versions = schemaRegistryService
+      versionList = schemaRegistryService
           .getSubjectSchemaVersions(schemaSubject, environment);
     } catch (Throwable ex) {
       enqueueError("No se han podido obtener las versiones de los esquemas de " + schemaSubject);
       enqueueInfo("[" + ex.getClass().getName() + "] " + ex.getMessage());
       return Collections.emptyList();
     }
-    int n = versions.size();
+    int n = versionList.size();
     enqueueSuccessful(n == 0 ? "No hay versiones" : "Hay " + n + " versiones");
 
-    return versions;
+    return versionList;
   }
 
   public void versionsReceived() {
@@ -309,12 +269,11 @@ public class SchemaRegistryPanel extends BasePanel {
       printError("No hay versiones");
       return;
     }
-    Environment environment = (Environment) comboEnvironment.getSelectedItem();
     String schemaSubject = comboSchemaSubject.getSelectedItem().toString();
 
     printAction("Obteniendo todos los esquemas de " + schemaSubject);
     futureSchemas = this.<Map<String, String>>executeAsyncTask(
-        () -> requestSchemas(environment, schemaSubject, versions), this::schemasReceived);
+        () -> requestSchemas(getEnvironment(), schemaSubject, versions), this::schemasReceived);
   }
 
   public void schemasReceived() {
@@ -386,7 +345,7 @@ public class SchemaRegistryPanel extends BasePanel {
       return;
     }
 
-    Environment environment = (Environment) comboEnvironment.getSelectedItem();
+    Environment environment = getEnvironment();
     String schemaSubject = comboSchemaSubject.getSelectedItem().toString();
     String version = selectedVersion.toString();
 
@@ -610,6 +569,15 @@ public class SchemaRegistryPanel extends BasePanel {
     } else {
       return Optional.empty();
     }
+  }
+
+  @Override
+  protected void showConnectionStatus(boolean ok) {
+  }
+
+  @Override
+  protected Environment getEnvironment() {
+    return (Environment) comboEnvironment.getSelectedItem();
   }
 
   private void createUIComponents() {

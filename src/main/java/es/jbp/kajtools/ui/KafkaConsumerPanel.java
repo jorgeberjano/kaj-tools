@@ -53,7 +53,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
-public class KafkaConsumerPanel extends BasePanel {
+public class KafkaConsumerPanel extends KafkaBasePanel {
 
 
   private JButton consumeButtom;
@@ -81,6 +81,7 @@ public class KafkaConsumerPanel extends BasePanel {
   private JComboBox comboFilterType;
   private JTextField textFieldFilter;
   private JButton buttonFindTopic;
+  private JButton buttonCheckEnvironment;
 
   private RSyntaxTextArea jsonEditorValue;
   private RSyntaxTextArea jsonEditorKey;
@@ -95,6 +96,8 @@ public class KafkaConsumerPanel extends BasePanel {
 
     // Combo Entorno
     EnvironmentConfiguration.ENVIRONMENT_LIST.forEach(comboEnvironment::addItem);
+
+    buttonCheckEnvironment.addActionListener(e -> retrieveTopics());
 
     // Combo Dominio
     final List<IProducer> producerList = KajToolsApp.getInstance().getProducerList();
@@ -124,9 +127,13 @@ public class KafkaConsumerPanel extends BasePanel {
     enableTextSearch(searchTextField, jsonEditorValue, jsonEditorKey);
   }
 
+  @Override
+  protected void showConnectionStatus(boolean ok) {
+    buttonCheckEnvironment.setIcon(ok ? iconCheckOk : iconCheckFail);
+  }
+
   private void findTopic() {
-    Environment environment = (Environment) comboEnvironment.getSelectedItem();
-    TopicItem topicItem = selectTopic(environment);
+    TopicItem topicItem = selectTopic();
     if (topicItem != null) {
       comboTopic.getEditor().setItem(topicItem.getName());
     }
@@ -165,7 +172,6 @@ public class KafkaConsumerPanel extends BasePanel {
 
   private void consume() {
 
-    Environment environment = (Environment) comboEnvironment.getSelectedItem();
     String topic = comboTopic.getEditor().getItem().toString();
 
     Object consumerSelectedItem = comboConsumer.getSelectedItem();
@@ -197,7 +203,7 @@ public class KafkaConsumerPanel extends BasePanel {
     printAction("Consumiendo mensajes del topic " + topic);
 
     futureRecords = this.<List<RecordItem>>executeAsyncTask(
-        () -> requestRecords(environment, topic, consumer, filter, maxRecordsPerPartition),
+        () -> requestRecords(getEnvironment(), topic, consumer, filter, maxRecordsPerPartition),
         this::recordsReceived);
   }
 
@@ -297,6 +303,18 @@ public class KafkaConsumerPanel extends BasePanel {
     buttonFindTopic.setToolTipText("Buscar en todos los topics");
     panel1.add(buttonFindTopic,
         new GridConstraints(3, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+            GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, new Dimension(24, 24),
+            new Dimension(24, 24), new Dimension(24, 24), 0, false));
+    buttonCheckEnvironment = new JButton();
+    Font buttonCheckEnvironmentFont = this.$$$getFont$$$(null, -1, -1, buttonCheckEnvironment.getFont());
+    if (buttonCheckEnvironmentFont != null) {
+      buttonCheckEnvironment.setFont(buttonCheckEnvironmentFont);
+    }
+    buttonCheckEnvironment.setIcon(new ImageIcon(getClass().getResource("/images/check_grey.png")));
+    buttonCheckEnvironment.setText("");
+    buttonCheckEnvironment.setToolTipText("Comprobar conexión");
+    panel1.add(buttonCheckEnvironment,
+        new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
             GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, new Dimension(24, 24),
             new Dimension(24, 24), new Dimension(24, 24), 0, false));
     final JPanel panel2 = new JPanel();
@@ -489,5 +507,10 @@ public class KafkaConsumerPanel extends BasePanel {
     } else {
       return Optional.empty();
     }
+  }
+
+  @Override
+  protected Environment getEnvironment() {
+    return (Environment) comboEnvironment.getSelectedItem();
   }
 }

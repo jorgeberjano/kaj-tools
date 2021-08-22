@@ -3,6 +3,7 @@ package es.jbp.kajtools.ui;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
+import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.util.ClassScanner;
 import es.jbp.kajtools.util.DeepTestObjectCreator;
 import es.jbp.kajtools.util.JsonTemplateCreator;
@@ -426,5 +427,9 @@ public class JsonGeneratorPanel extends BasePanel {
 
   @Override
   protected void enableButtons(boolean enable) {
+  }
+
+  protected Environment getEnvironment() {
+    return null;
   }
 }

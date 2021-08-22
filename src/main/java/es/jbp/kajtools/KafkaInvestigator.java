@@ -1,6 +1,7 @@
 package es.jbp.kajtools;
 
 import es.jbp.kajtools.tabla.entities.TopicItem;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -11,13 +12,16 @@ import org.apache.kafka.common.PartitionInfo;
 
 public class KafkaInvestigator implements KafkaBase {
 
-  public List<TopicItem> getTopics(Environment environment) {
-    try (KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(createConsumerProperties(environment))) {
-      Map<String, List<PartitionInfo>> topics = consumer.listTopics();
+  public List<TopicItem> getTopics(Environment environment) throws KajException {
+    try (KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(
+        createConsumerProperties(environment))) {
+      Map<String, List<PartitionInfo>> topics = consumer.listTopics(Duration.ofSeconds(10));
       return topics.entrySet().stream()
           .map(this::createTopicItem)
           .sorted((t1, t2) -> StringUtils.compare(t1.getName(), t2.getName()))
           .collect(Collectors.toList());
+    } catch (Exception ex) {
+      throw new KajException("No se ha podido obtener la lista de topics", ex);
     }
   }
 

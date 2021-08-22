@@ -55,6 +55,7 @@ public abstract class BasePanel {
 
   private final List<InfoMessage> messages = new ArrayList<>();
   private JTextField field;
+  private List<TopicItem> topics;
 
   protected abstract JTextPane getInfoTextPane();
 
@@ -334,31 +335,6 @@ public abstract class BasePanel {
 
     result.forEach(p -> enqueueText(p.getLeft(), p.getRight()));
     enqueueInfo("");
-  }
-
-  protected TopicItem selectTopic(Environment environment) {
-
-    KafkaInvestigator kafkaInvestigator = new KafkaInvestigator();
-    List<TopicItem> topics = kafkaInvestigator.getTopics(environment);
-
-    ModeloTablaGenerico<TopicItem> tableModel = new ModeloTablaGenerico<>();
-    tableModel.agregarColumna("name", "Topic", 200);
-    tableModel.agregarColumna("partitions", "Particiones", 20);
-    tableModel.setListaObjetos(topics);
-    TableSelectorPanel<TopicItem> tableSelectorPanel = new TableSelectorPanel<>(tableModel);
-
-    JPanel panel = tableSelectorPanel.getContentPane();
-    panel.setBounds(0, 0, 400, 450);
-    JDialog dialog = new JDialog();
-    dialog.setTitle("Topics");
-    dialog.setSize(800, 450);
-    dialog.setLocationRelativeTo(getContentPane());
-    dialog.setContentPane(panel);
-    tableSelectorPanel.bindDialog(dialog);
-    dialog.setModal(true);
-    dialog.setVisible(true);
-
-    return tableSelectorPanel.getSelectedItem();
   }
 
   protected abstract Component getContentPane();

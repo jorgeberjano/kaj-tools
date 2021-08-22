@@ -8,8 +8,6 @@ import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.EnvironmentConfiguration;
 import es.jbp.kajtools.GenericProducer;
 import es.jbp.kajtools.IProducer;
-import es.jbp.kajtools.KafkaInvestigator;
-import es.jbp.kajtools.tabla.ModeloTablaGenerico;
 import es.jbp.kajtools.tabla.entities.TopicItem;
 import es.jbp.kajtools.ui.InfoMessage.Type;
 import es.jbp.kajtools.KajToolsApp;
@@ -29,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.IntStream;
@@ -37,7 +36,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -55,7 +53,7 @@ import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
 import org.springframework.web.client.HttpClientErrorException.NotFound;
 
-public class KafkaProducerPanel extends BasePanel {
+public class KafkaProducerPanel extends KafkaBasePanel {
 
   private static final int MAXIMUM_QUANTITY = 10;
 
@@ -91,6 +89,7 @@ public class KafkaProducerPanel extends BasePanel {
   private JLabel dangerLabel;
   private JComboBox comboDomain;
   private JButton buttonFindTopic;
+  private JButton buttonCheckEnvironment;
   private RSyntaxTextArea jsonEditorValue;
   private RSyntaxTextArea jsonEditorKey;
 
@@ -121,17 +120,19 @@ public class KafkaProducerPanel extends BasePanel {
       dangerLabel.setVisible(!local);
     });
 
+    buttonCheckEnvironment.addActionListener(e -> retrieveTopics());
+
     // Combo Dominio
     final List<IProducer> producerList = KajToolsApp.getInstance().getProducerList();
     producerList.stream().map(IProducer::getDomain).distinct().forEach(comboDomain::addItem);
     comboDomain.addActionListener(e -> updateProducers());
 
     // Combo Productores
-    comboProducer.addActionListener(e -> updateTopicsEventsAndKeys());
+    comboProducer.addActionListener(e -> updateTopicsKeysAndValues());
     updateProducers();
 
     // Combos Topics, Values y Keys
-    updateTopicsEventsAndKeys();
+    updateTopicsKeysAndValues();
 
     buttonFindTopic.addActionListener(e -> findTopic());
 
@@ -149,8 +150,7 @@ public class KafkaProducerPanel extends BasePanel {
   }
 
   private void findTopic() {
-    Environment environment = (Environment) comboEnvironment.getSelectedItem();
-    TopicItem topicItem = selectTopic(environment);
+    TopicItem topicItem = selectTopic();
     if (topicItem != null) {
       comboTopic.getEditor().setItem(topicItem.getName());
     }
@@ -158,14 +158,14 @@ public class KafkaProducerPanel extends BasePanel {
 
   private void updateProducers() {
     comboProducer.removeAllItems();
-    String domain = comboDomain.getSelectedItem().toString();
+    String domain = Objects.toString(comboDomain.getSelectedItem());
     final List<IProducer> producerList = KajToolsApp.getInstance().getProducerList();
     producerList.stream()
         .filter(p -> StringUtils.isBlank(domain) || domain.equals(p.getDomain()))
         .forEach(comboProducer::addItem);
   }
 
-  private void updateTopicsEventsAndKeys() {
+  private void updateTopicsKeysAndValues() {
     comboTopic.removeAllItems();
     comboValue.removeAllItems();
     comboKey.removeAllItems();
@@ -244,7 +244,7 @@ public class KafkaProducerPanel extends BasePanel {
   }
 
   private void asyncSendEvent() {
-    Environment environment = (Environment) comboEnvironment.getSelectedItem();
+    Environment environment = getEnvironment();
     IProducer producer = (IProducer) comboProducer.getSelectedItem();
     String topic = comboTopic.getEditor().getItem().toString();
 
@@ -358,9 +358,7 @@ public class KafkaProducerPanel extends BasePanel {
     String topic = comboTopic.getEditor().getItem().toString();
     printAction("Comprobando esquemas del topic " + topic);
 
-    Environment environment = (Environment) comboEnvironment.getSelectedItem();
-
-    executeAsyncTask(() -> checkSchema(producer, topic, environment));
+    executeAsyncTask(() -> checkSchema(producer, topic, getEnvironment()));
   }
 
   private Void checkSchema(IProducer producer, String topic, Environment environment) {
@@ -476,6 +474,16 @@ public class KafkaProducerPanel extends BasePanel {
     } else {
       return Optional.empty();
     }
+  }
+
+  @Override
+  protected void showConnectionStatus(boolean ok) {
+    buttonCheckEnvironment.setIcon(ok ? iconCheckOk : iconCheckFail);
+  }
+
+  @Override
+  protected Environment getEnvironment() {
+    return (Environment) comboEnvironment.getSelectedItem();
   }
 
   /**
@@ -631,6 +639,18 @@ public class KafkaProducerPanel extends BasePanel {
     buttonFindTopic.setToolTipText("Buscar en todos los topics");
     panel2.add(buttonFindTopic,
         new GridConstraints(3, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+            GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, new Dimension(24, 24),
+            new Dimension(24, 24), new Dimension(24, 24), 0, false));
+    buttonCheckEnvironment = new JButton();
+    Font buttonCheckEnvironmentFont = this.$$$getFont$$$(null, -1, -1, buttonCheckEnvironment.getFont());
+    if (buttonCheckEnvironmentFont != null) {
+      buttonCheckEnvironment.setFont(buttonCheckEnvironmentFont);
+    }
+    buttonCheckEnvironment.setIcon(new ImageIcon(getClass().getResource("/images/check_grey.png")));
+    buttonCheckEnvironment.setText("");
+    buttonCheckEnvironment.setToolTipText("Comprobar conexión");
+    panel2.add(buttonCheckEnvironment,
+        new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
             GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, new Dimension(24, 24),
             new Dimension(24, 24), new Dimension(24, 24), 0, false));
     tabbedPane = new JTabbedPane();
