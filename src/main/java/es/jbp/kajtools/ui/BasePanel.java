@@ -27,7 +27,9 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Vector;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -53,9 +55,10 @@ import org.fife.ui.rtextarea.SearchResult;
 
 public abstract class BasePanel {
 
+  protected AtomicBoolean abortTasks = new AtomicBoolean();
+
   private final List<InfoMessage> messages = new ArrayList<>();
   private JTextField field;
-  private List<TopicItem> topics;
 
   protected abstract JTextPane getInfoTextPane();
 
@@ -218,7 +221,6 @@ public abstract class BasePanel {
 
 
   protected interface AsyncTask<T> {
-
     T execute();
   }
 
@@ -231,7 +233,12 @@ public abstract class BasePanel {
     this.<Void>executeAsyncTask(task, null);
   }
 
+  protected void stopAsyncTasks() {
+    abortTasks.set(true);
+  }
+
   protected <T> Future<T> executeAsyncTask(AsyncTask<T> task, AsyncListener listener) {
+    abortTasks.set(false);
     enableButtons(false);
     SwingWorker<T, Void> worker = new SwingWorker<T, Void>() {
       @Override

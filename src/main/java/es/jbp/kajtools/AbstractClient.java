@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TimeZone;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -269,32 +270,27 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
   }
 
   public List<RecordItem> consumeLastRecords(Environment environment, String topic,
-      MessageFilter filter,  long maxRecordsPerPartition) throws KajException {
+      MessageFilter filter,  long maxRecordsPerPartition, AtomicBoolean abort) throws KajException {
     try (KafkaConsumer<K, V> consumer = new KafkaConsumer<>(createConsumerProperties(environment))) {
       consumer.subscribe(Collections.singletonList(topic));
 
-      consumer.poll(Duration.ofSeconds(5));
+      consumer.poll(Duration.ofSeconds(10));
 
       List<RecordItem> latestRecords = new ArrayList<>();
 
       Map<TopicPartition, Long> offsets = consumer.endOffsets(consumer.assignment());
 
       for (Map.Entry<TopicPartition, Long> offsetEntry : offsets.entrySet()) {
+        if (abort.get()) {
+          break;
+        }
         TopicPartition topicPartition = offsetEntry.getKey();
         Long offset = offsetEntry.getValue();
         final long newOffset = offset - maxRecordsPerPartition;
         consumer.seek(topicPartition, newOffset < 0 ? 0 : newOffset);
-
-        ConsumerRecords<K, V> records;
-        do {
-          records = consumer.poll(Duration.ofSeconds(1));
-          for (ConsumerRecord<K, V> r : records) {
-            if (filter.satisfyCondition(Objects.toString(r.key()), Objects.toString(r.value()))) {
-              latestRecords.add(createRecordItem(r));
-            }
-          }
-        } while (!records.isEmpty());
       }
+
+      processRecords(filter, abort, consumer, latestRecords);
 
       return latestRecords;
     } catch (KajException ex) {
@@ -304,12 +300,35 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
     }
   }
 
+  private void processRecords(MessageFilter filter, AtomicBoolean abort, KafkaConsumer<K, V> consumer,
+      List<RecordItem> latestRecords) throws KajException {
+    Instant start = Instant.now();
+    ConsumerRecords<K, V> records;
+    do {
+      records = consumer.poll(Duration.ofSeconds(1));
+      for (ConsumerRecord<K, V> r : records) {
+        if (abort.get()) {
+          break;
+        }
+        if (filter.satisfyCondition(Objects.toString(r.key()), Objects.toString(r.value()))) {
+          latestRecords.add(createRecordItem(r));
+        }
+      }
+    } while (!abort.get() && mustWait(records.isEmpty(), start));
+  }
+
+  private boolean mustWait(boolean noRecordsReceived, Instant start) {
+    int secondsOfWaiting = noRecordsReceived ? 5 : 10;
+    return Duration.between(start, Instant.now()).compareTo(Duration.ofSeconds(secondsOfWaiting)) < 0;
+  }
+
   private RecordItem createRecordItem(ConsumerRecord<K, V> rec) {
 
     String jsonKey = String.valueOf(rec.key());
     String jsonValue = String.valueOf(rec.value());
 
-    String keyError = null, valueError = null;
+    String keyError = null;
+    String valueError = null;
     try {
       K key = JsonUtils.createFromJson(jsonKey, keyType);
     } catch (IOException e) {

@@ -16,6 +16,7 @@ public abstract class KafkaBasePanel extends BasePanel {
 
   protected final ImageIcon iconCheckOk = new ImageIcon(getClass().getResource("/images/check_green.png"));
   protected final ImageIcon iconCheckFail = new ImageIcon(getClass().getResource("/images/check_red.png"));
+  protected final ImageIcon iconCheckUndefined = new ImageIcon(getClass().getResource("/images/check_grey.png"));
 
   @Getter
   protected List<TopicItem> topics;
@@ -30,7 +31,7 @@ public abstract class KafkaBasePanel extends BasePanel {
     KafkaInvestigator kafkaInvestigator = new KafkaInvestigator();
     try {
       topics = kafkaInvestigator.getTopics(environment);
-      showConnectionStatus(true);
+      showConnectionStatus(Boolean.TRUE);
       enqueueSuccessful("Se han obtenido " + topics.size() + " topics");
     } catch(KajException ex) {
       topics = new ArrayList<>();
@@ -40,7 +41,12 @@ public abstract class KafkaBasePanel extends BasePanel {
     return null;
   }
 
-  protected abstract void showConnectionStatus(boolean b);
+  protected void cleanTopics() {
+    topics = null;
+    showConnectionStatus(null);
+  }
+
+  protected abstract void showConnectionStatus(Boolean b);
 
   protected abstract Environment getEnvironment();
 
@@ -72,6 +78,5 @@ public abstract class KafkaBasePanel extends BasePanel {
     tableModel.setListaObjetos(topics);
     return tableModel;
   }
-
 
 }

@@ -118,6 +118,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
       boolean local = ((Environment) comboEnvironment.getSelectedItem()).getName().toLowerCase()
           .contains("local");
       dangerLabel.setVisible(!local);
+      cleanTopics();
     });
 
     buttonCheckEnvironment.addActionListener(e -> asyncRetrieveTopics());
@@ -248,7 +249,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     IMessageClient producer = (IMessageClient) comboProducer.getSelectedItem();
     String topic = comboTopic.getEditor().getItem().toString();
 
-    SchemaCheckStatus status = checkedSchemaTopics.get(topic);
+    SchemaCheckStatus status = checkedSchemaTopics.get(environment.getName() + "$" + topic);
     boolean local = environment.getName().toLowerCase().contains("local");
     if (!local && status != SchemaCheckStatus.EQUALS) {
       boolean userAccepts = warnUserAboutCheckSchema(status, topic);
@@ -367,7 +368,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
 
     if (keySchemaOk != null && eventSchemaOk != null) {
       checkedSchemaTopics
-          .put(topic, SchemaCheckStatus.getMoreSignificant(keySchemaOk, eventSchemaOk));
+          .put(environment.getName() + "$" + topic, SchemaCheckStatus.getMoreSignificant(keySchemaOk, eventSchemaOk));
     } else if (checkedSchemaTopics.get(topic) != null) {
       checkedSchemaTopics.remove(topic);
     }
@@ -477,10 +478,9 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   }
 
   @Override
-  protected void showConnectionStatus(boolean ok) {
-    buttonCheckEnvironment.setIcon(ok ? iconCheckOk : iconCheckFail);
+  protected void showConnectionStatus(Boolean ok) {
+    buttonCheckEnvironment.setIcon(ok == null ? iconCheckUndefined : (ok ? iconCheckOk : iconCheckFail));
   }
-
   @Override
   protected Environment getEnvironment() {
     return (Environment) comboEnvironment.getSelectedItem();

@@ -21,6 +21,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -49,7 +50,6 @@ import javax.swing.plaf.FontUIResource;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.StyleContext;
 import lombok.Getter;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
@@ -84,6 +84,7 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
   private JTextField textFieldFilter;
   private JButton buttonFindTopic;
   private JButton buttonCheckEnvironment;
+  private JButton buttonStop;
 
   private RSyntaxTextArea jsonEditorValue;
   private RSyntaxTextArea jsonEditorKey;
@@ -126,12 +127,14 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     cleanButton.addActionListener(e -> cleanEditor());
     copyButton.addActionListener(e -> copyToClipboard());
 
+    buttonStop.addActionListener(e -> stopAsyncTasks());
+
     enableTextSearch(searchTextField, jsonEditorValue, jsonEditorKey);
   }
 
   @Override
-  protected void showConnectionStatus(boolean ok) {
-    buttonCheckEnvironment.setIcon(ok ? iconCheckOk : iconCheckFail);
+  protected void showConnectionStatus(Boolean ok) {
+    buttonCheckEnvironment.setIcon(ok == null ? iconCheckUndefined : (ok ? iconCheckOk : iconCheckFail));
   }
 
   private void findTopic() {
@@ -203,7 +206,12 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
       filter = (k, v) -> true;
     }
 
+    recordTableModel.setListaObjetos(new ArrayList<>());
+    recordTableModel.actualizar();
+
     printAction("Consumiendo mensajes del topic " + topic);
+
+    buttonStop.setEnabled(true);
 
     futureRecords = this.<List<RecordItem>>executeAsyncTask(
         () -> requestRecords(getEnvironment(), topic, client, filter, maxRecordsPerPartition),
@@ -214,7 +222,8 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
   private List<RecordItem> requestRecords(Environment environment, String topic, IMessageClient client,
       MessageFilter filter, long maxRecordsPerPartition) {
     try {
-      List<RecordItem> records = client.consumeLastRecords(environment, topic, filter, maxRecordsPerPartition);
+      List<RecordItem> records = client
+          .consumeLastRecords(environment, topic, filter, maxRecordsPerPartition, abortTasks);
       enqueueSuccessful("Consumidos " + records.size() + " mensajes");
       return records;
     } catch (KajException ex) {
@@ -225,6 +234,9 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
   }
 
   private void recordsReceived() {
+
+    buttonStop.setEnabled(false);
+
     List<RecordItem> records = null;
     try {
       records = futureRecords.get();
@@ -394,7 +406,7 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     tabbedPane.addTab("Value", tabValue);
     tabValue.add(valueScrollPane, BorderLayout.CENTER);
     final JPanel panel3 = new JPanel();
-    panel3.setLayout(new GridLayoutManager(1, 9, new Insets(0, 0, 0, 0), -1, -1));
+    panel3.setLayout(new GridLayoutManager(1, 10, new Insets(0, 0, 0, 0), -1, -1));
     contentPane.add(panel3,
         new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, 1, null, null, null, 0,
@@ -407,29 +419,29 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     fieldRewindRecords = new JTextField();
     fieldRewindRecords.setText("50");
     panel3.add(fieldRewindRecords,
-        new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+        new GridConstraints(0, 4, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
             GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(40, -1), null, 0,
             false));
     final JLabel label6 = new JLabel();
     label6.setText("Rebobinar:");
     label6.setToolTipText("Número registros por partición a rebobinar");
-    panel3.add(label6, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+    panel3.add(label6, new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     cleanButton = new JButton();
     cleanButton.setIcon(new ImageIcon(getClass().getResource("/images/rubber.png")));
     cleanButton.setText("");
     cleanButton.setToolTipText("Limpiar");
-    panel3.add(cleanButton, new GridConstraints(0, 7, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+    panel3.add(cleanButton, new GridConstraints(0, 8, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     copyButton = new JButton();
     copyButton.setIcon(new ImageIcon(getClass().getResource("/images/copy.png")));
     copyButton.setText("");
     copyButton.setToolTipText("Copiar al portapapeles");
-    panel3.add(copyButton, new GridConstraints(0, 8, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+    panel3.add(copyButton, new GridConstraints(0, 9, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
         null, null, null, 0, false));
     final Spacer spacer1 = new Spacer();
-    panel3.add(spacer1, new GridConstraints(0, 6, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+    panel3.add(spacer1, new GridConstraints(0, 7, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
         GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
     final Spacer spacer2 = new Spacer();
     panel3.add(spacer2, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
@@ -441,14 +453,20 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     defaultComboBoxModel4.addElement("Filtro JavaScript");
     comboFilterType.setModel(defaultComboBoxModel4);
     panel3.add(comboFilterType,
-        new GridConstraints(0, 4, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+        new GridConstraints(0, 5, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
             GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(80, -1), null, 0,
             false));
     textFieldFilter = new JTextField();
     panel3.add(textFieldFilter,
-        new GridConstraints(0, 5, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+        new GridConstraints(0, 6, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
             GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null,
             0, false));
+    buttonStop = new JButton();
+    buttonStop.setEnabled(false);
+    buttonStop.setIcon(new ImageIcon(getClass().getResource("/images/stop.png")));
+    buttonStop.setText("");
+    panel3.add(buttonStop, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+        GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
   }
 
   /**

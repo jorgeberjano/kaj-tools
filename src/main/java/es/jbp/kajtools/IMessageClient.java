@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.kafka.clients.producer.ProducerConfig;
 
 public interface IMessageClient {
@@ -31,7 +32,7 @@ public interface IMessageClient {
       throws KajException;
 
   List<RecordItem> consumeLastRecords(Environment environment, String topic,
-      MessageFilter filter,  long maxRecordsPerPartition) throws KajException;
+      MessageFilter filter,  long maxRecordsPerPartition, AtomicBoolean abort) throws KajException;
 
   String getKeyClassName();
 

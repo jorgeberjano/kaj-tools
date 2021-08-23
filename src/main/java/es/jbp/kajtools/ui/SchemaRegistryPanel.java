@@ -616,7 +616,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   }
 
   @Override
-  protected void showConnectionStatus(boolean ok) {
+  protected void showConnectionStatus(Boolean ok) {
   }
 
   @Override
