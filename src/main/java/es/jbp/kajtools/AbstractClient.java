@@ -26,6 +26,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import lombok.Getter;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -274,7 +275,7 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
     try (KafkaConsumer<K, V> consumer = new KafkaConsumer<>(createConsumerProperties(environment))) {
       consumer.subscribe(Collections.singletonList(topic));
 
-      consumer.poll(Duration.ofSeconds(10));
+      consumer.poll(Duration.ofSeconds(2));
 
       List<RecordItem> latestRecords = new ArrayList<>();
 
@@ -290,7 +291,7 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
         consumer.seek(topicPartition, newOffset < 0 ? 0 : newOffset);
       }
 
-      processRecords(filter, abort, consumer, latestRecords);
+      comsumeRecords(filter, abort, consumer, latestRecords);
 
       return latestRecords;
     } catch (KajException ex) {
@@ -300,7 +301,7 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
     }
   }
 
-  private void processRecords(MessageFilter filter, AtomicBoolean abort, KafkaConsumer<K, V> consumer,
+  private void comsumeRecords(MessageFilter filter, AtomicBoolean abort, KafkaConsumer<K, V> consumer,
       List<RecordItem> latestRecords) throws KajException {
     Instant start = Instant.now();
     ConsumerRecords<K, V> records;
@@ -329,15 +330,20 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
 
     String keyError = null;
     String valueError = null;
-    try {
-      K key = JsonUtils.createFromJson(jsonKey, keyType);
-    } catch (IOException e) {
-      keyError = e.getMessage();
+    if (!keyType.equals(GenericRecord.class)) {
+      try {
+        K key = JsonUtils.createFromJson(jsonKey, keyType);
+      } catch (IOException e) {
+        keyError = e.getMessage();
+      }
     }
-    try {
-      V value = JsonUtils.createFromJson(jsonValue, valueType);
-    } catch (IOException e) {
-      valueError = e.getMessage();
+
+    if (!valueType.equals(GenericRecord.class)) {
+      try {
+        V value = JsonUtils.createFromJson(jsonValue, valueType);
+      } catch (IOException e) {
+        valueError = e.getMessage();
+      }
     }
 
     LocalDateTime dateTime =

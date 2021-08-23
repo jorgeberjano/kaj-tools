@@ -115,7 +115,10 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     updateTopics();
 
     // Combo tipo de filtro
-    comboFilterType.addActionListener(e -> textFieldFilter.setEnabled(comboFilterType.getSelectedIndex() == 1));
+    comboFilterType.addActionListener(e -> {
+      textFieldFilter.setEnabled(comboFilterType.getSelectedIndex() == 1);
+      scriptEditorFilter.setEnabled(comboFilterType.getSelectedIndex() == 2);
+    });
     textFieldFilter.setEnabled(false);
 
     // Tabla de registros
@@ -128,6 +131,8 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     copyButton.addActionListener(e -> copyToClipboard());
 
     buttonStop.addActionListener(e -> stopAsyncTasks());
+
+    scriptEditorFilter.setEnabled(false);
 
     enableTextSearch(searchTextField, jsonEditorValue, jsonEditorKey);
   }
@@ -368,7 +373,7 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     contentPane.add(splitPane1,
         new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(200, 200),
+            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(200, 245),
             null, 0, false));
     final JScrollPane scrollPane1 = new JScrollPane();
     splitPane1.setLeftComponent(scrollPane1);
