@@ -10,11 +10,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.PartitionInfo;
 
-public class KafkaInvestigator implements KafkaBase {
+public class KafkaInvestigator {
 
   public List<TopicItem> getTopics(Environment environment) throws KajException {
     try (KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(
-        createConsumerProperties(environment))) {
+        GenericClient.createConsumerProperties(environment))) {
       Map<String, List<PartitionInfo>> topics = consumer.listTopics(Duration.ofSeconds(10));
       return topics.entrySet().stream()
           .map(this::createTopicItem)

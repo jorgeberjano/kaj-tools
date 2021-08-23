@@ -6,8 +6,8 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.EnvironmentConfiguration;
-import es.jbp.kajtools.GenericProducer;
-import es.jbp.kajtools.IProducer;
+import es.jbp.kajtools.GenericClient;
+import es.jbp.kajtools.IMessageClient;
 import es.jbp.kajtools.tabla.entities.TopicItem;
 import es.jbp.kajtools.ui.InfoMessage.Type;
 import es.jbp.kajtools.KajToolsApp;
@@ -120,11 +120,11 @@ public class KafkaProducerPanel extends KafkaBasePanel {
       dangerLabel.setVisible(!local);
     });
 
-    buttonCheckEnvironment.addActionListener(e -> retrieveTopics());
+    buttonCheckEnvironment.addActionListener(e -> asyncRetrieveTopics());
 
     // Combo Dominio
-    final List<IProducer> producerList = KajToolsApp.getInstance().getProducerList();
-    producerList.stream().map(IProducer::getDomain).distinct().forEach(comboDomain::addItem);
+    final List<IMessageClient> clientList = KajToolsApp.getInstance().getClientList();
+    clientList.stream().map(IMessageClient::getDomain).distinct().forEach(comboDomain::addItem);
     comboDomain.addActionListener(e -> updateProducers());
 
     // Combo Productores
@@ -159,7 +159,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   private void updateProducers() {
     comboProducer.removeAllItems();
     String domain = Objects.toString(comboDomain.getSelectedItem());
-    final List<IProducer> producerList = KajToolsApp.getInstance().getProducerList();
+    final List<IMessageClient> producerList = KajToolsApp.getInstance().getClientList();
     producerList.stream()
         .filter(p -> StringUtils.isBlank(domain) || domain.equals(p.getDomain()))
         .forEach(comboProducer::addItem);
@@ -169,7 +169,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     comboTopic.removeAllItems();
     comboValue.removeAllItems();
     comboKey.removeAllItems();
-    IProducer producer = (IProducer) comboProducer.getSelectedItem();
+    IMessageClient producer = (IMessageClient) comboProducer.getSelectedItem();
     if (producer == null) {
       return;
     }
@@ -245,7 +245,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
 
   private void asyncSendEvent() {
     Environment environment = getEnvironment();
-    IProducer producer = (IProducer) comboProducer.getSelectedItem();
+    IMessageClient producer = (IMessageClient) comboProducer.getSelectedItem();
     String topic = comboTopic.getEditor().getItem().toString();
 
     SchemaCheckStatus status = checkedSchemaTopics.get(topic);
@@ -288,7 +288,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     return response == JOptionPane.YES_OPTION;
   }
 
-  private Void sendEvent(Environment environment, IProducer producer, String topic, String key,
+  private Void sendEvent(Environment environment, IMessageClient producer, String topic, String key,
       String event, int quantity) {
     for (int i = 1; i <= quantity; i++) {
       templateVariables.put("i", i);
@@ -298,7 +298,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     return null;
   }
 
-  private void sendEvent(Environment environment, IProducer producer, String topic, String key,
+  private void sendEvent(Environment environment, IMessageClient producer, String topic, String key,
       String event) {
     TemplateExecutor templateExecutor = new TemplateExecutor(templateVariables);
     String jsonKey = getJson(templateExecutor, key, "KEY");
@@ -349,8 +349,8 @@ public class KafkaProducerPanel extends KafkaBasePanel {
 
 
   private void asyncCheckSchema() {
-    IProducer producer = (IProducer) comboProducer.getSelectedItem();
-    if (producer instanceof GenericProducer) {
+    IMessageClient producer = (IMessageClient) comboProducer.getSelectedItem();
+    if (producer instanceof GenericClient) {
       printError(
           "No es posible comparar los esquemas con el " + producer.getClass().getSimpleName());
       return;
@@ -361,7 +361,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     executeAsyncTask(() -> checkSchema(producer, topic, getEnvironment()));
   }
 
-  private Void checkSchema(IProducer producer, String topic, Environment environment) {
+  private Void checkSchema(IMessageClient producer, String topic, Environment environment) {
     SchemaCheckStatus keySchemaOk = checkSchema(producer, topic, environment, true);
     SchemaCheckStatus eventSchemaOk = checkSchema(producer, topic, environment, false);
 
@@ -385,7 +385,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     }
   }
 
-  private SchemaCheckStatus checkSchema(IProducer producer, String topic,
+  private SchemaCheckStatus checkSchema(IMessageClient producer, String topic,
       Environment environment,
       boolean isKey) {
     String registeredSchema, avroSchema;

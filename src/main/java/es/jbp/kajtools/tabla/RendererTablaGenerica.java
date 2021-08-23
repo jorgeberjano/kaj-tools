@@ -27,10 +27,6 @@ public class RendererTablaGenerica extends DefaultTableCellRenderer {
         TablaGenerica tablaGenerica = table instanceof TablaGenerica
                 ? (TablaGenerica) table : null;
 
-//        if (!isSelected) {
-//            componente.setBackground(table.getBackground());
-//        }
-
         if (value instanceof Color) {
             componente.setBackground((Color) value);
             if (componente instanceof JLabel) {
@@ -43,10 +39,14 @@ public class RendererTablaGenerica extends DefaultTableCellRenderer {
             Color colorFondo = coloreador.determinarColorFondo(entidad);
             if (colorFondo != null) {
                 componente.setBackground(colorFondo);
+            } else {
+                componente.setBackground(table.getBackground());
             }
             Color colorTexto = coloreador.determinarColorTexto(entidad);
             if (colorTexto != null) {
                 componente.setForeground(colorTexto);
+            } else {
+                componente.setForeground(table.getForeground());
             }
         }
 

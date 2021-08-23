@@ -8,20 +8,22 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
-public class GenericProducer implements IProducer {
+public class GenericClient extends AbstractClient<GenericRecord, GenericRecord> {
 
   private final SchemaRegistryService schemaRegistryService;
-  private final List<IProducer> producerList;
+  private final List<IMessageClient> producerList;
 
-  public GenericProducer(
+  public GenericClient(
       @Autowired SchemaRegistryService schemaRegistryService,
-      @Autowired List<IProducer> producerList) {
+      @Autowired List<IMessageClient> producerList) {
+    super(GenericRecord.class, GenericRecord.class);
     this.schemaRegistryService = schemaRegistryService;
     this.producerList = producerList;
   }
@@ -29,20 +31,20 @@ public class GenericProducer implements IProducer {
   @Override
   public List<String> getAvailableValues() {
     return Stream.concat(Stream.of(""),
-        producerList.stream().map(IProducer::getAvailableValues).flatMap(Collection::stream))
+        producerList.stream().map(IMessageClient::getAvailableValues).flatMap(Collection::stream))
         .collect(Collectors.toList());
   }
 
   @Override
   public List<String> getAvailableKeys() {
     return Stream.concat(Stream.of(""),
-        producerList.stream().map(IProducer::getAvailableKeys).flatMap(Collection::stream))
+        producerList.stream().map(IMessageClient::getAvailableKeys).flatMap(Collection::stream))
         .collect(Collectors.toList());
   }
 
   @Override
   public List<String> getAvailableTopics() {
-    return producerList.stream().map(IProducer::getDefaultTopic).collect(Collectors.toList());
+    return producerList.stream().map(IMessageClient::getDefaultTopic).collect(Collectors.toList());
   }
 
   @Override
@@ -122,6 +124,10 @@ public class GenericProducer implements IProducer {
     Schema schema = schemaParser.parse(schemaSource);
     JsonGenericRecordReader reader = new JsonGenericRecordReader();
     return reader.read(json.getBytes(), schema);
+  }
+
+  protected KafkaConsumer<GenericRecord, GenericRecord> createConsumer(Environment environment) {
+    return new KafkaConsumer<>(createConsumerProperties(environment));
   }
 
   @Override

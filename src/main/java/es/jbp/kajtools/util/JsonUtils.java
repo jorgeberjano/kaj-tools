@@ -18,7 +18,7 @@ public class JsonUtils {
             .configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
     }
 
-    public static <T> T stubFromJson(String json, Class<T> valueType) throws IOException {
+    public static <T> T createFromJson(String json, Class<T> valueType) throws IOException {
         return getObjectMapper().readValue(json, valueType);
     }
 

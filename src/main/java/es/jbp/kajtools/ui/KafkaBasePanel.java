@@ -20,18 +20,24 @@ public abstract class KafkaBasePanel extends BasePanel {
   @Getter
   protected List<TopicItem> topics;
 
-  protected void retrieveTopics() {
+  protected void asyncRetrieveTopics() {
 
+    printAction("Obteniendo la lista de topics");
+    executeAsyncTask(() -> retrieveTopics(getEnvironment()));
+  }
+
+  protected Void retrieveTopics(Environment environment) {
     KafkaInvestigator kafkaInvestigator = new KafkaInvestigator();
     try {
-      topics = kafkaInvestigator.getTopics(getEnvironment());
+      topics = kafkaInvestigator.getTopics(environment);
       showConnectionStatus(true);
+      enqueueSuccessful("Se han obtenido " + topics.size() + " topics");
     } catch(KajException ex) {
       topics = new ArrayList<>();
       printException(ex);
       showConnectionStatus(false);
     }
-
+    return null;
   }
 
   protected abstract void showConnectionStatus(boolean b);
@@ -61,7 +67,7 @@ public abstract class KafkaBasePanel extends BasePanel {
     tableModel.agregarColumna("name", "Topic", 200);
     tableModel.agregarColumna("partitions", "Particiones", 20);
     if (update || topics == null) {
-      retrieveTopics();
+      retrieveTopics(getEnvironment());
     }
     tableModel.setListaObjetos(topics);
     return tableModel;
