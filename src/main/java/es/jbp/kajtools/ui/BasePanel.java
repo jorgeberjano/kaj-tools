@@ -174,11 +174,11 @@ public abstract class BasePanel {
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_L && e.isControlDown() && e.isAltDown()) {
           String text = jsonEditor.getText();
-          if (!JsonUtils.isTemplate(text)) {
+//          if (!JsonUtils.isTemplate(text)) {
             int position = jsonEditor.getCaretPosition();
             jsonEditor.setText(JsonUtils.formatJson(text));
             jsonEditor.setCaretPosition(position);
-          }
+//          }
         }
         super.keyPressed(e);
       }
@@ -202,20 +202,7 @@ public abstract class BasePanel {
       scheme.getStyle(VARIABLE).foreground = Color.blue;
       scheme.getStyle(LITERAL_STRING_DOUBLE_QUOTE).foreground = Color.green.darker();
     }
-    jsonEditor.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_L && e.isControlDown() && e.isAltDown()) {
-          String text = jsonEditor.getText();
-          if (!JsonUtils.isTemplate(text)) {
-            int position = jsonEditor.getCaretPosition();
-            jsonEditor.setText(JsonUtils.formatJson(text));
-            jsonEditor.setCaretPosition(position);
-          }
-        }
-        super.keyPressed(e);
-      }
-    });
+
     return jsonEditor;
   }
 

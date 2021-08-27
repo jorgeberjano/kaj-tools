@@ -38,13 +38,6 @@ public class JsonUtils {
         return json.trim().startsWith("[");
     }
 
-    public static boolean isTemplate(String json) {
-        // Se considera que es un template cuando tiene mas @ y $ que dobles comillas.
-        // TODO: ver si hay una forma mas exacta
-        return StringUtils.countMatches(json, "@")
-            + StringUtils.countMatches(json, "$") > StringUtils.countMatches(json, "\"");
-    }
-
     public static String formatJson(String json) {
         if (json == null) {
             return null;

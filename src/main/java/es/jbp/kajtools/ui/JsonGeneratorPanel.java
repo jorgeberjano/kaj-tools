@@ -66,12 +66,9 @@ public class JsonGeneratorPanel extends BasePanel {
   private RTextScrollPane schemaScrollPane;
   private JButton cleanButton;
   private JTextField searchTextField;
-  private JPanel tabTemplate;
-  private RTextScrollPane templateScrollPane;
   private JButton generatrFromJsonButton;
   private RSyntaxTextArea jsonEditor;
   private RSyntaxTextArea schemaEditor;
-  private RSyntaxTextArea templateEditor;
 
   public JsonGeneratorPanel() {
     $$$setupUI$$$();
@@ -110,7 +107,7 @@ public class JsonGeneratorPanel extends BasePanel {
       }
     });
 
-    enableTextSearch(searchTextField, jsonEditor, schemaEditor, templateEditor);
+    enableTextSearch(searchTextField, jsonEditor, schemaEditor);
 
     generatrFromJsonButton.addActionListener(new ActionListener() {
       @Override
@@ -128,8 +125,6 @@ public class JsonGeneratorPanel extends BasePanel {
       return Optional.of(jsonEditor);
     } else if (index == 2) {
       return Optional.of(schemaEditor);
-    } else if (index == 3) {
-      return Optional.of(templateEditor);
     } else {
       return Optional.empty();
     }
@@ -186,9 +181,6 @@ public class JsonGeneratorPanel extends BasePanel {
 
     schemaEditor.setText(result.schema == null ? "" : result.schema);
     schemaEditor.setCaretPosition(0);
-
-    templateEditor.setText(result.template == null ? "" : result.template);
-    templateEditor.setCaretPosition(0);
   }
 
   private GeneratedResult generateAll(String nombreClase) {
@@ -343,10 +335,6 @@ public class JsonGeneratorPanel extends BasePanel {
     tabSchema.setLayout(new BorderLayout(0, 0));
     tabbedPane.addTab("Esquema AVRO", tabSchema);
     tabSchema.add(schemaScrollPane, BorderLayout.CENTER);
-    tabTemplate = new JPanel();
-    tabTemplate.setLayout(new BorderLayout(0, 0));
-    tabbedPane.addTab("Plantilla", tabTemplate);
-    tabTemplate.add(templateScrollPane, BorderLayout.CENTER);
     final JPanel panel1 = new JPanel();
     panel1.setLayout(new GridLayoutManager(1, 5, new Insets(0, 0, 0, 0), -1, -1));
     contentPane.add(panel1,
@@ -420,9 +408,6 @@ public class JsonGeneratorPanel extends BasePanel {
 
     schemaEditor = createJsonEditor();
     schemaScrollPane = createEditorScroll(schemaEditor);
-
-    templateEditor = createJsonEditor();
-    templateScrollPane = createEditorScroll(templateEditor);
   }
 
   @Override

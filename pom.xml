@@ -137,13 +137,6 @@
       <version>3.1.1</version>
     </dependency>
 
-    <!-- JsonTemplate -->
-    <dependency>
-      <groupId>com.github.json-template</groupId>
-      <artifactId>jsontemplate</artifactId>
-      <version>0.2.2</version>
-    </dependency>
-
     <!-- Logstash -->
     <dependency>
       <groupId>net.logstash.logback</groupId>
@@ -166,6 +159,10 @@
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
     </dependency>
   </dependencies>
 </project>

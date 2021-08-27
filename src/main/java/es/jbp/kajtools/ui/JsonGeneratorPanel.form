@@ -115,21 +115,6 @@
               </scrollpane>
             </children>
           </grid>
-          <grid id="d0e51" binding="tabTemplate" layout-manager="BorderLayout" hgap="0" vgap="0">
-            <constraints>
-              <tabbedpane title="Plantilla"/>
-            </constraints>
-            <properties/>
-            <border type="none"/>
-            <children>
-              <scrollpane id="416ea" class="org.fife.ui.rtextarea.RTextScrollPane" binding="templateScrollPane" custom-create="true">
-                <constraints border-constraint="Center"/>
-                <properties/>
-                <border type="none"/>
-                <children/>
-              </scrollpane>
-            </children>
-          </grid>
         </children>
       </tabbedpane>
       <grid id="28ccf" layout-manager="GridLayoutManager" row-count="1" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

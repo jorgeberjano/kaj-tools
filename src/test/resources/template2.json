@@ -1,0 +1,7 @@
+{
+  "identifier": ${UUID},
+  "ramdom": ${rand(100) / 10},
+  "country": ${fileLine("sample/countries.txt")},
+  "date_time": ${dateTime()},
+  "user_name": ${userName}
+}

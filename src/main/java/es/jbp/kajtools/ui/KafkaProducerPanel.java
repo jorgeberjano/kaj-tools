@@ -59,7 +59,6 @@ public class KafkaProducerPanel extends KafkaBasePanel {
 
   private final SchemaRegistryService schemaRegistryService;
   private String currentDirectory;
-  private final Map<String, Object> templateVariables = new HashMap<>();
   private int counter;
   private final Map<String, SchemaCheckStatus> checkedSchemaTopics = new HashMap<>();
 
@@ -93,17 +92,22 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   private RSyntaxTextArea jsonEditorValue;
   private RSyntaxTextArea jsonEditorKey;
 
+  private Map<String, String> templateVariables = new HashMap<>();
+  private TemplateExecutor templateExecutor;
+
   public KafkaProducerPanel() {
 
     $$$setupUI$$$();
 
     Properties properties = new Properties();
     try {
-      properties.load(ResourceUtil.getResourceStream("jsontemplate/variables.properties"));
+      properties.load(ResourceUtil.getResourceStream("variables.properties"));
     } catch (IOException e) {
     }
+
     templateVariables.putAll(Maps.fromProperties(properties));
-    templateVariables.put("i", 1);
+    templateVariables.put("i", "1");
+    templateExecutor = new TemplateExecutor(templateVariables);
 
     currentDirectory = new File(System.getProperty("user.home")).getPath();
     this.schemaRegistryService = KajToolsApp.getInstance().getSchemaRegistryService();
@@ -292,8 +296,8 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   private Void sendEvent(Environment environment, IMessageClient producer, String topic, String key,
       String event, int quantity) {
     for (int i = 1; i <= quantity; i++) {
-      templateVariables.put("i", i);
-      templateVariables.put("counter", ++counter);
+      templateVariables.put("i", Objects.toString(i));
+      templateVariables.put("counter", Objects.toString(++counter));
       sendEvent(environment, producer, topic, key, event);
     }
     return null;
@@ -301,9 +305,9 @@ public class KafkaProducerPanel extends KafkaBasePanel {
 
   private void sendEvent(Environment environment, IMessageClient producer, String topic, String key,
       String event) {
-    TemplateExecutor templateExecutor = new TemplateExecutor(templateVariables);
-    String jsonKey = getJson(templateExecutor, key, "KEY");
-    String jsonEvent = getJson(templateExecutor, event, "EVENT");
+
+    String jsonKey = getJson(key, "KEY");
+    String jsonEvent = getJson(event, "EVENT");
 
     if (StringUtils.isBlank(jsonKey)) {
       enqueueError("No se va a mandar el mensaje porque no se ha indicado ninguna KEY");
@@ -329,11 +333,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     enqueueSuccessful("Enviado el evento correctamente");
   }
 
-  private String getJson(TemplateExecutor templateExecutor, String json, String name) {
-
-    if (!JsonUtils.isTemplate(json)) {
-      return json;
-    }
+  private String getJson(String json, String name) {
 
     String generatedJson;
     try {
