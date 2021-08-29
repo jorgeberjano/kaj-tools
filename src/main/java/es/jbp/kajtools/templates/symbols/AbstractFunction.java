@@ -46,5 +46,8 @@ public abstract class AbstractFunction implements Function {
       return defaultValue;
     }
   }
+   public boolean allowOmitParameters() {
+    return true;
+  }
 
 }

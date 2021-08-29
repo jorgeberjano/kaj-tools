@@ -6,7 +6,6 @@ import java.util.UUID;
 
 public class UuidFunction extends AbstractFunction {
 
-
   @Override
   public Value evaluate(List<Value> parameterList) {
     Value value = randomElement(parameterList);
