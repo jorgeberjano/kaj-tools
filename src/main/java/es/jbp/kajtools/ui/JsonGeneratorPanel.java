@@ -6,7 +6,6 @@ import com.intellij.uiDesigner.core.Spacer;
 import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.util.ClassScanner;
 import es.jbp.kajtools.util.DeepTestObjectCreator;
-import es.jbp.kajtools.util.JsonTemplateCreator;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -150,7 +149,7 @@ public class JsonGeneratorPanel extends BasePanel {
     Object object;
     String json;
     String schema;
-    String template;
+//    String template;
   }
 
   private void asyncGenerateFromJson() {
@@ -188,7 +187,6 @@ public class JsonGeneratorPanel extends BasePanel {
     result.object = instantiateObjet(nombreClase);
     result.json = generateJson(result.object);
     result.schema = generateSchema(result.object);
-    result.template = generateTemplate(result.json);
     return result;
   }
 
@@ -196,7 +194,6 @@ public class JsonGeneratorPanel extends BasePanel {
     GeneratedResult result = new GeneratedResult();
     result.object = instantiateObjetFromJson(nombreClase, json);
     result.schema = generateSchema(result.object);
-    result.template = generateTemplate(json);
     return result;
   }
 
@@ -226,7 +223,7 @@ public class JsonGeneratorPanel extends BasePanel {
     } else {
       enqueueSuccessful("Se ha generado el JSON correctamente");
     }
-    creator.getErrors().forEach(m -> enqueueError(m));
+    creator.getErrors().forEach(this::enqueueError);
     return json;
   }
 
@@ -242,18 +239,6 @@ public class JsonGeneratorPanel extends BasePanel {
     return schema;
   }
 
-  private String generateTemplate(String json) {
-
-    enqueueAction("Generando la plantilla...");
-
-    JsonTemplateCreator creator = new JsonTemplateCreator(json);
-    String template = creator.create();
-    if (!StringUtils.isBlank(json)) {
-      enqueueSuccessful("Se ha generado la plantilla correctamente");
-    }
-    return template;
-  }
-
   private Object instantiateObjetFromJson(String nombreClase, String json) {
 
     enqueueAction("Generando la instancia del objeto desde el JSON...");
@@ -267,7 +252,7 @@ public class JsonGeneratorPanel extends BasePanel {
     } else {
       enqueueError("No se ha podido crear la instancia el Objeto desde el JSON");
     }
-    creator.getErrors().forEach(m -> enqueueError(m));
+    creator.getErrors().forEach(this::enqueueError);
     return generatedObject;
   }
 

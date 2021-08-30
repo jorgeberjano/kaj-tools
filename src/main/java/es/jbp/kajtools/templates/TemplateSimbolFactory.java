@@ -26,7 +26,6 @@ public class TemplateSimbolFactory implements SymbolFactory {
     addVariable("true", new FinalVariable(true));
     addVariable("false", new FinalVariable(false));
     addVariable("username", new FinalVariable(userName));
-    addVariable("uuid", () -> new Value(UUID.randomUUID().toString()));
     addFunction("uuid", new UuidFunction());
     addFunction("str", new StrFunction());
     addFunction("any", new AnyFunction());

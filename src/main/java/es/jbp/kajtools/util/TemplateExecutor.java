@@ -18,4 +18,9 @@ public class TemplateExecutor {
 
     return textTemplate.process(template);
   }
+
+  public boolean containsTemplateExpressions(String json) {
+    return json.contains("${") || json.contains("$S{") || json.contains("$R{") || json.contains("$I{") || json
+        .contains("$F{") || json.contains("$B{");
+  }
 }

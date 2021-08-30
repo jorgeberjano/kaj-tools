@@ -335,6 +335,10 @@ public class KafkaProducerPanel extends KafkaBasePanel {
 
   private String getJson(String json, String name) {
 
+    if (!templateExecutor.containsTemplateExpressions(json)) {
+      return json;
+    }
+
     String generatedJson;
     try {
       generatedJson = templateExecutor.templateToJson(json);

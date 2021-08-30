@@ -147,89 +147,144 @@ Si los esquemas no coinciden se mostrará en la consola de información las dife
 
 
 
-### Plantillas
+### Expresiones
 
-Para facilitar la inyección de datos aleatorios o preprogramados se ha usado la biblioteca **JsonTemplate** alojada en *GitHub* y con artefactos subidos a *Maven Central*. La *URL* de la biblioteca  es https://github.com/json-template/JsonTemplate.
+Para facilitar la inyección de datos aleatorios o preprogramados en los JSON que representan el *Key* y el *Value* del mensaje a enviar se permite incluir expresiones, mediante un leguaje específico de dominio, de tal forma que serán sustiuidas por el valor que genere la evaluación de la misma.
 
-Las plantillas proporcionan un leguaje específico de dominio para crear plantillas a partir de las cuales se genera contenido *JSON*.
+Las expresiones normalmente deben entre una secuencia de caracteres inicial  `${` y el caracter  `}`, aunque en la se secuencia inicial el caracter dolar puede ir seguido de una letra.
 
-Para la producción mensajes la aplicación permite especificar los contenidos *JSON* del *Key* y el *Value* tanto directamente en formato *JSON* o con la sintaxis que proporciona *JsonTemplate*.
+| Sintaxis      | Tipo de salida                                               |
+| ------------- | ------------------------------------------------------------ |
+| `${` ... `}`  | Produce un tipo salida en función del resultado (si es una cadena irá entre comillas dobles) |
+| `$S{` ... `}` | Produce una cadena (entre comillas dobles)                   |
+| `$I{` ... `}` | Produce un entero                                            |
+| `$B{` ... `}` | Produce un booleano                                          |
+| `$R{` ... `}` | Produce un resultado en crudo (si es una cadena no irá entre comillas dobles) |
 
-La sintaxis es parecida a la de un *JSON* normal pero:
 
-- Ni los atributos ni los literales de cadena se expresan entre comillas.
-- Los valores se pueden expresar con productores de valores (*value producers*) que empiezan con @, por ejemplo @s genera una cadena aleatoria.
-- Se pueden usar nombres de algunas variables que llevan el prefijo $.
 
-Los principales productores de valores que proporciona la biblioteca es la siguiente:
+Dentro de la expresión se pueden usar una serie de constantes, variables y funciones que se exponen a continuación. El evaluador de expresiones es insensible a mayúsculas y minúsculas.
 
-| productor de valor | descripción                                           |
-| ------------------ | ----------------------------------------------------- |
-| @smart             | usado para conversión inteligente, se usa por defecto |
-| @s                 | produce una cadena                                    |
-| @i                 | produce un entero                                     |
-| @f                 | produce un número en coma flotante                    |
-| @b                 | produce un booleano                                   |
-| @raw               | produce un contenido de cadena en bruto               |
 
-Los productores personalizados son los siguientes:
+
+##### Constantes:
+
+| productor de valor | descripción                                     |
+| ------------------ | ----------------------------------------------- |
+| true               | El valor booleano true                          |
+| false              | El valor booleano false                         |
+| username           | El nombre del usuario que ejecuta la aplicación |
+| @f                 | produce un número en coma flotante              |
+| @b                 | produce un booleano                             |
+| @raw               | produce un contenido de cadena en bruto         |
+
+##### Funciones
 
 | productor de valor | descripción                                                  |
 | ------------------ | ------------------------------------------------------------ |
-| @date              | produce la fecha actual en un formato determinado o uno por defecto. Para especificar un formato determinado se usa el mismo patrón que usa la clase de Java SimpleDateFormat. |
-| @uuid              | produce un UUID o [Identificador único universal](https://es.wikipedia.org/wiki/Identificador_único_universal#:~:text=UUID se utilizó originalmente en,Open Software Foundation (OSF) .). Si se le suministra un parámetro indica la clave para compartir el valor entre diferentes atributos del JSON o entre atributos de los JSON de la Key y el Value. |
-| @file              | produce una cadena elegida de forma aleatoria de entre todas las líneas de un fichero de texto. |
-| @gs                | produce cadenas con valores aleatorios globales que pueden compartirse entre varios atributos del JSON o entre atributos de los JSON de la Key y el Value. |
+| datetime()         | Produce una cadena con la fecha y hora.<br />Puede recibir un parametro que expresa el formato. por defecto es `yyyy-dd-MM'T'HH:MM'Z'` |
+| uuid()             | produce un UUID o [Identificador único universal](https://es.wikipedia.org/wiki/Identificador_único_universal#:~:text=UUID se utilizó originalmente en,Open Software Foundation (OSF) .). Si se le suministra un parámetro indica la clave para compartir el valor entre diferentes atributos del JSON o entre atributos de los JSON de la Key y el Value. |
+| str()              | Convierte a cadena y concatena todos los parametros que recibe. |
+| any()              | Devuelve, de forma aleatoria, uno de los parámetros que se le pase. |
+| rand()             | Devuelve un valor aleatorio entre 0 hasta valor del partametro que se le pase (no incluido). |
+| fileline()         | Devuelve una linea aleatoria del archivo de texto que se le pase como parámetro. El archivo debe estar incluido en los recursos de la aplicación. |
+| fragment()         | Incluye un fragmento del mensaje tomado del contenido completo de un archivo de recursos. Este archivo de recursos tambien puede contener expresiones. |
+|                    |                                                              |
 
-Hay algunas variable predefinidas por la aplicación que tiene un significado especial:
+##### Variables predefinidas:
 
 | variable | descripción                                                  |
 | -------- | ------------------------------------------------------------ |
-| $i       | índice relativo empezando por 1 del mensaje cuando se mandan varios mensajes a la vez. Si solo se manda uno será, evidentemente, 1. Se resetea cada vez que se envía una serie de mensajes |
-| $counter | contador del número de mensajes enviados desde que se arranca la aplicación |
+| i        | índice relativo empezando por 1 del mensaje cuando se mandan varios mensajes a la vez. Si solo se manda uno será, evidentemente, 1. Se resetea cada vez que se envía una serie de mensajes |
+| counter  | contador del número de mensajes enviados desde que se arranca la aplicación |
+
+
 
 También es posible asignar valores a variables que nos interese usar en nuestras plantillas. Para ello, en el archivo de propiedades `variables.properties` se debe crear un entrada por cada variable que queramos asignar. Dicha variable luego podrá ser usado como valor en cualquiera de los campos de la plantilla.
 
+A continuación se muestra un ejemplo simple de JSON con expresiones
 
-A continuación se muestra un ejemplo simple de plantilla
 
-``` 
+
+`variables.properties`
+
+````properties
+message: un mensaje
+foo: bar
+origin: kaj-tools
+````
+
+`marcas.txt`
+
+````
+tortola
+la pava
+lirios
+acliclas
+````
+
+`metadatos.json`
+
+````json
 {
-  value: @file,
-  flag: @b(true, false, false, false),
-  id: @uuid,
-  type: @s(A, B, C),
-  date: @date(yyyy-MM-dd),
-  origin: $origin,
-  number_string: @s($i),
-  user: @file(users)    
+  "user": ${username},
+  "date": ${dateTime("yyyy-MM-dd")},
+  "origin": ${origin}       
+}
+````
+
+
+
+JSON con expresiones:
+
+``` json
+{
+  "flag": ${any(true, false, false, false)},
+  "flag_string": $S{any(true, false)}
+  "id": ${uuid()},
+  "type": ${any("A", "B", "C")},
+  "brand": ${fileLine("marcas.txt")}
+  "number": ${3 + 2},
+  "number_string": $S{rand(100) / 10}
+  "message": ${message},
+  "message_composition": ${str("Dos mas dos es", 2 + 2)}
+  "metadata": $R{fragment("metadaros.json")}
 }
 ```
-La plantilla de ejemplo podría generar el JSON:
+Un posible JSON que generaría:
 
 
-```
+```json
 {
-  "value": "foo",  
   "flag": false,
+  "flag_string": "true",
   "id": "b3d2cf2d-6267-479c-8df2-4305491537e4",
   "type": "B",
-  "date": "2021-02-07",
-  "origin" : "FOOBAR",
-  "number_string" : "1",
-  "user" : "miriam"
-
+  "brand": "la pava",
+  "number": 5,
+  "number_string" : "9.3",
+  "message": "un mensaje",
+  "message_composition": "Dos mas dos es 4",    
+  "metadata": {
+     "user": "fulanito",
+      "date": "2021-30-08",
+      "origin": "kaj-tools"
+  }  
 }
 ```
 
-- value: un valor de cadena  a partir de una línea aleatoria del archivo de texto almacenado en la carpeta de recursos de la aplicación `jsontemplate/default.txt`.
-- flag: valor booleano con un 75% de probabilidad de que sea false.
-- id: un identificador único universal.
-- type: una cadena aleatoria de entre A, B y C.
-- date: la fecha actual con formato año, mes y día separados por guión.
-- origin:  la cadena variable plp.origin definida en el 
-- number_string: una cadena con el número de mensaje,
-- user: una de las líneas del archivo users.txt
+- `flag`: valor booleano con un 75% de probabilidad de que sea false.
+- `flag_string`: una string con el valor "true" o "false" con un 50% de probabilidad cada uno
+- `id`: un identificador único universal.
+- `type`: una cadena aleatoria de entre "A", "B y "C".
+- `brand`: una cadena que contiene el texto de una línea aleatoria del archivo `marcas.txt`.
+- `number`: el entero resultante de sumar 2 y 3.
+- `message`: el valor string de la propiedad message del fichero variables.properties.
+- `number_string`: una cadena con el número aleatorio del 0 al 10 con un decimal.
+- `metadata`: el fragmento de JSON procesado que contiene el archivo `metadatos.json`.
+- `user`: el nombre de usuario tomado del sistema.
+- `date`: la fecha actual con formato año, mes y día separados por un guión.
+- `origin`: el valor de la propiedad `origin` del archivo `variables.properties`
 
 Para una referencia mas exhaustiva se puede consultar el manual y los ejemplos que hay en el mismo repositorio.
 

@@ -9,7 +9,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import java.io.IOException;
-import org.apache.commons.lang3.StringUtils;
 
 public class JsonUtils {
 
@@ -28,10 +27,6 @@ public class JsonUtils {
 
     public static String toJson(Object object) throws JsonProcessingException {
         return getObjectMapper().writeValueAsString(object);
-    }
-
-    public static String jsonToTemplate(String json) {
-        return JsonTemplateCreator.fromJson(json).create();
     }
 
     public static boolean isArray(String json) {
