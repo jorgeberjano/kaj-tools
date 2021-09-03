@@ -1,8 +1,8 @@
 package es.jbp.expressions;
 
 /**
- *
- * @author Jorge
+ * Nodo del árbol de expresión que representa una expresión.
+ * @author Jorge Berjano
  */
 public interface ExpressionNode {
     Value evaluar() throws ExpressionException;

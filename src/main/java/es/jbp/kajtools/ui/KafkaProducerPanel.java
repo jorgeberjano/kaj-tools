@@ -485,6 +485,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   protected void showConnectionStatus(Boolean ok) {
     buttonCheckEnvironment.setIcon(ok == null ? iconCheckUndefined : (ok ? iconCheckOk : iconCheckFail));
   }
+
   @Override
   protected Environment getEnvironment() {
     return (Environment) comboEnvironment.getSelectedItem();
@@ -499,10 +500,10 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   private void $$$setupUI$$$() {
     createUIComponents();
     contentPane = new JPanel();
-    contentPane.setLayout(new GridLayoutManager(4, 1, new Insets(10, 10, 10, 10), -1, -1));
+    contentPane.setLayout(new GridLayoutManager(5, 2, new Insets(10, 10, 10, 10), -1, -1));
     final JPanel panel1 = new JPanel();
-    panel1.setLayout(new GridLayoutManager(1, 7, new Insets(0, 0, 0, 0), -1, -1));
-    contentPane.add(panel1, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+    panel1.setLayout(new GridLayoutManager(1, 6, new Insets(0, 0, 0, 0), -1, -1));
+    contentPane.add(panel1, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, 1, null, null, null, 0, false));
     buttonCompareSchemas = new JButton();
     buttonCompareSchemas.setIcon(new ImageIcon(getClass().getResource("/images/compare.png")));
@@ -512,27 +513,13 @@ public class KafkaProducerPanel extends KafkaBasePanel {
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
             GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     final Spacer spacer1 = new Spacer();
-    panel1.add(spacer1, new GridConstraints(0, 4, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+    panel1.add(spacer1, new GridConstraints(0, 4, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
         GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
     buttonSend = new JButton();
     buttonSend.setIcon(new ImageIcon(getClass().getResource("/images/enviar.png")));
     buttonSend.setText("Enviar");
     panel1.add(buttonSend,
         new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-            GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-    cleanButton = new JButton();
-    cleanButton.setIcon(new ImageIcon(getClass().getResource("/images/rubber.png")));
-    cleanButton.setText("");
-    cleanButton.setToolTipText("Limpiar");
-    panel1.add(cleanButton, new GridConstraints(0, 5, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
-        GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-    copyButton = new JButton();
-    copyButton.setIcon(new ImageIcon(getClass().getResource("/images/copy.png")));
-    copyButton.setText("");
-    copyButton.setToolTipText("Copiar al portapapeles");
-    panel1.add(copyButton,
-        new GridConstraints(0, 6, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
             GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     quantityComboBox = new JComboBox();
@@ -550,7 +537,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     final JPanel panel2 = new JPanel();
     panel2.setLayout(new GridLayoutManager(6, 3, new Insets(0, 0, 0, 0), -1, -1));
     contentPane.add(panel2,
-        new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL,
+        new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
             GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(615, 121), null, 0, false));
     comboTopic = new JComboBox();
@@ -657,12 +644,25 @@ public class KafkaProducerPanel extends KafkaBasePanel {
         new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
             GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, new Dimension(24, 24),
             new Dimension(24, 24), new Dimension(24, 24), 0, false));
+    final JPanel panel3 = new JPanel();
+    panel3.setLayout(new BorderLayout(0, 0));
+    contentPane.add(panel3, new GridConstraints(4, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
+        null, null, null, 0, false));
+    final JLabel label7 = new JLabel();
+    label7.setIcon(new ImageIcon(getClass().getResource("/images/search.png")));
+    label7.setText("");
+    panel3.add(label7, BorderLayout.WEST);
+    searchTextField = new JTextField();
+    searchTextField.setText("");
+    panel3.add(searchTextField, BorderLayout.CENTER);
+    final JPanel panel4 = new JPanel();
+    panel4.setLayout(new BorderLayout(0, 0));
+    contentPane.add(panel4, new GridConstraints(2, 0, 2, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
     tabbedPane = new JTabbedPane();
-    contentPane.add(tabbedPane,
-        new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(200, 200),
-            null, 0, false));
+    panel4.add(tabbedPane, BorderLayout.CENTER);
     tabInfo = new JPanel();
     tabInfo.setLayout(new BorderLayout(0, 0));
     tabbedPane.addTab("Información", tabInfo);
@@ -687,18 +687,28 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     tabValue.setLayout(new BorderLayout(0, 0));
     tabbedPane.addTab("Value", tabValue);
     tabValue.add(valueScrollPane, BorderLayout.CENTER);
-    final JPanel panel3 = new JPanel();
-    panel3.setLayout(new BorderLayout(0, 0));
-    contentPane.add(panel3, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+    final JPanel panel5 = new JPanel();
+    panel5.setLayout(new GridLayoutManager(4, 1, new Insets(0, 0, 0, 0), -1, -1));
+    panel4.add(panel5, BorderLayout.EAST);
+    cleanButton = new JButton();
+    cleanButton.setIcon(new ImageIcon(getClass().getResource("/images/rubber.png")));
+    cleanButton.setText("");
+    cleanButton.setToolTipText("Limpiar");
+    panel5.add(cleanButton, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+        GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+    copyButton = new JButton();
+    copyButton.setIcon(new ImageIcon(getClass().getResource("/images/copy.png")));
+    copyButton.setText("");
+    copyButton.setToolTipText("Copiar al portapapeles");
+    panel5.add(copyButton, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
         null, null, null, 0, false));
-    final JLabel label7 = new JLabel();
-    label7.setIcon(new ImageIcon(getClass().getResource("/images/search.png")));
-    label7.setText("");
-    panel3.add(label7, BorderLayout.WEST);
-    searchTextField = new JTextField();
-    searchTextField.setText("");
-    panel3.add(searchTextField, BorderLayout.CENTER);
+    final Spacer spacer2 = new Spacer();
+    panel5.add(spacer2, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+        GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+    final Spacer spacer3 = new Spacer();
+    panel5.add(spacer3, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_NONE, 1,
+        GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(-1, 30), null, 0, false));
   }
 
   /**

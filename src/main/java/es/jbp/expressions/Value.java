@@ -3,6 +3,7 @@ package es.jbp.expressions;
 import java.util.Objects;
 
 /**
+ * Representación de un valor de tipo booleano, numérico entero, numérico real o cadena de texto.
  * @author Jorge Berjano
  */
 public class Value {

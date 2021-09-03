@@ -1,8 +1,8 @@
 package es.jbp.expressions;
 
 /**
- *
- * @author Jorge
+ * Nodo del árbol de expresión que representa una variable
+ * @author Jorge Berjano
  */
 public class VariableNode implements ExpressionNode {
     

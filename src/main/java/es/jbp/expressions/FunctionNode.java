@@ -5,24 +5,25 @@ import java.util.List;
 
 
 /**
- * Nodo del arbol de expresión que representa una función matemática.
+ * Nodo del árbol de expresión que representa una función matemática.
+ * @author Jorge Berjano
  */
 public class FunctionNode implements ExpressionNode {
-    private final Function funcion;
+    private final Function function;
     private final List<ExpressionNode> listaNodosParametros = new ArrayList<>();
     
     public static final int MULTIPLES_VALORES = -1;
     
     public FunctionNode(Function funcion) {
-        this.funcion = funcion;
+        this.function = funcion;
     }
 
     public int numeroParametrosEntrada() {
-        return funcion.getParameterCount();
+        return function.getParameterCount();
     }
 
     public boolean allowOmitParameters() {
-        return funcion.allowOmitParameters();
+        return function.allowOmitParameters();
     }
 
     /**
@@ -40,6 +41,6 @@ public class FunctionNode implements ExpressionNode {
         for(ExpressionNode nodoOperando : listaNodosParametros) {
             listaValores.add(nodoOperando.evaluar());
         }
-        return funcion.evaluate(listaValores);
+        return function.evaluate(listaValores);
     }
 }

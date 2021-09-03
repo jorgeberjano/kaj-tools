@@ -36,7 +36,7 @@ public class KajToolsApp {
         this.schemaRegistryService = schemaRegistryService;
     }
 
-    public void showWindow(String[] args) {
+    public void showWindow(String title, String[] args) {
 
         boolean dark = args.length > 0 && "dark".equals(args[0]);
         try {
@@ -55,6 +55,7 @@ public class KajToolsApp {
             try {
                 theme = Theme.load(in);
             } catch (IOException ioe) {
+                System.err.println("No de ha podido cargar el tema dark");
             }
         }
 
@@ -65,6 +66,7 @@ public class KajToolsApp {
                 icono = new ImageIcon(ImageIO.read(url));
             }
         } catch (IOException e) {
+            System.err.println("No de ha podido cargar el icono de la aplicación");
         }
 
         JFrame frame = new JFrame("MainForm");
@@ -77,6 +79,9 @@ public class KajToolsApp {
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setSize(1000, 600);
+        if (title != null) {
+            frame.setTitle(title);
+        }
         frame.setVisible(true);
     }
 }

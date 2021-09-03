@@ -1,8 +1,8 @@
 package es.jbp.expressions;
 
 /**
- *
- * @author Jorge
+ * Nodo del árbol de expresión que representa una constante.
+ * @author Jorge Berjano
  */
 public class ConstantNode implements ExpressionNode {
     

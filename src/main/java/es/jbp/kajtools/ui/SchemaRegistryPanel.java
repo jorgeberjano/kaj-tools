@@ -338,7 +338,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   // Borrado de esquemas
   private void asyncDeleteSelectedSchemaVersion() {
 
-    String version =  Objects.toString(versionsList.getSelectedValue());
+    String version = Objects.toString(versionsList.getSelectedValue());
     if (StringUtils.isBlank(version)) {
       return;
     }
@@ -396,8 +396,6 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
       return;
     }
 
-
-
     printAction("Escritura de nueva versión esquema de " + schemaSubject);
     executeAsyncTask(() -> writeSchema(environment, schemaSubject, jsonSchema),
         this::updateVersionList);
@@ -420,11 +418,11 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   private void $$$setupUI$$$() {
     createUIComponents();
     contentPane = new JPanel();
-    contentPane.setLayout(new GridLayoutManager(4, 1, new Insets(10, 10, 10, 10), -1, -1));
+    contentPane.setLayout(new GridLayoutManager(4, 2, new Insets(10, 10, 10, 10), -1, -1));
     final JPanel panel1 = new JPanel();
     panel1.setLayout(new GridLayoutManager(3, 2, new Insets(0, 0, 0, 0), -1, -1));
     contentPane.add(panel1,
-        new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL,
+        new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
             GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     comboSchemaSubject = new JComboBox();
@@ -458,7 +456,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
             GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     final JPanel panel2 = new JPanel();
     panel2.setLayout(new BorderLayout(0, 0));
-    contentPane.add(panel2, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+    contentPane.add(panel2, new GridConstraints(3, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
         null, null, null, 0, false));
     final JLabel label4 = new JLabel();
@@ -468,20 +466,57 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     searchTextField = new JTextField();
     panel2.add(searchTextField, BorderLayout.CENTER);
     final JPanel panel3 = new JPanel();
-    panel3.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
-    contentPane.add(panel3, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+    panel3.setLayout(new GridLayoutManager(1, 6, new Insets(0, 0, 0, 0), -1, -1));
+    contentPane.add(panel3, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
+        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
+        null, null, null, 0, false));
+    final Spacer spacer1 = new Spacer();
+    panel3.add(spacer1, new GridConstraints(0, 4, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+        GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+    getSchemasButton = new JButton();
+    getSchemasButton.setText("Obtener esquemas");
+    getSchemasButton.setToolTipText("Obtiene todos los esquemas del Schema Registry ");
+    panel3.add(getSchemasButton,
+        new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+    final Spacer spacer2 = new Spacer();
+    panel3.add(spacer2, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+        GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+    dangerLabel = new JLabel();
+    dangerLabel.setIcon(new ImageIcon(getClass().getResource("/images/danger.png")));
+    dangerLabel.setText("");
+    dangerLabel.setToolTipText("Cuidado, no estas en el entorno local");
+    panel3.add(dangerLabel, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+        GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+    writeSchemaButton = new JButton();
+    writeSchemaButton.setText("Escribir esquema");
+    panel3.add(writeSchemaButton,
+        new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+            GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+    final JPanel panel4 = new JPanel();
+    panel4.setLayout(new BorderLayout(0, 0));
+    contentPane.add(panel4, new GridConstraints(2, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+    final JPanel panel5 = new JPanel();
+    panel5.setLayout(new BorderLayout(0, 0));
+    panel4.add(panel5, BorderLayout.WEST);
+    final JLabel label5 = new JLabel();
+    label5.setText("Versiones");
+    panel5.add(label5, BorderLayout.NORTH);
+    final JScrollPane scrollPane1 = new JScrollPane();
+    panel5.add(scrollPane1, BorderLayout.CENTER);
+    versionsList = new JList();
+    scrollPane1.setViewportView(versionsList);
     tabbedPane = new JTabbedPane();
-    panel3.add(tabbedPane, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
-        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(200, 200),
-        null, 0, false));
+    panel4.add(tabbedPane, BorderLayout.CENTER);
     tabInfo = new JPanel();
     tabInfo.setLayout(new BorderLayout(0, 0));
     tabbedPane.addTab("Información", tabInfo);
-    final JScrollPane scrollPane1 = new JScrollPane();
-    tabInfo.add(scrollPane1, BorderLayout.CENTER);
+    final JScrollPane scrollPane2 = new JScrollPane();
+    tabInfo.add(scrollPane2, BorderLayout.CENTER);
     infoTextPane = new JTextPane();
     infoTextPane.setBackground(new Color(-16777216));
     infoTextPane.setCaretColor(new Color(-1));
@@ -492,71 +527,37 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     }
     infoTextPane.setForeground(new Color(-1));
     infoTextPane.putClientProperty("charset", "");
-    scrollPane1.setViewportView(infoTextPane);
+    scrollPane2.setViewportView(infoTextPane);
     tabSchema = new JPanel();
     tabSchema.setLayout(new BorderLayout(0, 0));
     tabbedPane.addTab("Esquema", tabSchema);
     tabSchema.add(schemaScrollPane, BorderLayout.CENTER);
-    final JPanel panel4 = new JPanel();
-    panel4.setLayout(new BorderLayout(0, 0));
-    panel3.add(panel4, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
-        GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-        null, new Dimension(60, -1), null, 0, false));
-    final JLabel label5 = new JLabel();
-    label5.setText("Versiones");
-    panel4.add(label5, BorderLayout.NORTH);
-    final JScrollPane scrollPane2 = new JScrollPane();
-    panel4.add(scrollPane2, BorderLayout.CENTER);
-    versionsList = new JList();
-    scrollPane2.setViewportView(versionsList);
-    final JPanel panel5 = new JPanel();
-    panel5.setLayout(new GridLayoutManager(1, 7, new Insets(0, 0, 0, 0), -1, -1));
-    contentPane.add(panel5, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
-        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
-        null, null, null, 0, false));
+    final JPanel panel6 = new JPanel();
+    panel6.setLayout(new GridLayoutManager(4, 1, new Insets(0, 0, 0, 0), -1, -1));
+    panel4.add(panel6, BorderLayout.EAST);
     cleanButton = new JButton();
     cleanButton.setHorizontalTextPosition(0);
     cleanButton.setIcon(new ImageIcon(getClass().getResource("/images/rubber.png")));
     cleanButton.setText("");
     cleanButton.setToolTipText("Limpiar");
     cleanButton.putClientProperty("html.disable", Boolean.TRUE);
-    panel5.add(cleanButton,
-        new GridConstraints(0, 5, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-            GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-    final Spacer spacer1 = new Spacer();
-    panel5.add(spacer1, new GridConstraints(0, 4, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
-        GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+    panel6.add(cleanButton, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
+        null, null, null, 0, false));
     copyButton = new JButton();
     copyButton.setHorizontalTextPosition(0);
     copyButton.setIcon(new ImageIcon(getClass().getResource("/images/copy.png")));
     copyButton.setText("");
     copyButton.setToolTipText("Copiar al portapapeles");
-    panel5.add(copyButton, new GridConstraints(0, 6, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+    panel6.add(copyButton, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-    getSchemasButton = new JButton();
-    getSchemasButton.setText("Obtener esquemas");
-    getSchemasButton.setToolTipText("Obtiene todos los esquemas del Schema Registry ");
-    panel5.add(getSchemasButton,
-        new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-    final Spacer spacer2 = new Spacer();
-    panel5.add(spacer2, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
-        GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
-    dangerLabel = new JLabel();
-    dangerLabel.setIcon(new ImageIcon(getClass().getResource("/images/danger.png")));
-    dangerLabel.setText("");
-    dangerLabel.setToolTipText("Cuidado, no estas en el entorno local");
-    panel5.add(dangerLabel, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
-        GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-    writeSchemaButton = new JButton();
-    writeSchemaButton.setText("Escribir esquema");
-    panel5.add(writeSchemaButton,
-        new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-            GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+    final Spacer spacer3 = new Spacer();
+    panel6.add(spacer3, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+        GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+    final Spacer spacer4 = new Spacer();
+    panel6.add(spacer4, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_NONE, 1,
+        GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(-1, 30), null, 0, false));
   }
 
   /**

@@ -1,5 +1,9 @@
 package es.jbp.expressions;
 
+/**
+ * Variable con un valor constante.
+ * @author Jorge Berjano
+ */
 public class FinalVariable implements Variable {
 
   private final Value value;

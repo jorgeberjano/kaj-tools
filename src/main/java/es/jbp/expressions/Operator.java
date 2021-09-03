@@ -4,7 +4,8 @@ import es.jbp.expressions.Value.ValueType;
 import java.util.List;
 
 /**
- * @author Jorge
+ * Operador matemático representado como una función
+ * @author Jorge Berjano
  */
 public abstract class Operator implements Function {
 

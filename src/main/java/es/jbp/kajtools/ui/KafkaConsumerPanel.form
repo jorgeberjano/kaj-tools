@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="contentPane" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="10" left="10" bottom="10" right="10"/>
     <constraints>
-      <xy x="20" y="20" width="831" height="562"/>
+      <xy x="20" y="20" width="897" height="562"/>
     </constraints>
     <properties/>
     <border type="empty">
@@ -145,7 +145,7 @@
           </grid>
         </constraints>
         <properties>
-          <dividerLocation value="120"/>
+          <dividerLocation value="150"/>
           <orientation value="0"/>
         </properties>
         <border type="none"/>
@@ -166,92 +166,139 @@
               </component>
             </children>
           </scrollpane>
-          <tabbedpane id="2d280" binding="tabbedPane">
+          <grid id="4172b" layout-manager="BorderLayout" hgap="0" vgap="0">
             <constraints>
               <splitpane position="right"/>
             </constraints>
             <properties/>
             <border type="none"/>
             <children>
-              <grid id="6b50e" binding="tabInfo" layout-manager="BorderLayout" hgap="0" vgap="0">
-                <constraints>
-                  <tabbedpane title="Información"/>
-                </constraints>
+              <tabbedpane id="2d280" binding="tabbedPane">
+                <constraints border-constraint="Center"/>
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <scrollpane id="3d968">
-                    <constraints border-constraint="Center"/>
+                  <grid id="6b50e" binding="tabInfo" layout-manager="BorderLayout" hgap="0" vgap="0">
+                    <constraints>
+                      <tabbedpane title="Información"/>
+                    </constraints>
                     <properties/>
                     <border type="none"/>
                     <children>
-                      <component id="e6ec0" class="javax.swing.JTextPane" binding="infoTextPane">
-                        <constraints/>
-                        <properties>
-                          <background color="-16777216"/>
-                          <caretColor color="-1"/>
-                          <editable value="false"/>
-                          <font name="Consolas" size="12"/>
-                          <foreground color="-1"/>
-                        </properties>
-                        <clientProperties>
-                          <charset class="java.lang.String" value=""/>
-                        </clientProperties>
-                      </component>
+                      <scrollpane id="3d968">
+                        <constraints border-constraint="Center"/>
+                        <properties/>
+                        <border type="none"/>
+                        <children>
+                          <component id="e6ec0" class="javax.swing.JTextPane" binding="infoTextPane">
+                            <constraints/>
+                            <properties>
+                              <background color="-16777216"/>
+                              <caretColor color="-1"/>
+                              <editable value="false"/>
+                              <font name="Consolas" size="12"/>
+                              <foreground color="-1"/>
+                            </properties>
+                            <clientProperties>
+                              <charset class="java.lang.String" value=""/>
+                            </clientProperties>
+                          </component>
+                        </children>
+                      </scrollpane>
                     </children>
-                  </scrollpane>
+                  </grid>
+                  <grid id="2707a" binding="tabFilter" layout-manager="BorderLayout" hgap="0" vgap="0">
+                    <constraints>
+                      <tabbedpane title="Filtro"/>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <scrollpane id="6f628" class="org.fife.ui.rtextarea.RTextScrollPane" binding="filterScrollPane" custom-create="true">
+                        <constraints border-constraint="Center"/>
+                        <properties/>
+                        <border type="none"/>
+                        <children/>
+                      </scrollpane>
+                    </children>
+                  </grid>
+                  <grid id="239e3" binding="tabKey" layout-manager="BorderLayout" hgap="0" vgap="0">
+                    <constraints>
+                      <tabbedpane title="Key"/>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <scrollpane id="be79b" class="org.fife.ui.rtextarea.RTextScrollPane" binding="keyScrollPane" custom-create="true">
+                        <constraints border-constraint="Center"/>
+                        <properties/>
+                        <border type="none"/>
+                        <children/>
+                      </scrollpane>
+                    </children>
+                  </grid>
+                  <grid id="ff05a" binding="tabValue" layout-manager="BorderLayout" hgap="0" vgap="0">
+                    <constraints>
+                      <tabbedpane title="Value"/>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <scrollpane id="40ce8" class="org.fife.ui.rtextarea.RTextScrollPane" binding="valueScrollPane" custom-create="true">
+                        <constraints border-constraint="Center"/>
+                        <properties/>
+                        <border type="none"/>
+                        <children/>
+                      </scrollpane>
+                    </children>
+                  </grid>
                 </children>
-              </grid>
-              <grid id="2707a" binding="tabFilter" layout-manager="BorderLayout" hgap="0" vgap="0">
-                <constraints>
-                  <tabbedpane title="Filtro"/>
-                </constraints>
+              </tabbedpane>
+              <grid id="97cdf" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
+                <constraints border-constraint="East"/>
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <scrollpane id="6f628" class="org.fife.ui.rtextarea.RTextScrollPane" binding="filterScrollPane" custom-create="true">
-                    <constraints border-constraint="Center"/>
-                    <properties/>
-                    <border type="none"/>
-                    <children/>
-                  </scrollpane>
-                </children>
-              </grid>
-              <grid id="239e3" binding="tabKey" layout-manager="BorderLayout" hgap="0" vgap="0">
-                <constraints>
-                  <tabbedpane title="Key"/>
-                </constraints>
-                <properties/>
-                <border type="none"/>
-                <children>
-                  <scrollpane id="be79b" class="org.fife.ui.rtextarea.RTextScrollPane" binding="keyScrollPane" custom-create="true">
-                    <constraints border-constraint="Center"/>
-                    <properties/>
-                    <border type="none"/>
-                    <children/>
-                  </scrollpane>
-                </children>
-              </grid>
-              <grid id="ff05a" binding="tabValue" layout-manager="BorderLayout" hgap="0" vgap="0">
-                <constraints>
-                  <tabbedpane title="Value"/>
-                </constraints>
-                <properties/>
-                <border type="none"/>
-                <children>
-                  <scrollpane id="40ce8" class="org.fife.ui.rtextarea.RTextScrollPane" binding="valueScrollPane" custom-create="true">
-                    <constraints border-constraint="Center"/>
-                    <properties/>
-                    <border type="none"/>
-                    <children/>
-                  </scrollpane>
+                  <component id="ad12d" class="javax.swing.JButton" binding="cleanButton" default-binding="true">
+                    <constraints>
+                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <icon value="images/rubber.png"/>
+                      <text value=""/>
+                      <toolTipText value="Limpiar"/>
+                    </properties>
+                  </component>
+                  <component id="59472" class="javax.swing.JButton" binding="copyButton">
+                    <constraints>
+                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <icon value="images/copy.png"/>
+                      <text value=""/>
+                      <toolTipText value="Copiar al portapapeles"/>
+                    </properties>
+                  </component>
+                  <vspacer id="be0ed">
+                    <constraints>
+                      <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                  </vspacer>
+                  <vspacer id="d9cf">
+                    <constraints>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="1" fill="0" indent="0" use-parent-layout="false">
+                        <preferred-size width="-1" height="30"/>
+                      </grid>
+                    </constraints>
+                  </vspacer>
                 </children>
               </grid>
             </children>
-          </tabbedpane>
+          </grid>
         </children>
       </splitpane>
-      <grid id="e271c" layout-manager="GridLayoutManager" row-count="1" column-count="10" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="e271c" layout-manager="GridLayoutManager" row-count="1" column-count="8" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
@@ -284,26 +331,6 @@
             <properties>
               <text value="Rebobinar:"/>
               <toolTipText value="Número registros por partición a rebobinar"/>
-            </properties>
-          </component>
-          <component id="ad12d" class="javax.swing.JButton" binding="cleanButton" default-binding="true">
-            <constraints>
-              <grid row="0" column="8" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <icon value="images/rubber.png"/>
-              <text value=""/>
-              <toolTipText value="Limpiar"/>
-            </properties>
-          </component>
-          <component id="59472" class="javax.swing.JButton" binding="copyButton">
-            <constraints>
-              <grid row="0" column="9" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <icon value="images/copy.png"/>
-              <text value=""/>
-              <toolTipText value="Copiar al portapapeles"/>
             </properties>
           </component>
           <hspacer id="82a4b">

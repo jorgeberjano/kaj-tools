@@ -4,7 +4,6 @@ import java.util.regex.Pattern;
 
 /**
  * Representa un token generado por el analizador lexico.
- *
  * @author Jorge Berjano
  */
 public class Token {

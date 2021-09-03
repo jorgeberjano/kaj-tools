@@ -1,5 +1,5 @@
 {
-  "identifier": ${UUID},
+  "identifier": ${uuid()},
   "ramdom": ${rand(100) / 10},
   "country": ${fileLine("sample/countries.txt")},
   "date_time": ${dateTime()},

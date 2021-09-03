@@ -14,6 +14,7 @@ import java.util.List;
 /**
  * Compilador de expresiones. Genera una estructura de árbol que representa la expresión en memoria y sirve para evaluar
  * su valor.
+ * @author Jorge Berjano
  */
 public class ExpressionCompiler {
 
