@@ -154,31 +154,15 @@ public abstract class BasePanel {
   }
 
   protected RSyntaxTextArea createJsonEditor() {
-    final RSyntaxTextArea jsonEditor = new RSyntaxTextArea();
-    jsonEditor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JSON);
-    jsonEditor.setCodeFoldingEnabled(true);
-    jsonEditor.setAlignmentX(0.0F);
-    Font font = new Font("Courier New", Font.PLAIN, 12);
-    jsonEditor.setFont(font);
-    Theme theme = KajToolsApp.getInstance().getTheme();
-    if (theme != null) {
-      theme.apply(jsonEditor);
-    } else {
-      SyntaxScheme scheme = jsonEditor.getSyntaxScheme();
-      scheme.getStyle(SEPARATOR).foreground = Color.black;
-      scheme.getStyle(VARIABLE).foreground = Color.blue;
-      scheme.getStyle(LITERAL_STRING_DOUBLE_QUOTE).foreground = Color.green.darker();
-    }
+    final RSyntaxTextArea jsonEditor = createEditor(SyntaxConstants.SYNTAX_STYLE_JSON);
     jsonEditor.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_L && e.isControlDown() && e.isAltDown()) {
           String text = jsonEditor.getText();
-//          if (!JsonUtils.isTemplate(text)) {
             int position = jsonEditor.getCaretPosition();
             jsonEditor.setText(JsonUtils.formatJson(text));
             jsonEditor.setCaretPosition(position);
-//          }
         }
         super.keyPressed(e);
       }
@@ -187,8 +171,16 @@ public abstract class BasePanel {
   }
 
   protected RSyntaxTextArea createScriptEditor() {
+    return createEditor(SyntaxConstants.SYNTAX_STYLE_JAVASCRIPT);
+  }
+
+  protected RSyntaxTextArea createPropertiesEditor() {
+    return createEditor(SyntaxConstants.SYNTAX_STYLE_PROPERTIES_FILE);
+  }
+
+  protected RSyntaxTextArea createEditor(String styleKey) {
     final RSyntaxTextArea jsonEditor = new RSyntaxTextArea();
-    jsonEditor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVASCRIPT);
+    jsonEditor.setSyntaxEditingStyle(styleKey);
     jsonEditor.setCodeFoldingEnabled(true);
     jsonEditor.setAlignmentX(0.0F);
     Font font = new Font("Courier New", Font.PLAIN, 12);
@@ -205,7 +197,6 @@ public abstract class BasePanel {
 
     return jsonEditor;
   }
-
 
   protected interface AsyncTask<T> {
     T execute();

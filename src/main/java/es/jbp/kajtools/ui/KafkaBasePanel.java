@@ -7,9 +7,11 @@ import es.jbp.kajtools.tabla.ModeloTablaGenerico;
 import es.jbp.kajtools.tabla.entities.TopicItem;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
+import javax.swing.text.JTextComponent;
 import lombok.Getter;
 
 public abstract class KafkaBasePanel extends BasePanel {
@@ -77,6 +79,15 @@ public abstract class KafkaBasePanel extends BasePanel {
     }
     tableModel.setListaObjetos(topics);
     return tableModel;
+  }
+
+
+  protected Optional<JTextComponent> getUmpteenthEditor(int index, JTextComponent... editors) {
+    if (editors.length > index) {
+      return Optional.of(editors[index]);
+    } else {
+      return Optional.empty();
+    }
   }
 
 }

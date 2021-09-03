@@ -4,7 +4,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import es.jbp.kajtools.Environment;
-import es.jbp.kajtools.EnvironmentConfiguration;
+import es.jbp.kajtools.configuration.Configuration;
 import es.jbp.kajtools.IMessageClient;
 import es.jbp.kajtools.KajException;
 import es.jbp.kajtools.KajToolsApp;
@@ -98,7 +98,7 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     $$$setupUI$$$();
 
     // Combo Entorno
-    EnvironmentConfiguration.ENVIRONMENT_LIST.forEach(comboEnvironment::addItem);
+    Configuration.getEnvironmentList().forEach(comboEnvironment::addItem);
 
     buttonCheckEnvironment.addActionListener(e -> asyncRetrieveTopics());
 

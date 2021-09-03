@@ -1,11 +1,10 @@
 package es.jbp.kajtools.ui;
 
-import com.google.common.collect.Maps;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import es.jbp.kajtools.Environment;
-import es.jbp.kajtools.EnvironmentConfiguration;
+import es.jbp.kajtools.configuration.Configuration;
 import es.jbp.kajtools.GenericClient;
 import es.jbp.kajtools.IMessageClient;
 import es.jbp.kajtools.tabla.entities.TopicItem;
@@ -74,8 +73,6 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   private JPanel tabInfo;
   private JPanel tabValue;
   private JPanel tabKey;
-  private RTextScrollPane valueScrollPane;
-  private RTextScrollPane keyScrollPane;
   @Getter
   private JTextPane infoTextPane;
   private JComboBox comboProducer;
@@ -89,25 +86,20 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   private JComboBox comboDomain;
   private JButton buttonFindTopic;
   private JButton buttonCheckEnvironment;
-  private RSyntaxTextArea jsonEditorValue;
-  private RSyntaxTextArea jsonEditorKey;
+  private RTextScrollPane valueScrollPane;
+  private RTextScrollPane keyScrollPane;
+  private RTextScrollPane variablesScrollPane;
+  private RSyntaxTextArea valueEditor;
+  private RSyntaxTextArea keyEditor;
+  private RSyntaxTextArea variablesEditor;
 
-  private Map<String, String> templateVariables = new HashMap<>();
-  private TemplateExecutor templateExecutor;
+  private TemplateExecutor templateExecutor = new TemplateExecutor();
 
   public KafkaProducerPanel() {
 
     $$$setupUI$$$();
 
-    Properties properties = new Properties();
-    try {
-      properties.load(ResourceUtil.getResourceStream("variables.properties"));
-    } catch (IOException e) {
-    }
-
-    templateVariables.putAll(Maps.fromProperties(properties));
-    templateVariables.put("i", "1");
-    templateExecutor = new TemplateExecutor(templateVariables);
+    variablesEditor.setText(ResourceUtil.readResourceString("variables.properties"));
 
     currentDirectory = new File(System.getProperty("user.home")).getPath();
     this.schemaRegistryService = KajToolsApp.getInstance().getSchemaRegistryService();
@@ -117,7 +109,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     buttonSend.addActionListener(e -> asyncSendEvent());
 
     // Combo Entorno
-    EnvironmentConfiguration.ENVIRONMENT_LIST.forEach(comboEnvironment::addItem);
+    Configuration.getEnvironmentList().forEach(comboEnvironment::addItem);
     comboEnvironment.addActionListener(e -> {
       boolean local = ((Environment) comboEnvironment.getSelectedItem()).getName().toLowerCase()
           .contains("local");
@@ -151,7 +143,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
 
     IntStream.rangeClosed(1, MAXIMUM_QUANTITY).forEach(quantityComboBox::addItem);
 
-    enableTextSearch(searchTextField, jsonEditorValue, jsonEditorKey);
+    enableTextSearch(searchTextField, valueEditor, keyEditor, variablesEditor);
   }
 
   private void findTopic() {
@@ -196,14 +188,14 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   private void openFileForKey() {
     File file = chooseAndReadFile();
     if (file != null) {
-      loadJsonFromFile(file, jsonEditorKey);
+      loadJsonFromFile(file, keyEditor);
     }
   }
 
   private void openFileForEvent() {
     File file = chooseAndReadFile();
     if (file != null) {
-      loadJsonFromFile(file, jsonEditorValue);
+      loadJsonFromFile(file, valueEditor);
     }
   }
 
@@ -222,13 +214,13 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   private void loadResourceForKey() {
     String path = Optional.ofNullable(comboKey.getSelectedItem()).map(Object::toString)
         .orElse("");
-    loadJsonFromResource(path, jsonEditorKey);
+    loadJsonFromResource(path, keyEditor);
   }
 
   private void loadResourceForValue() {
     String path = Optional.ofNullable(comboValue.getSelectedItem()).map(Object::toString)
         .orElse("");
-    loadJsonFromResource(path, jsonEditorValue);
+    loadJsonFromResource(path, valueEditor);
   }
 
   private void loadJsonFromResource(String path, RSyntaxTextArea jsonEditor) {
@@ -263,8 +255,8 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     }
 
     printAction("Enviando evento a " + topic);
-    String key = jsonEditorKey.getText();
-    String event = jsonEditorValue.getText();
+    String key = keyEditor.getText();
+    String event = valueEditor.getText();
     int quantity = (int) quantityComboBox.getSelectedItem();
     executeAsyncTask(() -> sendEvent(environment, producer, topic, key, event, quantity));
   }
@@ -295,9 +287,12 @@ public class KafkaProducerPanel extends KafkaBasePanel {
 
   private Void sendEvent(Environment environment, IMessageClient producer, String topic, String key,
       String event, int quantity) {
+
+    String variablesProperties = variablesEditor.getText();
+    templateExecutor.setVariables(variablesProperties);
     for (int i = 1; i <= quantity; i++) {
-      templateVariables.put("i", Objects.toString(i));
-      templateVariables.put("counter", Objects.toString(++counter));
+      templateExecutor.setVariableValue("i", Objects.toString(i));
+      templateExecutor.setVariableValue("counter", Objects.toString(++counter));
       sendEvent(environment, producer, topic, key, event);
     }
     return null;
@@ -412,8 +407,8 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     }
 
     try {
-      avroSchema = isKey ? producer.getKeySchema(jsonEditorKey.getText())
-          : producer.getValueSchema(jsonEditorValue.getText());
+      avroSchema = isKey ? producer.getKeySchema(keyEditor.getText())
+          : producer.getValueSchema(valueEditor.getText());
     } catch (Exception e) {
       enqueueError("Error obteniendo esquema AVRO de " +
           (isKey ? producer.getKeyClassName() : producer.getValueClassName()));
@@ -455,10 +450,12 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   }
 
   private void createUIComponents() {
-    jsonEditorValue = createJsonEditor();
-    valueScrollPane = createEditorScroll(jsonEditorValue);
-    jsonEditorKey = createJsonEditor();
-    keyScrollPane = createEditorScroll(jsonEditorKey);
+    valueEditor = createJsonEditor();
+    valueScrollPane = createEditorScroll(valueEditor);
+    keyEditor = createJsonEditor();
+    keyScrollPane = createEditorScroll(keyEditor);
+    variablesEditor = createPropertiesEditor();
+    variablesScrollPane = createEditorScroll(variablesEditor);
   }
 
   @Override
@@ -470,15 +467,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   @Override
   protected Optional<JTextComponent> getCurrentEditor() {
     int index = tabbedPane.getSelectedIndex();
-    if (index == 0) {
-      return Optional.of(infoTextPane);
-    } else if (index == 1) {
-      return Optional.of(jsonEditorKey);
-    } else if (index == 2) {
-      return Optional.of(jsonEditorValue);
-    } else {
-      return Optional.empty();
-    }
+    return getUmpteenthEditor(index, infoTextPane, keyEditor, valueEditor, variablesEditor);
   }
 
   @Override
@@ -688,26 +677,30 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     tabbedPane.addTab("Value", tabValue);
     tabValue.add(valueScrollPane, BorderLayout.CENTER);
     final JPanel panel5 = new JPanel();
-    panel5.setLayout(new GridLayoutManager(4, 1, new Insets(0, 0, 0, 0), -1, -1));
-    panel4.add(panel5, BorderLayout.EAST);
+    panel5.setLayout(new BorderLayout(0, 0));
+    tabbedPane.addTab("Variables", panel5);
+    panel5.add(variablesScrollPane, BorderLayout.CENTER);
+    final JPanel panel6 = new JPanel();
+    panel6.setLayout(new GridLayoutManager(4, 1, new Insets(0, 0, 0, 0), -1, -1));
+    panel4.add(panel6, BorderLayout.EAST);
     cleanButton = new JButton();
     cleanButton.setIcon(new ImageIcon(getClass().getResource("/images/rubber.png")));
     cleanButton.setText("");
     cleanButton.setToolTipText("Limpiar");
-    panel5.add(cleanButton, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+    panel6.add(cleanButton, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     copyButton = new JButton();
     copyButton.setIcon(new ImageIcon(getClass().getResource("/images/copy.png")));
     copyButton.setText("");
     copyButton.setToolTipText("Copiar al portapapeles");
-    panel5.add(copyButton, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+    panel6.add(copyButton, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
         null, null, null, 0, false));
     final Spacer spacer2 = new Spacer();
-    panel5.add(spacer2, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
+    panel6.add(spacer2, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
         GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
     final Spacer spacer3 = new Spacer();
-    panel5.add(spacer3, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_NONE, 1,
+    panel6.add(spacer3, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_NONE, 1,
         GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(-1, 30), null, 0, false));
   }
 

@@ -7,9 +7,7 @@ import es.jbp.expressions.Value;
 import es.jbp.expressions.Value.ValueType;
 import java.util.Map;
 import java.util.Objects;
-import lombok.Builder;
 
-@Builder
 public class TextTemplate {
 
   private enum Context {
@@ -19,11 +17,19 @@ public class TextTemplate {
     INSIDE_EXPRESSION
   }
 
-  private final Map<String, String> variables;
+  private final TemplateSimbolFactory templateSimbolFactory = new TemplateSimbolFactory(this);
+
+  public void setVariableValues(Map<String, String> variableValues) {
+    templateSimbolFactory.setVariableValues(variableValues);
+  }
+
+  public void setVariableValue(String variableName, String value) {
+    templateSimbolFactory.setVariableValue(variableName, value);
+  }
 
   public String process(String text) throws ExpressionException {
 
-    final ExpressionCompiler compilador = new ExpressionCompiler(new TemplateSimbolFactory(variables, this));
+    final ExpressionCompiler compilador = new ExpressionCompiler(templateSimbolFactory);
 
     StringBuilder stringBuilder = new StringBuilder();
     Context context = Context.OUTSIDE;
@@ -60,7 +66,7 @@ public class TextTemplate {
       } else if (ch == '}' && context == Context.INSIDE_EXPRESSION) {
         String expression = text.substring(expressionStartIndex + 1, i);
 
-        ExpressionNode expressionNode = compilador.compilar(expression);
+        ExpressionNode expressionNode = compilador.compile(expression);
         Value value;
         if (expressionNode != null) {
           value = expressionNode.evaluar();

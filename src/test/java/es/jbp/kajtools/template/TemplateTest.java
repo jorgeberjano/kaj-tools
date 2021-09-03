@@ -7,32 +7,30 @@ import es.jbp.expressions.ExpressionException;
 import es.jbp.kajtools.templates.TextTemplate;
 import es.jbp.kajtools.util.ResourceUtil;
 import java.util.Collections;
+import org.junit.Before;
 import org.junit.Test;
 
 public class TemplateTest {
+
+    TextTemplate textTemplate = new TextTemplate();
 
     @Test
     public void test() throws ExpressionException {
         String template = ResourceUtil.readResourceString("template.json");
         String expected = ResourceUtil.readResourceString("expected.json");
 
-        String actual = TextTemplate.builder()
-            .variables(Collections.singletonMap("variable", "valor"))
-            .build()
-            .process(template);
+        textTemplate.setVariableValues(Collections.singletonMap("variable", "valor"));
 
+        String actual = textTemplate.process(template);
         assertEquals(expected, actual);
     }
 
     @Test
     public void testUUID() throws ExpressionException {
         String template = ResourceUtil.readResourceString("template2.json");
-        String actual = TextTemplate.builder()
-            .variables(Collections.singletonMap("variable", "valor"))
-            .build()
-            .process(template);
+        textTemplate.setVariableValues(Collections.singletonMap("variable", "valor"));
 
+        String actual = textTemplate.process(template);
         assertNotNull(actual);
-
     }
 }

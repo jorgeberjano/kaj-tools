@@ -321,6 +321,21 @@
                   </scrollpane>
                 </children>
               </grid>
+              <grid id="fd095" layout-manager="BorderLayout" hgap="0" vgap="0">
+                <constraints>
+                  <tabbedpane title="Variables"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <scrollpane id="7eebe" class="org.fife.ui.rtextarea.RTextScrollPane" binding="variablesScrollPane" custom-create="true">
+                    <constraints border-constraint="Center"/>
+                    <properties/>
+                    <border type="none"/>
+                    <children/>
+                  </scrollpane>
+                </children>
+              </grid>
             </children>
           </tabbedpane>
           <grid id="76316" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

@@ -22,7 +22,6 @@ public class KajToolsApp {
     @Getter
     private static KajToolsApp instance;
     @Getter
-
     private final List<IMessageClient> clientList;
     @Getter
     private final SchemaRegistryService schemaRegistryService;

@@ -5,7 +5,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import es.jbp.kajtools.Environment;
-import es.jbp.kajtools.EnvironmentConfiguration;
+import es.jbp.kajtools.configuration.Configuration;
 import es.jbp.kajtools.IMessageClient;
 import es.jbp.kajtools.ui.InfoMessage.Type;
 import es.jbp.kajtools.KajToolsApp;
@@ -103,7 +103,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     dangerLabel.setVisible(false);
 
     // Combo Entorno
-    EnvironmentConfiguration.ENVIRONMENT_LIST.stream().forEach(comboEnvironment::addItem);
+    Configuration.getEnvironmentList().stream().forEach(comboEnvironment::addItem);
     comboEnvironment.addActionListener(e -> {
       boolean local = getEnvironment().getName().toLowerCase().contains("local");
       dangerLabel.setVisible(!local);
