@@ -24,7 +24,7 @@ public class TemplateExecutor {
     return textTemplate.process(template);
   }
 
-  public boolean containsTemplateExpressions(String json) {
+  public static boolean containsTemplateExpressions(String json) {
     return json.contains("${") || json.contains("$S{") || json.contains("$R{") || json.contains("$I{") || json
         .contains("$F{") || json.contains("$B{");
   }
@@ -43,5 +43,13 @@ public class TemplateExecutor {
 
   public void setVariableValue(String variableName, String value) {
     textTemplate.setVariableValue(variableName, value);
+  }
+
+  public String formatJson(String text) throws ExpressionException {
+    text = textTemplate.encodeBeforeFormatting(text);
+
+    text = JsonUtils.formatJson(text);
+
+    return textTemplate.decodeAfterFormatting(text);
   }
 }

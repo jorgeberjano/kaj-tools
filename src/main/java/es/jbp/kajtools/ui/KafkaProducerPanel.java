@@ -93,8 +93,6 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   private RSyntaxTextArea keyEditor;
   private RSyntaxTextArea variablesEditor;
 
-  private TemplateExecutor templateExecutor = new TemplateExecutor();
-
   public KafkaProducerPanel() {
 
     $$$setupUI$$$();

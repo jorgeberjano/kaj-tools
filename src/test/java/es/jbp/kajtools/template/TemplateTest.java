@@ -33,4 +33,14 @@ public class TemplateTest {
         String actual = textTemplate.process(template);
         assertNotNull(actual);
     }
+
+    @Test
+    public void testFormat() throws ExpressionException {
+        String template = ResourceUtil.readResourceString("template2.json");
+
+        String encoded = textTemplate.encodeBeforeFormatting(template);
+        String actual = textTemplate.decodeAfterFormatting(encoded);
+
+        assertEquals(template, actual);
+    }
 }

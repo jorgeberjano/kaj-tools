@@ -4,4 +4,5 @@
   "country": ${fileLine("sample/countries.txt")},
   "date_time": ${dateTime()},
   "user_name": ${userName}
+  "text": ${"\n\"\\"}
 }

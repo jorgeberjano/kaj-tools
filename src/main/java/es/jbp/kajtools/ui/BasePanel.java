@@ -4,14 +4,12 @@ import static org.fife.ui.rsyntaxtextarea.TokenTypes.LITERAL_STRING_DOUBLE_QUOTE
 import static org.fife.ui.rsyntaxtextarea.TokenTypes.SEPARATOR;
 import static org.fife.ui.rsyntaxtextarea.TokenTypes.VARIABLE;
 
-import es.jbp.kajtools.Environment;
-import es.jbp.kajtools.KafkaInvestigator;
+import es.jbp.expressions.ExpressionException;
 import es.jbp.kajtools.KajException;
-import es.jbp.kajtools.tabla.ModeloTablaGenerico;
-import es.jbp.kajtools.tabla.entities.TopicItem;
-import es.jbp.kajtools.ui.InfoMessage.Type;
 import es.jbp.kajtools.KajToolsApp;
+import es.jbp.kajtools.ui.InfoMessage.Type;
 import es.jbp.kajtools.util.JsonUtils;
+import es.jbp.kajtools.util.TemplateExecutor;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
@@ -27,11 +25,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Vector;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.swing.JDialog;
-import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.SwingWorker;
@@ -54,6 +49,8 @@ import org.fife.ui.rtextarea.SearchEngine;
 import org.fife.ui.rtextarea.SearchResult;
 
 public abstract class BasePanel {
+
+  protected TemplateExecutor templateExecutor = new TemplateExecutor();
 
   protected AtomicBoolean abortTasks = new AtomicBoolean();
 
@@ -159,15 +156,27 @@ public abstract class BasePanel {
       @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_L && e.isControlDown() && e.isAltDown()) {
-          String text = jsonEditor.getText();
-            int position = jsonEditor.getCaretPosition();
-            jsonEditor.setText(JsonUtils.formatJson(text));
-            jsonEditor.setCaretPosition(position);
+          formatJsonInEditor(jsonEditor);
         }
         super.keyPressed(e);
       }
     });
     return jsonEditor;
+  }
+
+  protected void formatJsonInEditor(RSyntaxTextArea jsonEditor) {
+    String text = jsonEditor.getText();
+    int position = jsonEditor.getCaretPosition();
+
+    try {
+      text = templateExecutor.formatJson(text);
+    } catch (ExpressionException e) {
+      System.err.println("No de pudo formatear el JSON");
+      return;
+    }
+
+    jsonEditor.setText(text);
+    jsonEditor.setCaretPosition(position);
   }
 
   protected RSyntaxTextArea createScriptEditor() {
@@ -199,6 +208,7 @@ public abstract class BasePanel {
   }
 
   protected interface AsyncTask<T> {
+
     T execute();
   }
 
@@ -323,5 +333,6 @@ public abstract class BasePanel {
   }
 
   protected abstract Component getContentPane();
+
 
 }

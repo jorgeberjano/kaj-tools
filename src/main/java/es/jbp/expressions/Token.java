@@ -14,7 +14,8 @@ public class Token {
     NUMBER("[0-9]*\\.?[0-9]*([eE][-+]?[0-9]*)?"),
     COLON(","),
     IDENTIFIER("[A-Za-z_][A-Za-z_0-9]*[\\.]*[A-Za-z_0-9]*"),
-    STRING("\"[^\"]*\""),
+    //STRING("\"[^\"]*\""),
+    STRING("\"(\\.|[^\"])*\""),
     OPEN_PARENTHESIS("\\("),
     CLOSE_PARENTHESIS("\\)");
 
