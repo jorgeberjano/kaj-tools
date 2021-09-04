@@ -20,7 +20,8 @@ public class FragmentFunction extends AbstractFunction {
     if (fileName == null) {
       return null;
     }
-    return new Value(textTemplate.process(ResourceUtil.readResourceString(fileName)));
+    String fragment = ResourceUtil.readResourceString(fileName);
+    return new Value(textTemplate.process(fragment));
   }
 
   @Override

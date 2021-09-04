@@ -223,6 +223,10 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   }
 
   private void loadJsonFromResource(String path, RSyntaxTextArea jsonEditor) {
+
+    if (StringUtils.isBlank(path)) {
+      return;
+    }
     IMessageClient producer = (IMessageClient) comboProducer.getSelectedItem();
     if (producer != null) {
       path = producer.getFolder() + File.separator + path;

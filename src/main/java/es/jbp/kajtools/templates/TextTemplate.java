@@ -12,8 +12,8 @@ import org.apache.commons.text.StringEscapeUtils;
 
 public class TextTemplate {
 
-  private static final String BEGIN_EXPRESSION = "\"»»»»»";
-  private static final String END_EXPRESSION = "«««««\"";
+  private static final String BEGIN_ENCODED_EXPRESSION = "\"»»»»»";
+  private static final String END_ENCODED_EXPRESSION = "«««««\"";
 
   private enum Context {
     OUTSIDE,
@@ -43,7 +43,7 @@ public class TextTemplate {
     StringBuilder builder = new StringBuilder();
 
     while (StringUtils.isNotBlank(text)) {
-      int beginIndex = text.indexOf(BEGIN_EXPRESSION);
+      int beginIndex = text.indexOf(BEGIN_ENCODED_EXPRESSION);
 
       if (beginIndex < 0) {
         builder.append(text);
@@ -52,11 +52,11 @@ public class TextTemplate {
       builder.append(text.substring(0, beginIndex));
       text = text.substring(beginIndex);
 
-      int endIndex = text.indexOf(END_EXPRESSION);
+      int endIndex = text.indexOf(END_ENCODED_EXPRESSION);
       if (endIndex >= 0) {
-        String expression = text.substring(BEGIN_EXPRESSION.length(), endIndex);
+        String expression = text.substring(BEGIN_ENCODED_EXPRESSION.length(), endIndex);
         builder.append(StringEscapeUtils.unescapeJava(expression));
-        text = text.substring(endIndex + END_EXPRESSION.length());
+        text = text.substring(endIndex + END_ENCODED_EXPRESSION.length());
       }
     }
 
@@ -65,7 +65,7 @@ public class TextTemplate {
 
   private String encodeExpression(String text) {
     text = StringEscapeUtils.escapeJava(text);
-    return BEGIN_EXPRESSION + text + END_EXPRESSION;
+    return BEGIN_ENCODED_EXPRESSION + text + END_ENCODED_EXPRESSION;
   }
 
   private interface ExpressionSubstitution {
