@@ -1,5 +1,8 @@
 package es.jbp.expressions;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 /**
  * Variable con un valor constante.
  * @author Jorge Berjano
@@ -16,11 +19,11 @@ public class FinalVariable implements Variable {
     this.value = new Value(value);
   }
 
-  public FinalVariable(Long value) {
+  public FinalVariable(BigInteger value) {
     this.value = new Value(value);
   }
 
-  public FinalVariable(Double value) {
+  public FinalVariable(BigDecimal value) {
     this.value = new Value(value);
   }
 

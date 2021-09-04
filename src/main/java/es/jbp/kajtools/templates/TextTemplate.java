@@ -53,7 +53,7 @@ public class TextTemplate {
         } else if (ch == 'I') {
           focedValueType = ValueType.INTEGER;
         } else if (ch == 'F') {
-          focedValueType = ValueType.FLOAT;
+          focedValueType = ValueType.DECIMAL;
         } else if (ch == 'B') {
           focedValueType = ValueType.BOOLEAN;
         } else if (ch == '{') {
@@ -71,7 +71,7 @@ public class TextTemplate {
         if (expressionNode != null) {
           value = expressionNode.evaluar();
         } else {
-          value = new Value(null);
+          value = new Value();
         }
         stringBuilder.append(toJson(value, focedValueType, raw));
 

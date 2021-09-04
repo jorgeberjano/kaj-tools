@@ -31,17 +31,17 @@ public abstract class AbstractFunction implements Function {
     return list.get(i);
   }
 
-  protected Long getParameterAsLong(List<Value> parameterList, long index, long defaultValue) {
+  protected Long getParameterAsLong(List<Value> parameterList, int index, long defaultValue) {
     if (parameterList.size() > index) {
-      return parameterList.get(0).toLong();
+      return parameterList.get(index).toBigInteger().longValue();
     } else {
       return defaultValue;
     }
   }
 
-  protected String getParameterAsString(List<Value> parameterList, long index, String defaultValue) {
+  protected String getParameterAsString(List<Value> parameterList, int index, String defaultValue) {
     if (parameterList.size() > index) {
-      return parameterList.get(0).toString();
+      return parameterList.get(index).toString();
     } else {
       return defaultValue;
     }

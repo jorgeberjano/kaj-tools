@@ -4,12 +4,13 @@
     "via": "rue del percebe",
     "numero": ${10 + 3}
   },
-  "puntuacion": ${100 / 2},
+  "puntuacion": ${100 / 3},
+  "half": ${100 / 2},
   "numero": ${"10" + "10"},
   "hola": ${"mundo"},
   "holamundo": ${str("hola", " ", "mundo")},
-  "entero19": $I{"19"},
-  "real19": $F{"19"},
+  "entero19": $I{"19.5"},
+  "real19": $F{"19.5"},
   "string19": ${STR(19.0, " es diecinueve")},
   "variable": ${variable}
 }

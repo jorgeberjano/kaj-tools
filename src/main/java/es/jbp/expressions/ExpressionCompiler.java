@@ -6,8 +6,10 @@ import es.jbp.expressions.Operator.GreaterEquals;
 import es.jbp.expressions.Operator.Less;
 import es.jbp.expressions.Operator.LessEquals;
 import es.jbp.expressions.Operator.Multiplication;
-import es.jbp.expressions.Operator.Substract;
+import es.jbp.expressions.Operator.Subtract;
 import es.jbp.expressions.Token.Type;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,79 +32,79 @@ public class ExpressionCompiler {
   public static final String TOKEN_NO_RECONOCIDO = "Token no reconocido";
   private final List<Token> listaTokens = new ArrayList<>();
 
-  private SymbolFactory factoriaIdentificadores;
+  private SymbolFactory symbolFactory;
 
-  public ExpressionCompiler(SymbolFactory factoriaIdentificadores) {
-    this.factoriaIdentificadores = factoriaIdentificadores;
+  public ExpressionCompiler(SymbolFactory symbolFactory) {
+    this.symbolFactory = symbolFactory;
   }
 
-  public void setFactoriaIdentificadores(SymbolFactory factoriaIdentificadores) {
-    this.factoriaIdentificadores = factoriaIdentificadores;
+  public void setSymbolFactory(SymbolFactory symbolFactory) {
+    this.symbolFactory = symbolFactory;
   }
 
   /**
    * Realiza el analisis lexico y sintactico de la expresion que se le inyecta
    */
-  public ExpressionNode compilar(String expresion) throws ExpressionException {
-    if (!analisisLexico(expresion)) {
+  public ExpressionNode compile(String expression) throws ExpressionException {
+    if (!lexicalAnalisis(expression)) {
       return null;
     }
 
     return analisisSintactico();
   }
 
-  private void error(String mensaje, String tokens, int posicion) throws ExpressionException {
-    throw new es.jbp.expressions.ExpressionException(mensaje + " (" + posicion + "): " + tokens);
+  private void error(String message, String tokens, int position) throws ExpressionException {
+    throw new es.jbp.expressions.ExpressionException(message + " (" + position + "): " + tokens);
   }
 
   /*
    * Analisis lexico: separa la expresión en tokens.
    */
-  public boolean analisisLexico(String expresion) throws ExpressionException {
+  public boolean lexicalAnalisis(String expression) throws ExpressionException {
     listaTokens.clear();
-    if (expresion.isEmpty()) {
+    if (expression.isEmpty()) {
       error("Falta la expresión", "", 0);
       return false;
     }
 
-    int indiceBase = 0;
-    int indiceActual = 0;
-    Token ultimoToken = null;
+    int baseIndex = 0;
+    int currentIndex = 0;
+    Token lastToken = null;
 
-    while (indiceActual < expresion.length()) {
-      String parte = mid(expresion, indiceBase, indiceActual - indiceBase + 1);
+    while (currentIndex < expression.length()) {
+      String fragment = mid(expression, baseIndex, currentIndex - baseIndex + 1);
 
-      if ("\"".equals(parte)) {
-        indiceActual = expresion.indexOf('"', indiceActual + 1);
-        parte = mid(expresion, indiceBase, indiceActual - indiceBase + 1);
+      if ("\"".equals(fragment)) {
+        currentIndex = expression.indexOf('"', currentIndex + 1);
+        fragment = mid(expression, baseIndex, currentIndex - baseIndex + 1);
       }
 
-      Type tipo = determinarTipoDeToken(parte);
+      Type tokenType = determinarTipoDeToken(fragment);
 
-      if (tipo == null) {
-        if (ultimoToken != null) {
+      if (tokenType == null) {
+        if (lastToken != null) {
           // se agrega el ultimo token valido que no sea un espacio
-          if (ultimoToken.type != Type.SPACE) {
-            agregarToken(ultimoToken);
-            ultimoToken = null;
+          if (lastToken.type != Type.SPACE) {
+            addToken(lastToken);
+            lastToken = null;
           }
-          indiceBase = indiceActual;
+          baseIndex = currentIndex;
           continue;
         } else {
-          error(TOKEN_NO_RECONOCIDO, parte, indiceBase);
+          error(TOKEN_NO_RECONOCIDO, fragment, baseIndex);
           return false;
         }
       } else { // Token valido
-        ultimoToken = new Token(tipo);
-        ultimoToken.position = indiceBase;
-        ultimoToken.text = parte;
+        lastToken = new Token(tokenType);
+        lastToken.position = baseIndex;
+        lastToken.text = fragment;
       }
-      indiceActual++;
+      currentIndex++;
     }
 
-    if (ultimoToken != null && ultimoToken.type != null &&
-        ultimoToken.type != Type.SPACE) {
-      agregarToken(ultimoToken);
+    if (lastToken != null && lastToken.type != null &&
+        lastToken.type != Type.SPACE) {
+      addToken(lastToken);
     }
 
     return true;
@@ -111,7 +113,7 @@ public class ExpressionCompiler {
   /**
    * Agrega un token a la lista de tokens y le asignana la prioridad que le corresponda.
    */
-  private void agregarToken(Token token) {
+  private void addToken(Token token) {
     Token ultimoToken = null;
 
     if (!listaTokens.isEmpty()) {
@@ -220,7 +222,7 @@ public class ExpressionCompiler {
       if (nodoOperando1 != null) {
         nodoOperador.agregarOperando(nodoOperando1);
       } else if ("+".equals(tokenOperador.text) || "-".equals(tokenOperador.text)) {
-        nodoOperador.agregarOperando(new ConstantNode(new Value(0.0)));
+        nodoOperador.agregarOperando(new ConstantNode(new Value(BigInteger.ZERO)));
       } else {
         error(FALTA_EL_OPERANDO_IZQUIERDO, tokenOperador.text, tokenOperador.position);
         return null;
@@ -290,10 +292,10 @@ public class ExpressionCompiler {
       String valor = mid(token.text, 1, token.text.length() - 2);
       return new ConstantNode(new Value(valor));
     } else if (token.text.contains(".")) {
-      double valor = Double.parseDouble(token.text);
+      BigDecimal valor = new BigDecimal(token.text);
       return new ConstantNode(new Value(valor));
     } else {
-      long valor = Long.parseLong(token.text);
+      BigInteger valor = new BigInteger(token.text);
       return new ConstantNode(new Value(valor));
     }
   }
@@ -301,8 +303,8 @@ public class ExpressionCompiler {
   private VariableNode crearNodoVariable(Token token) throws ExpressionException {
 
     Variable variable = null;
-    if (factoriaIdentificadores != null) {
-      variable = factoriaIdentificadores.createVariable(token.text);
+    if (symbolFactory != null) {
+      variable = symbolFactory.createVariable(token.text);
     }
     if (variable == null) {
       error(VARIABLE_NO_ENCONTRADA, token.text, token.position);
@@ -313,12 +315,12 @@ public class ExpressionCompiler {
   }
 
   private FunctionNode crearNodoFuncion(Token token) throws ExpressionException {
-    Function funcion = crearFuncion(token.text);
-    if (funcion == null) {
+    Function function = crearFuncion(token.text);
+    if (function == null) {
       error(FUNCION_NO_RECONOCIDA, token.text, token.position);
       return null;
     }
-    return new FunctionNode(funcion);
+    return new FunctionNode(function);
   }
 
   /**
@@ -387,8 +389,8 @@ public class ExpressionCompiler {
    */
   private Function crearOperador(String nombreFuncion) {
     Function operator = null;
-    if (factoriaIdentificadores != null) {
-      operator = factoriaIdentificadores.createOperator(nombreFuncion);
+    if (symbolFactory != null) {
+      operator = symbolFactory.createOperator(nombreFuncion);
       if (operator != null) {
         return operator;
       }
@@ -397,7 +399,7 @@ public class ExpressionCompiler {
     if ("+".equals(nombreFuncion)) {
       operator = new Addition();
     } else if ("-".equals(nombreFuncion)) {
-      operator = new Substract();
+      operator = new Subtract();
     } else if ("*".equals(nombreFuncion)) {
       operator = new Multiplication();
     } else if ("/".equals(nombreFuncion)) {
@@ -425,8 +427,8 @@ public class ExpressionCompiler {
   private Function crearFuncion(String nombreFuncion) {
 
     Function function = null;
-    if (factoriaIdentificadores != null) {
-      function = factoriaIdentificadores.createFunction(nombreFuncion);
+    if (symbolFactory != null) {
+      function = symbolFactory.createFunction(nombreFuncion);
     }
     return function;
   }

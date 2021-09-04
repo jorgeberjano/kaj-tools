@@ -1,7 +1,12 @@
 package es.jbp.expressions;
 
+import com.google.common.math.BigIntegerMath;
 import es.jbp.expressions.Value.ValueType;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.MathContext;
 import java.util.List;
+import java.util.function.BiFunction;
 
 /**
  * Operador matemático representado como una función
@@ -17,12 +22,12 @@ public abstract class Operator implements Function {
     if (!parameterList.isEmpty()) {
       valor1 = parameterList.get(0);
     } else {
-      valor1 = new Value(0.0);
+      valor1 = new Value(BigDecimal.ZERO);
     }
     if (parameterList.size() > 1) {
       valor2 = parameterList.get(1);
     } else {
-      valor2 = new Value(0.0);
+      valor2 = new Value(BigDecimal.ZERO);
     }
     return operar(valor1, valor2);
   }
@@ -43,21 +48,21 @@ public abstract class Operator implements Function {
     @Override
     public Value operar(Value valor1, Value valor2) {
       if (valor1.getType() == ValueType.INTEGER && valor2.getType() == ValueType.INTEGER) {
-        return new Value(valor1.toLong() + valor2.toLong());
+        return new Value(valor1.toBigInteger().add(valor2.toBigInteger()));
       } else {
-        return new Value(valor1.toDouble() + valor2.toDouble());
+        return new Value(valor1.toBigDecimal().add(valor2.toBigDecimal()));
       }
     }
   }
 
-  public static class Substract extends Operator {
+  public static class Subtract extends Operator {
 
     @Override
     public Value operar(Value valor1, Value valor2) {
       if (valor1.getType() == ValueType.INTEGER && valor2.getType() == ValueType.INTEGER) {
-        return new Value(valor1.toLong() - valor2.toLong());
+        return new Value(valor1.toBigInteger().subtract(valor2.toBigInteger()));
       } else {
-        return new Value(valor1.toDouble() - valor2.toDouble());
+        return new Value(valor1.toBigDecimal().subtract(valor2.toBigDecimal()));
       }
     }
   }
@@ -67,9 +72,9 @@ public abstract class Operator implements Function {
     @Override
     public Value operar(Value valor1, Value valor2) {
       if (valor1.getType() == ValueType.INTEGER && valor2.getType() == ValueType.INTEGER) {
-        return new Value(valor1.toLong() * valor2.toLong());
+        return new Value(valor1.toBigInteger().multiply(valor2.toBigInteger()));
       } else {
-        return new Value(valor1.toDouble() * valor2.toDouble());
+        return new Value(valor1.toBigDecimal().multiply(valor2.toBigDecimal()));
       }
     }
   }
@@ -78,7 +83,15 @@ public abstract class Operator implements Function {
 
     @Override
     public Value operar(Value valor1, Value valor2) {
-      return new Value(valor1.toDouble() / valor2.toDouble());
+      return new Value(valor1.toBigDecimal().divide(valor2.toBigDecimal(), MathContext.DECIMAL32));
+    }
+  }
+
+  static class Equals extends Operator {
+
+    @Override
+    public Value operar(Value valor1, Value valor2) {
+      return new Value(valor1.toBigDecimal().equals(valor2.toBigDecimal()));
     }
   }
 
@@ -86,7 +99,7 @@ public abstract class Operator implements Function {
 
     @Override
     public Value operar(Value valor1, Value valor2) {
-      return new Value(valor1.toDouble() < valor2.toDouble());
+      return new Value(valor1.toBigDecimal().compareTo(valor2.toBigDecimal()) < 0);
     }
   }
 
@@ -94,7 +107,7 @@ public abstract class Operator implements Function {
 
     @Override
     public Value operar(Value valor1, Value valor2) {
-      return new Value(valor1.toDouble() <= valor2.toDouble());
+      return new Value(valor1.toBigDecimal().compareTo(valor2.toBigDecimal()) <= 0);
     }
   }
 
@@ -102,7 +115,7 @@ public abstract class Operator implements Function {
 
     @Override
     public Value operar(Value valor1, Value valor2) {
-      return new Value(valor1.toDouble() > valor2.toDouble());
+      return new Value(valor1.toBigDecimal().compareTo(valor2.toBigDecimal()) > 0);
     }
   }
 
@@ -110,7 +123,7 @@ public abstract class Operator implements Function {
 
     @Override
     public Value operar(Value valor1, Value valor2) {
-      return new Value(valor1.toDouble() >= valor2.toDouble());
+      return new Value(valor1.toBigDecimal().compareTo(valor2.toBigDecimal()) >= 0);
     }
   }
 

@@ -1,5 +1,7 @@
 package es.jbp.expressions;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Objects;
 
 /**
@@ -11,26 +13,31 @@ public class Value {
     public enum ValueType {
         BOOLEAN,
         INTEGER,
-        FLOAT,
+        DECIMAL,
         STRING
     }
 
     private final ValueType type;
     private final Object variant;
 
+    public Value() {
+        type = ValueType.STRING;
+        variant = "";
+    }
+
     public Value(boolean valor) {
         type = ValueType.BOOLEAN;
         variant = valor;
     }
 
-    public Value(long valor) {
+    public Value(BigInteger valor) {
         type = ValueType.INTEGER;
         variant = valor;
     }
 
-    public Value(double valor) {
+    public Value(BigDecimal valor) {
 
-        type = ValueType.FLOAT;
+        type = ValueType.DECIMAL;
         variant = valor;
     }
 
@@ -47,31 +54,34 @@ public class Value {
         return Objects.toString(variant);
     }
 
-    public Long toLong() {
+    public BigInteger toBigInteger() {
         if (variant == null) {
-            return 0L;
+            return BigInteger.valueOf(0L);
         }
         if (variant instanceof Boolean) {
-            return (boolean) variant ? 1L : 0L;
+            return (boolean) variant ? BigInteger.ONE : BigInteger.ZERO;
         }
-        if (variant instanceof Number) {
-            return ((Number) variant).longValue();
+        if (variant instanceof BigInteger) {
+            return (BigInteger) variant;
         }
-        return Long.parseLong(variant.toString());
+        if (variant instanceof BigDecimal) {
+            return ((BigDecimal) variant).toBigInteger();
+        }
+        return new BigDecimal(variant.toString()).toBigInteger();
     }
 
-    public Double toDouble() {
+    public BigDecimal toBigDecimal() {
         if (variant == null) {
-            return 0.0;
+            return new BigDecimal(0);
         }
         if (variant instanceof Boolean) {
-            return (boolean) variant ? 1.0 : 0.0;
+            return (boolean) variant ? BigDecimal.ONE : BigDecimal.ZERO;
         }
 
-        if (variant instanceof Double) {
-            return (Double) variant;
+        if (variant instanceof BigDecimal) {
+            return (BigDecimal) variant;
         }
-        return Double.parseDouble(variant.toString());
+        return new BigDecimal(variant.toString());
     }
 
     public Boolean toBoolean() {
@@ -99,9 +109,9 @@ public class Value {
             case STRING:
                 return toString();
             case INTEGER:
-                return toLong();
-            case FLOAT:
-                return toDouble();
+                return toBigInteger();
+            case DECIMAL:
+                return toBigDecimal();
             default:
                 return null;
         }
