@@ -10,15 +10,15 @@ import java.util.List;
  */
 public class FunctionNode implements ExpressionNode {
     private final Function function;
-    private final List<ExpressionNode> listaNodosParametros = new ArrayList<>();
+    private final List<ExpressionNode> parameterNodeList = new ArrayList<>();
     
-    public static final int MULTIPLES_VALORES = -1;
+    public static final int MULTIPLE_VALUES = -1;
     
     public FunctionNode(Function funcion) {
         this.function = funcion;
     }
 
-    public int numeroParametrosEntrada() {
+    public int parameterCount() {
         return function.getParameterCount();
     }
 
@@ -29,17 +29,17 @@ public class FunctionNode implements ExpressionNode {
     /**
      * Añade un nodo de parámetro de entrada a la función
      */
-    public void agregarOperando(ExpressionNode nodoOperando) {
-        listaNodosParametros.add(nodoOperando);
+    public void addOperand(ExpressionNode operandNode) {
+        parameterNodeList.add(operandNode);
     }
 
     /**
      * Ejecuta la función asociada al nodo y devuelve el valor del calculo realizado
      */
-    public Value evaluar() throws ExpressionException {
+    public Value evaluate() throws ExpressionException {
         List<Value> listaValores = new ArrayList<>();
-        for(ExpressionNode nodoOperando : listaNodosParametros) {
-            listaValores.add(nodoOperando.evaluar());
+        for(ExpressionNode parameterNode : parameterNodeList) {
+            listaValores.add(parameterNode.evaluate());
         }
         return function.evaluate(listaValores);
     }

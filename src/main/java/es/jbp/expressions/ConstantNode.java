@@ -5,16 +5,15 @@ package es.jbp.expressions;
  * @author Jorge Berjano
  */
 public class ConstantNode implements ExpressionNode {
-    
-    public ConstantNode(Value valor) {
-        this.valor = valor;
+
+    private Value value;
+
+    public ConstantNode(Value value) {
+        this.value = value;
     }
-    /*!
-     * Devuelve el valor de la constante
-     */
-    public Value evaluar() {
-        return valor;
+
+    public Value evaluate() {
+        return value;
     }
-    
-    private Value valor;
+
 }

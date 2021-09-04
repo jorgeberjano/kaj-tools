@@ -12,6 +12,7 @@ import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -187,13 +188,15 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
 
   @Getter(lazy = true)
   private final List<String> availableKeys = ResourceUtil.getResourceFileNames(getFolder()).stream()
-      .filter(s -> s.toLowerCase().contains("key.")).collect(
-          Collectors.toList());
+      .filter(s -> s.toLowerCase().contains("key."))
+      .map(s -> Paths.get(s).getFileName().toString())
+      .collect(Collectors.toList());
 
   @Getter(lazy = true)
   private final List<String> availableValues = ResourceUtil.getResourceFileNames(getFolder())
-      .stream().filter(s -> s.toLowerCase().contains("value.")).collect(
-          Collectors.toList());
+      .stream().filter(s -> s.toLowerCase().contains("value."))
+      .map(s -> Paths.get(s).getFileName().toString())
+      .collect(Collectors.toList());
 
   public String getFolder() {
     return ".";
@@ -271,7 +274,7 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
   }
 
   public List<RecordItem> consumeLastRecords(Environment environment, String topic,
-      MessageFilter filter,  long maxRecordsPerPartition, AtomicBoolean abort) throws KajException {
+      MessageFilter filter, long maxRecordsPerPartition, AtomicBoolean abort) throws KajException {
     try (KafkaConsumer<K, V> consumer = new KafkaConsumer<>(createConsumerProperties(environment))) {
       consumer.subscribe(Collections.singletonList(topic));
 

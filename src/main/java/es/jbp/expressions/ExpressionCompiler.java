@@ -20,17 +20,18 @@ import java.util.List;
  */
 public class ExpressionCompiler {
 
-  public static final String FALTA_UN_PARENTESIS_DE_CIERRE = "Falta un paréntesis de cierre";
-  public static final String OPERADOR_INVALIDO = "Operador inválido";
-  public static final String ERROR_DE_SINTAXIS = "Error de sintaxis";
-  public static final String VARIABLE_NO_ENCONTRADA = "Variable no encontrada";
-  public static final String FUNCION_NO_RECONOCIDA = "Función no reconocida";
-  public static final String DEMASIADOS_PARENTESIS_DE_CIERRE_EN_LA_FUNCION = "Demasiados paréntesis de cierre en la función";
-  public static final String NUMERO_DE_PARAMETROS_EXCESIVO = "Número de parámetros excesivo";
-  public static final String FALTA_EL_OPERANDO_DERECHO = "Falta el operando derecho";
-  public static final String FALTA_EL_OPERANDO_IZQUIERDO = "Falta el operando izquierdo";
-  public static final String TOKEN_NO_RECONOCIDO = "Token no reconocido";
-  private final List<Token> listaTokens = new ArrayList<>();
+  public static final String MISSING_CLOSING_PARENTHESIS = "Falta un paréntesis de cierre";
+  public static final String INVALID_OPERATOR = "Operador inválido";
+  public static final String SYNTAX_ERROR = "Error de sintaxis";
+  public static final String VARIABLE_NOT_FOUND = "Variable no encontrada";
+  public static final String FUNCTION_NOT_FOUND = "Función no reconocida";
+  public static final String TOO_MANY_CLOSING_PARENTHESIS = "Demasiados paréntesis de cierre en la función";
+  public static final String TOO_MANY_PARAMETERS = "Número de parámetros excesivo";
+  public static final String MISSING_RIGTH_OPERAND = "Falta el operando derecho";
+  public static final String MISSING_LEFT_OPERAND = "Falta el operando izquierdo";
+  public static final String TOKEN_UNRECOGNIZED = "Token no reconocido";
+  public static final String MISSING_EXPRESSION = "Falta la expresión";
+  private final List<Token> TokenList = new ArrayList<>();
 
   private SymbolFactory symbolFactory;
 
@@ -43,14 +44,14 @@ public class ExpressionCompiler {
   }
 
   /**
-   * Realiza el analisis lexico y sintactico de la expresion que se le inyecta
+   * Realiza el análisis lexico y sintáctico de una expresión
    */
   public ExpressionNode compile(String expression) throws ExpressionException {
-    if (!lexicalAnalisis(expression)) {
+    if (!lexicalAnalysis(expression)) {
       return null;
     }
 
-    return analisisSintactico();
+    return syntacticalAnalysis();
   }
 
   private void error(String message, String tokens, int position) throws ExpressionException {
@@ -58,12 +59,12 @@ public class ExpressionCompiler {
   }
 
   /*
-   * Analisis lexico: separa la expresión en tokens.
+   * Realiza el análisis lexico de una expresión: separa la expresión en tokens.
    */
-  public boolean lexicalAnalisis(String expression) throws ExpressionException {
-    listaTokens.clear();
+  public boolean lexicalAnalysis(String expression) throws ExpressionException {
+    TokenList.clear();
     if (expression.isEmpty()) {
-      error("Falta la expresión", "", 0);
+      error(MISSING_EXPRESSION, "", 0);
       return false;
     }
 
@@ -91,7 +92,7 @@ public class ExpressionCompiler {
           baseIndex = currentIndex;
           continue;
         } else {
-          error(TOKEN_NO_RECONOCIDO, fragment, baseIndex);
+          error(TOKEN_UNRECOGNIZED, fragment, baseIndex);
           return false;
         }
       } else { // Token valido
@@ -116,8 +117,8 @@ public class ExpressionCompiler {
   private void addToken(Token token) {
     Token ultimoToken = null;
 
-    if (!listaTokens.isEmpty()) {
-      ultimoToken = listaTokens.get(listaTokens.size() - 1);
+    if (!TokenList.isEmpty()) {
+      ultimoToken = TokenList.get(TokenList.size() - 1);
     }
 
     if (token.text.compareToIgnoreCase("OR") == 0) {
@@ -140,7 +141,7 @@ public class ExpressionCompiler {
       token.priority = 5;
     }
 
-    listaTokens.add(token);
+    TokenList.add(token);
   }
 
 
@@ -158,19 +159,19 @@ public class ExpressionCompiler {
   }
 
   /**
-   * Realiza el analisis sintactico
+   * Realiza el análisis sintáctico
    */
-  private ExpressionNode analisisSintactico() throws ExpressionException {
-    return parsear(0, listaTokens.size());
+  private ExpressionNode syntacticalAnalysis() throws ExpressionException {
+    return parsear(0, TokenList.size());
   }
 
   /**
    * Parsea el listado de tokens
    */
   private ExpressionNode parsear(int indicePrimero, int indiceUltimo) throws ExpressionException {
-    if (listaTokens.isEmpty()
-        || indicePrimero >= listaTokens.size()
-        || indiceUltimo > listaTokens.size()
+    if (TokenList.isEmpty()
+        || indicePrimero >= TokenList.size()
+        || indiceUltimo > TokenList.size()
         || indicePrimero >= indiceUltimo) {
       return null;
     }
@@ -181,7 +182,7 @@ public class ExpressionCompiler {
 
     // Se busca el operarador de menor prioridad de derecha a izquierda
     for (int i = indiceUltimo - 1; i >= indicePrimero; i--) {
-      Token token = listaTokens.get(i);
+      Token token = TokenList.get(i);
 
       if (token.type == Type.OPEN_PARENTHESIS) {
         nivelParentesis--;
@@ -189,7 +190,7 @@ public class ExpressionCompiler {
         nivelParentesis++;
       } else if (token.type == Type.OPERATOR && nivelParentesis == 0) {
         // Si hay algun operador a la izquierda, se omite este operador
-        if (i - 1 >= indicePrimero && listaTokens.get(i - 1).type == Type.OPERATOR) {
+        if (i - 1 >= indicePrimero && TokenList.get(i - 1).type == Type.OPERATOR) {
           continue;
         }
 
@@ -200,13 +201,13 @@ public class ExpressionCompiler {
       }
     }
 
-    Token ultimoToken = listaTokens.get(indiceUltimo - 1);
+    Token ultimoToken = TokenList.get(indiceUltimo - 1);
 
     if (nivelParentesis > 0) {
       error("No se esperaba el paréntesis de cierre", "", ultimoToken.position);
       return null;
     } else if (nivelParentesis < 0) {
-      error(FALTA_UN_PARENTESIS_DE_CIERRE, "", ultimoToken.position);
+      error(MISSING_CLOSING_PARENTHESIS, "", ultimoToken.position);
       return null;
     }
 
@@ -214,34 +215,34 @@ public class ExpressionCompiler {
     if (tokenOperador != null) {
       Function funcion = crearOperador(tokenOperador.text);
       if (funcion == null) {
-        error(OPERADOR_INVALIDO, tokenOperador.text, ultimoToken.position);
+        error(INVALID_OPERATOR, tokenOperador.text, ultimoToken.position);
         return null;
       }
       FunctionNode nodoOperador = new FunctionNode(funcion);
       ExpressionNode nodoOperando1 = parsear(indicePrimero, indiceOperador);
       if (nodoOperando1 != null) {
-        nodoOperador.agregarOperando(nodoOperando1);
+        nodoOperador.addOperand(nodoOperando1);
       } else if ("+".equals(tokenOperador.text) || "-".equals(tokenOperador.text)) {
-        nodoOperador.agregarOperando(new ConstantNode(new Value(BigInteger.ZERO)));
+        nodoOperador.addOperand(new ConstantNode(new Value(BigInteger.ZERO)));
       } else {
-        error(FALTA_EL_OPERANDO_IZQUIERDO, tokenOperador.text, tokenOperador.position);
+        error(MISSING_LEFT_OPERAND, tokenOperador.text, tokenOperador.position);
         return null;
       }
 
       ExpressionNode nodoOperando2 = parsear(indiceOperador + 1, indiceUltimo);
       if (nodoOperando2 != null) {
-        nodoOperador.agregarOperando(nodoOperando2);
+        nodoOperador.addOperand(nodoOperando2);
       } else {
-        error(FALTA_EL_OPERANDO_DERECHO, tokenOperador.text, ultimoToken.position);
+        error(MISSING_RIGTH_OPERAND, tokenOperador.text, ultimoToken.position);
         return null;
       }
       return nodoOperador;
     }
 
     // No hay operadores...
-    Token primerToken = listaTokens.get(indicePrimero);
+    Token primerToken = TokenList.get(indicePrimero);
     Token segundoToken = (indicePrimero + 1 < indiceUltimo) ?
-        listaTokens.get(indicePrimero + 1) : null;
+        TokenList.get(indicePrimero + 1) : null;
 
     // Es un literal (numero o cadena), una variable o un atributo
     if (segundoToken == null) {
@@ -257,7 +258,7 @@ public class ExpressionCompiler {
       // Es una función o un método
       if (segundoToken.type == Type.OPEN_PARENTHESIS && primerToken.type == Type.IDENTIFIER) {
         if (ultimoToken.type != Type.CLOSE_PARENTHESIS) {
-          error(FALTA_UN_PARENTESIS_DE_CIERRE, "", ultimoToken.position);
+          error(MISSING_CLOSING_PARENTHESIS, "", ultimoToken.position);
           return null;
         }
 
@@ -271,7 +272,7 @@ public class ExpressionCompiler {
     // Es una expresión entre paréntesis
     if (primerToken.type == Type.OPEN_PARENTHESIS) {
       if (ultimoToken.type != Type.CLOSE_PARENTHESIS) {
-        error(FALTA_UN_PARENTESIS_DE_CIERRE, "", ultimoToken.position);
+        error(MISSING_CLOSING_PARENTHESIS, "", ultimoToken.position);
         return null;
       }
       return parsear(indicePrimero + 1, indiceUltimo - 1);
@@ -279,10 +280,10 @@ public class ExpressionCompiler {
 
     StringBuilder subexpresion = new StringBuilder();
     for (int i = indicePrimero; i < indiceUltimo; i++) {
-      subexpresion.append(listaTokens.get(i).text);
+      subexpresion.append(TokenList.get(i).text);
     }
 
-    error(ERROR_DE_SINTAXIS, subexpresion.toString(), ultimoToken.position);
+    error(SYNTAX_ERROR, subexpresion.toString(), ultimoToken.position);
 
     return null;
   }
@@ -307,7 +308,7 @@ public class ExpressionCompiler {
       variable = symbolFactory.createVariable(token.text);
     }
     if (variable == null) {
-      error(VARIABLE_NO_ENCONTRADA, token.text, token.position);
+      error(VARIABLE_NOT_FOUND, token.text, token.position);
       return null;
     }
 
@@ -315,9 +316,9 @@ public class ExpressionCompiler {
   }
 
   private FunctionNode crearNodoFuncion(Token token) throws ExpressionException {
-    Function function = crearFuncion(token.text);
+    Function function = createFunction(token.text);
     if (function == null) {
-      error(FUNCION_NO_RECONOCIDA, token.text, token.position);
+      error(FUNCTION_NOT_FOUND, token.text, token.position);
       return null;
     }
     return new FunctionNode(function);
@@ -326,57 +327,57 @@ public class ExpressionCompiler {
   /**
    * Parsea todos los parametros de entrada a la funcion reconocida
    */
-  private FunctionNode parsearParametrosFuncion(FunctionNode nodoFuncion, String nombreFuncion, int indicePrimero,
-      int indiceUltimo)
+  private FunctionNode parsearParametrosFuncion(FunctionNode nodoFuncion, String nombreFuncion, int firstIndex,
+      int lastIndex)
       throws ExpressionException {
     if (nodoFuncion == null) {
       return null;
     }
 
-    int nivelParentesis = 0;
-    int contadorParametros = 0;
+    int parenthesisLevel = 0;
+    int parameterCount = 0;
     Token token = null;
 
-    for (int i = indicePrimero; i < indiceUltimo; i++) {
-      token = listaTokens.get(i);
+    for (int i = firstIndex; i < lastIndex; i++) {
+      token = TokenList.get(i);
       if (token.type == Type.OPEN_PARENTHESIS) {
-        nivelParentesis++;
+        parenthesisLevel++;
       } else if (token.type == Type.CLOSE_PARENTHESIS) {
-        nivelParentesis--;
-        if (nivelParentesis < 0) {
-          error(DEMASIADOS_PARENTESIS_DE_CIERRE_EN_LA_FUNCION, nombreFuncion, token.position);
+        parenthesisLevel--;
+        if (parenthesisLevel < 0) {
+          error(TOO_MANY_CLOSING_PARENTHESIS, nombreFuncion, token.position);
         }
       }
-      boolean esUltimoToken = i == indiceUltimo - 1;
+      boolean isLastToken = i == lastIndex - 1;
 
-      if (nivelParentesis == 0 && (token.type == Type.COLON || esUltimoToken)) {
-        contadorParametros++;
+      if (parenthesisLevel == 0 && (token.type == Type.COLON || isLastToken)) {
+        parameterCount++;
 
-        if (nodoFuncion.numeroParametrosEntrada() != FunctionNode.MULTIPLES_VALORES
-            && contadorParametros > nodoFuncion.numeroParametrosEntrada()) {
-          error(NUMERO_DE_PARAMETROS_EXCESIVO, nombreFuncion, token.position);
+        if (nodoFuncion.parameterCount() != FunctionNode.MULTIPLE_VALUES
+            && parameterCount > nodoFuncion.parameterCount()) {
+          error(TOO_MANY_PARAMETERS, nombreFuncion, token.position);
 
           return null;
         }
-        ExpressionNode parametro = parsear(indicePrimero, esUltimoToken ? i + 1 : i);
-        if (parametro != null) {
-          nodoFuncion.agregarOperando(parametro);
+        ExpressionNode parameter = parsear(firstIndex, isLastToken ? i + 1 : i);
+        if (parameter != null) {
+          nodoFuncion.addOperand(parameter);
         }
-        indicePrimero = i + 1;
+        firstIndex = i + 1;
       }
     }
 
-    int posicion = token != null ? token.position : 0;
+    int position = token != null ? token.position : 0;
 
-    if (nivelParentesis != 0) {
-      error("Falta el paréntesis de cierre en la función", nombreFuncion, posicion);
+    if (parenthesisLevel != 0) {
+      error("Falta el paréntesis de cierre en la función", nombreFuncion, position);
       return null;
     }
 
-    if (nodoFuncion.numeroParametrosEntrada() != FunctionNode.MULTIPLES_VALORES
+    if (nodoFuncion.parameterCount() != FunctionNode.MULTIPLE_VALUES
         && !nodoFuncion.allowOmitParameters()
-        && nodoFuncion.numeroParametrosEntrada() > contadorParametros) {
-      error("Número de parámetros insuficiente", nombreFuncion, posicion);
+        && nodoFuncion.parameterCount() > parameterCount) {
+      error("Número de parámetros insuficiente", nombreFuncion, position);
       return null;
     }
 
@@ -387,34 +388,34 @@ public class ExpressionCompiler {
    * Crea un función asociada a un token operador. Si hay operadores de usuario con el mismo nombre que el estándar se
    * devuelve éste.
    */
-  private Function crearOperador(String nombreFuncion) {
+  private Function crearOperador(String functionName) {
     Function operator = null;
     if (symbolFactory != null) {
-      operator = symbolFactory.createOperator(nombreFuncion);
+      operator = symbolFactory.createOperator(functionName);
       if (operator != null) {
         return operator;
       }
     }
 
-    if ("+".equals(nombreFuncion)) {
+    if ("+".equals(functionName)) {
       operator = new Addition();
-    } else if ("-".equals(nombreFuncion)) {
+    } else if ("-".equals(functionName)) {
       operator = new Subtract();
-    } else if ("*".equals(nombreFuncion)) {
+    } else if ("*".equals(functionName)) {
       operator = new Multiplication();
-    } else if ("/".equals(nombreFuncion)) {
+    } else if ("/".equals(functionName)) {
       operator = new Operator.Division();
-    } else if ("<".equals(nombreFuncion)) {
+    } else if ("<".equals(functionName)) {
       operator = new Less();
-    } else if ("<=".equals(nombreFuncion)) {
+    } else if ("<=".equals(functionName)) {
       operator = new LessEquals();
-    } else if (">".equals(nombreFuncion)) {
+    } else if (">".equals(functionName)) {
       operator = new Greater();
-    } else if (">=".equals(nombreFuncion)) {
+    } else if (">=".equals(functionName)) {
       operator = new GreaterEquals();
-    } else if ("and".equals(nombreFuncion)) {
+    } else if ("and".equals(functionName)) {
       operator = new Operator.And();
-    } else if ("or".equals(nombreFuncion)) {
+    } else if ("or".equals(functionName)) {
       operator = new Operator.Or();
     }
     return operator;
@@ -424,16 +425,16 @@ public class ExpressionCompiler {
    * Crea la función asociada al token. El token puede ser un operador, una función estándar o una función de usuario.
    * Si hay funciones de usuario con el mismo nombre que una estándar la se retorna la de usuario.
    */
-  private Function crearFuncion(String nombreFuncion) {
+  private Function createFunction(String functionName) {
 
     Function function = null;
     if (symbolFactory != null) {
-      function = symbolFactory.createFunction(nombreFuncion);
+      function = symbolFactory.createFunction(functionName);
     }
     return function;
   }
 
-  private String mid(String texto, int posicion, int n) {
-    return texto.substring(posicion, posicion + n);
+  private String mid(String texto, int position, int n) {
+    return texto.substring(position, position + n);
   }
 }

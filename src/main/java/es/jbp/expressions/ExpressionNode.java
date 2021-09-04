@@ -5,5 +5,5 @@ package es.jbp.expressions;
  * @author Jorge Berjano
  */
 public interface ExpressionNode {
-    Value evaluar() throws ExpressionException;
+    Value evaluate() throws ExpressionException;
 }

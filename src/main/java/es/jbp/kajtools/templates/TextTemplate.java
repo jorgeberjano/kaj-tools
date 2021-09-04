@@ -69,7 +69,7 @@ public class TextTemplate {
         ExpressionNode expressionNode = compilador.compile(expression);
         Value value;
         if (expressionNode != null) {
-          value = expressionNode.evaluar();
+          value = expressionNode.evaluate();
         } else {
           value = new Value();
         }

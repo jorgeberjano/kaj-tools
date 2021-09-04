@@ -214,6 +214,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   private void loadResourceForKey() {
     String path = Optional.ofNullable(comboKey.getSelectedItem()).map(Object::toString)
         .orElse("");
+
     loadJsonFromResource(path, keyEditor);
   }
 
@@ -224,6 +225,10 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   }
 
   private void loadJsonFromResource(String path, RSyntaxTextArea jsonEditor) {
+    IMessageClient producer = (IMessageClient) comboProducer.getSelectedItem();
+    if (producer != null) {
+      path = producer.getFolder() + File.separator + path;
+    }
     String json = ResourceUtil.readResourceString(path);
     jsonEditor.setText(json);
     jsonEditor.setCaretPosition(0);
