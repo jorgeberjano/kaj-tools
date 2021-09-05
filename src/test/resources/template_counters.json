@@ -1,0 +1,4 @@
+{
+  "index": ${i},
+  "counter": ${counter}
+}

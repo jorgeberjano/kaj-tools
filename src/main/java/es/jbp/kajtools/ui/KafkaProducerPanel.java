@@ -7,28 +7,25 @@ import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.configuration.Configuration;
 import es.jbp.kajtools.GenericClient;
 import es.jbp.kajtools.IMessageClient;
-import es.jbp.kajtools.tabla.entities.TopicItem;
+import es.jbp.kajtools.ui.entities.TopicItem;
 import es.jbp.kajtools.ui.InfoMessage.Type;
 import es.jbp.kajtools.KajToolsApp;
 import es.jbp.kajtools.util.JsonFirstComparator;
 import es.jbp.kajtools.util.JsonUtils;
 import es.jbp.kajtools.util.ResourceUtil;
 import es.jbp.kajtools.util.SchemaRegistryService;
-import es.jbp.kajtools.util.TemplateExecutor;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.stream.IntStream;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
@@ -58,7 +55,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
 
   private final SchemaRegistryService schemaRegistryService;
   private String currentDirectory;
-  private int counter;
+//  private int counter;
   private final Map<String, SchemaCheckStatus> checkedSchemaTopics = new HashMap<>();
 
   @Getter
@@ -297,10 +294,10 @@ public class KafkaProducerPanel extends KafkaBasePanel {
 
     String variablesProperties = variablesEditor.getText();
     templateExecutor.setVariables(variablesProperties);
+    templateExecutor.resetIndexCounter();
     for (int i = 1; i <= quantity; i++) {
-      templateExecutor.setVariableValue("i", Objects.toString(i));
-      templateExecutor.setVariableValue("counter", Objects.toString(++counter));
       sendEvent(environment, producer, topic, key, event);
+      templateExecutor.avanceCounters();
     }
     return null;
   }

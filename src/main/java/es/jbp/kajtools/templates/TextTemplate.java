@@ -5,6 +5,7 @@ import es.jbp.expressions.ExpressionException;
 import es.jbp.expressions.ExpressionNode;
 import es.jbp.expressions.Value;
 import es.jbp.expressions.Value.ValueType;
+import java.math.BigInteger;
 import java.util.Map;
 import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
@@ -28,6 +29,10 @@ public class TextTemplate {
   }
 
   public void setVariableValue(String variableName, String value) {
+    templateSimbolFactory.setVariableValue(variableName, value);
+  }
+
+  public void setVariableValue(String variableName, BigInteger value) {
     templateSimbolFactory.setVariableValue(variableName, value);
   }
 

@@ -8,9 +8,12 @@ import es.jbp.kajtools.templates.symbols.AnyFunction;
 import es.jbp.kajtools.templates.symbols.DateTimeFunction;
 import es.jbp.kajtools.templates.symbols.FileLineFunction;
 import es.jbp.kajtools.templates.symbols.FragmentFunction;
+import es.jbp.kajtools.templates.symbols.GetFunction;
 import es.jbp.kajtools.templates.symbols.RandFunction;
+import es.jbp.kajtools.templates.symbols.SetFunction;
 import es.jbp.kajtools.templates.symbols.StrFunction;
 import es.jbp.kajtools.templates.symbols.UuidFunction;
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -33,6 +36,8 @@ public class TemplateSimbolFactory implements SymbolFactory {
     addFunction("fileline", new FileLineFunction());
     addFunction("fragment", new FragmentFunction(textTemplate));
     addFunction("datetime", new DateTimeFunction());
+    addFunction("set", new SetFunction());
+    addFunction("get", new GetFunction());
   }
 
   private void addVariable(String name, Variable variable) {
@@ -63,6 +68,10 @@ public class TemplateSimbolFactory implements SymbolFactory {
   }
 
   public void setVariableValue(String variableName, String value) {
+    variables.put(variableName.toLowerCase(), new FinalVariable(value));
+  }
+
+  public void setVariableValue(String variableName, BigInteger value) {
     variables.put(variableName.toLowerCase(), new FinalVariable(value));
   }
 }

@@ -1,12 +1,5 @@
 package es.jbp.expressions;
 
-import es.jbp.expressions.Operator.Addition;
-import es.jbp.expressions.Operator.Greater;
-import es.jbp.expressions.Operator.GreaterEquals;
-import es.jbp.expressions.Operator.Less;
-import es.jbp.expressions.Operator.LessEquals;
-import es.jbp.expressions.Operator.Multiplication;
-import es.jbp.expressions.Operator.Subtract;
 import es.jbp.expressions.Token.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -16,6 +9,7 @@ import java.util.List;
 /**
  * Compilador de expresiones. Genera una estructura de árbol que representa la expresión en memoria y sirve para evaluar
  * su valor.
+ *
  * @author Jorge Berjano
  */
 public class ExpressionCompiler {
@@ -385,36 +379,14 @@ public class ExpressionCompiler {
    * devuelve éste.
    */
   private Function createOperator(String functionName) {
-    Function operator = null;
+
     if (symbolFactory != null) {
-      operator = symbolFactory.createOperator(functionName);
+      Function operator = symbolFactory.createOperator(functionName);
       if (operator != null) {
         return operator;
       }
     }
-
-    if ("+".equals(functionName)) {
-      operator = new Addition();
-    } else if ("-".equals(functionName)) {
-      operator = new Subtract();
-    } else if ("*".equals(functionName)) {
-      operator = new Multiplication();
-    } else if ("/".equals(functionName)) {
-      operator = new Operator.Division();
-    } else if ("<".equals(functionName)) {
-      operator = new Less();
-    } else if ("<=".equals(functionName)) {
-      operator = new LessEquals();
-    } else if (">".equals(functionName)) {
-      operator = new Greater();
-    } else if (">=".equals(functionName)) {
-      operator = new GreaterEquals();
-    } else if ("and".equals(functionName)) {
-      operator = new Operator.And();
-    } else if ("or".equals(functionName)) {
-      operator = new Operator.Or();
-    }
-    return operator;
+    return Operator.of(functionName);
   }
 
   /**

@@ -1,7 +1,7 @@
 package es.jbp.kajtools;
 
 import es.jbp.kajtools.filter.MessageFilter;
-import es.jbp.kajtools.tabla.entities.RecordItem;
+import es.jbp.kajtools.ui.entities.RecordItem;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 

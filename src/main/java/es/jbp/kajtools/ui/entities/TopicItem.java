@@ -1,4 +1,4 @@
-package es.jbp.kajtools.tabla.entities;
+package es.jbp.kajtools.ui.entities;
 
 import lombok.Builder;
 import lombok.Data;

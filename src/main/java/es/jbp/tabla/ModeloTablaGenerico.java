@@ -1,6 +1,9 @@
-package es.jbp.kajtools.tabla;
+package es.jbp.tabla;
 
 import es.jbp.kajtools.reflexion.Reflexion;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -12,6 +15,8 @@ import java.util.stream.Collectors;
  * @author jberjano
  */
 public class ModeloTablaGenerico<T> extends ModeloTablaAbstracto {
+
+    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss.SSS");
 
     private transient List<T> listaCompleta;
     private transient List<T> listaActual;
@@ -118,6 +123,9 @@ public class ModeloTablaGenerico<T> extends ModeloTablaAbstracto {
 
         if (valor instanceof Boolean) {
             valor = (Boolean) valor ? "Sí" : "No";
+        } else if (valor instanceof LocalDateTime) {
+
+            valor = ((LocalDateTime) valor).format(dateTimeFormatter);
         }
 
         return valor;

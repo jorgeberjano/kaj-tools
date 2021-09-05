@@ -2,8 +2,8 @@ package es.jbp.kajtools.ui;
 
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import es.jbp.kajtools.tabla.ModeloTablaGenerico;
-import es.jbp.kajtools.tabla.TablaGenerica;
+import es.jbp.tabla.ModeloTablaGenerico;
+import es.jbp.tabla.TablaGenerica;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;

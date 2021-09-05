@@ -1,4 +1,4 @@
-package es.jbp.kajtools.tabla;
+package es.jbp.tabla;
 
 import javax.swing.table.AbstractTableModel;
 

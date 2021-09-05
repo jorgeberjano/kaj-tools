@@ -8,7 +8,9 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
+import com.google.gson.reflect.TypeToken;
 import java.io.IOException;
+import java.util.Map;
 
 public class JsonUtils {
 
@@ -44,4 +46,9 @@ public class JsonUtils {
         JsonElement jsonElement = gson.fromJson(json, JsonElement.class);
         return gson.toJson(jsonElement);
     }
+
+  public static Map<String, Object> toMap(String json) {
+      Gson gson = new Gson();
+      return gson.fromJson(json, new TypeToken<Map<String, Object>>(){}.getType());
+  }
 }

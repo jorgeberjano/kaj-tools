@@ -2,18 +2,21 @@ package es.jbp.kajtools.templates.symbols;
 
 import es.jbp.expressions.Value;
 import java.util.List;
-import java.util.UUID;
 
-public class UuidFunction extends AbstractFunction {
+public class GetFunction extends MemoryFunction {
 
   @Override
   public Value evaluate(List<Value> parameterList) {
-    return new Value(UUID.randomUUID().toString());
+    String key = getParameterAsString(parameterList, 0, null);
+    if (key != null) {
+      return getMemorizedValue(key);
+    }
+    return new Value();
   }
 
   @Override
   public int getParameterCount() {
-    return 0;
+    return -1;
   }
 }
 

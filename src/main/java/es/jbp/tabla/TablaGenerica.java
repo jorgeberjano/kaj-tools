@@ -1,4 +1,4 @@
-package es.jbp.kajtools.tabla;
+package es.jbp.tabla;
 
 import java.awt.Font;
 import java.awt.event.MouseAdapter;

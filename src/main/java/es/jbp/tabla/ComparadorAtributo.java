@@ -1,4 +1,4 @@
-package es.jbp.kajtools.tabla;
+package es.jbp.tabla;
 
 import es.jbp.kajtools.reflexion.Reflexion;
 import java.util.Comparator;

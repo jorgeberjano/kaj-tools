@@ -10,11 +10,11 @@ import es.jbp.kajtools.KajException;
 import es.jbp.kajtools.KajToolsApp;
 import es.jbp.kajtools.filter.MessageFilter;
 import es.jbp.kajtools.filter.ScriptMessageFilter;
-import es.jbp.kajtools.tabla.ColoreadorFila;
-import es.jbp.kajtools.tabla.ModeloTablaGenerico;
-import es.jbp.kajtools.tabla.TablaGenerica;
-import es.jbp.kajtools.tabla.entities.RecordItem;
-import es.jbp.kajtools.tabla.entities.TopicItem;
+import es.jbp.tabla.ColoreadorFila;
+import es.jbp.tabla.ModeloTablaGenerico;
+import es.jbp.tabla.TablaGenerica;
+import es.jbp.kajtools.ui.entities.RecordItem;
+import es.jbp.kajtools.ui.entities.TopicItem;
 import es.jbp.kajtools.util.JsonUtils;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -570,18 +570,20 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
 
   @Override
   protected Optional<JTextComponent> getCurrentEditor() {
+
     int index = tabbedPane.getSelectedIndex();
-    if (index == 0) {
-      return Optional.of(infoTextPane);
-    } else if (index == 1) {
-      return Optional.of(scriptEditorFilter);
-    } else if (index == 2) {
-      return Optional.of(jsonEditorKey);
-    } else if (index == 3) {
-      return Optional.of(jsonEditorValue);
-    } else {
-      return Optional.empty();
-    }
+    return getUmpteenthEditor(index, infoTextPane, scriptEditorFilter, jsonEditorKey, jsonEditorValue);
+//    if (index == 0) {
+//      return Optional.of(infoTextPane);
+//    } else if (index == 1) {
+//      return Optional.of(scriptEditorFilter);
+//    } else if (index == 2) {
+//      return Optional.of(jsonEditorKey);
+//    } else if (index == 3) {
+//      return Optional.of(jsonEditorValue);
+//    } else {
+//      return Optional.empty();
+//    }
   }
 
   @Override

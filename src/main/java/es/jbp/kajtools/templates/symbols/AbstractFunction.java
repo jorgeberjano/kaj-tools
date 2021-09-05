@@ -10,15 +10,6 @@ import org.springframework.util.CollectionUtils;
 
 public abstract class AbstractFunction implements Function {
 
-  protected final Map<String, Value> memory = new HashMap<>();
-
-  protected Value getMemorizedValue(String key) {
-    return memory.getOrDefault(key, null);
-  }
-  protected void memorizeValue(String key, Value randValue) {
-    memory.put(key, randValue);
-  }
-
   protected <T> T randomElement(List<T> list) {
     if (CollectionUtils.isEmpty(list)) {
       return null;

@@ -2,6 +2,7 @@ package es.jbp.kajtools.reflexion;
 
 import java.awt.Color;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Blob;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -141,22 +142,46 @@ public class Conversion {
     }
   }
 
+  public static BigInteger toBigInteger(Object obj) {
+    if (obj == null) {
+      return null;
+    }
+//    if (obj instanceof Long) {
+//      return BigInteger.valueOf((Long) obj);
+//    }
+//    if (obj instanceof Integer) {
+//      return BigInteger.valueOf((Integer) obj);
+//    }
+//    if (obj instanceof Double) {
+//      return BigInteger.valueOf(((Double) obj).longValue());
+//    }
+//    if (obj instanceof Float) {
+//      return BigInteger.valueOf(((Float) obj).longValue());
+//    }
+
+    try {
+      return new BigInteger(obj.toString());
+    } catch (Throwable e) {
+      return null;
+    }
+  }
+
   public static BigDecimal toBigDecimal(Object obj) {
     if (obj == null) {
       return null;
     }
-    if (obj instanceof Long) {
-      return new BigDecimal((Long) obj);
-    }
-    if (obj instanceof Integer) {
-      return new BigDecimal((Integer) obj);
-    }
-    if (obj instanceof Double) {
-      return new BigDecimal((Double) obj);
-    }
-    if (obj instanceof Float) {
-      return new BigDecimal((Float) obj);
-    }
+//    if (obj instanceof Long) {
+//      return new BigDecimal((Long) obj);
+//    }
+//    if (obj instanceof Integer) {
+//      return new BigDecimal((Integer) obj);
+//    }
+//    if (obj instanceof Double) {
+//      return new BigDecimal((Double) obj);
+//    }
+//    if (obj instanceof Float) {
+//      return new BigDecimal((Float) obj);
+//    }
 
     try {
       return new BigDecimal(obj.toString());

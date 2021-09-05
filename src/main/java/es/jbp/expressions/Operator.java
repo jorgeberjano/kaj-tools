@@ -14,6 +14,36 @@ import java.util.function.BiFunction;
  */
 public abstract class Operator implements Function {
 
+  public static Function of(String functionName) {
+    Function operator = null;
+    if ("+".equals(functionName)) {
+      operator = new Addition();
+    } else if ("-".equals(functionName)) {
+      operator = new Subtract();
+    } else if ("*".equals(functionName)) {
+      operator = new Multiplication();
+    } else if ("/".equals(functionName)) {
+      operator = new Division();
+    } else if ("%".equals(functionName)) {
+      operator = new Module();
+    } else if ("==".equals(functionName)) {
+      operator = new Equals();
+    } else if ("<".equals(functionName)) {
+      operator = new Less();
+    } else if ("<=".equals(functionName)) {
+      operator = new LessEquals();
+    } else if (">".equals(functionName)) {
+      operator = new Greater();
+    } else if (">=".equals(functionName)) {
+      operator = new GreaterEquals();
+    } else if ("and".equals(functionName)) {
+      operator = new Operator.And();
+    } else if ("or".equals(functionName)) {
+      operator = new Operator.Or();
+    }
+    return operator;
+  }
+
   @Override
   public Value evaluate(List<Value> parameterList) {
     Value valor1;
@@ -76,6 +106,14 @@ public abstract class Operator implements Function {
       } else {
         return new Value(valor1.toBigDecimal().multiply(valor2.toBigDecimal()));
       }
+    }
+  }
+
+  public static class Module extends Operator {
+
+    @Override
+    public Value operar(Value valor1, Value valor2) {
+      return new Value(valor1.toBigInteger().mod(valor2.toBigInteger()));
     }
   }
 

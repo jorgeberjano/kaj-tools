@@ -3,7 +3,7 @@ package es.jbp.kajtools;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Lists;
 import es.jbp.kajtools.filter.MessageFilter;
-import es.jbp.kajtools.tabla.entities.RecordItem;
+import es.jbp.kajtools.ui.entities.RecordItem;
 import es.jbp.kajtools.util.AvroUtils;
 import es.jbp.kajtools.util.JsonUtils;
 import es.jbp.kajtools.util.ResourceUtil;

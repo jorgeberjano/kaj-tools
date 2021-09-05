@@ -1,6 +1,6 @@
 package es.jbp.kajtools;
 
-import es.jbp.kajtools.tabla.entities.TopicItem;
+import es.jbp.kajtools.ui.entities.TopicItem;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
