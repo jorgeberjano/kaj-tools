@@ -1,7 +1,7 @@
 package es.jbp.kajtools;
 
-import es.jbp.kajtools.filter.MessageFilter;
-import es.jbp.kajtools.ui.entities.RecordItem;
+import es.jbp.kajtools.kafka.ConsumerFeedback;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -22,8 +22,8 @@ public interface IMessageClient {
   void sendFromJson(Environment environment, String topic, String keyJson, String valueJson)
       throws KajException;
 
-  List<RecordItem> consumeLastRecords(Environment environment, String topic,
-      MessageFilter filter, long maxRecordsPerPartition, AtomicBoolean abort) throws KajException;
+  void consumeLastRecords(Environment environment, String topic, LocalDateTime dateTimeToRewind,
+      AtomicBoolean abort, ConsumerFeedback feedback) throws KajException;
 
   String getKeyClassName();
 

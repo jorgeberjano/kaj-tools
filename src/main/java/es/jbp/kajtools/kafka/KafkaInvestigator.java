@@ -1,6 +1,7 @@
-package es.jbp.kajtools;
+package es.jbp.kajtools.kafka;
 
-import es.jbp.kajtools.ui.entities.TopicItem;
+import es.jbp.kajtools.Environment;
+import es.jbp.kajtools.KajException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;

@@ -1,5 +1,8 @@
-package es.jbp.kajtools;
+package es.jbp.kajtools.kafka;
 
+import es.jbp.kajtools.Environment;
+import es.jbp.kajtools.IMessageClient;
+import es.jbp.kajtools.KajException;
 import es.jbp.kajtools.util.JsonGenericRecordReader;
 import es.jbp.kajtools.util.SchemaRegistryService;
 import java.util.Collection;
@@ -103,6 +106,7 @@ public class GenericClient extends AbstractClient<GenericRecord, GenericRecord> 
       throw new KajException("Error al enviar el mensaje al topic. Causa: " + ex.getMessage());
     }
   }
+
 
   @Override
   public String getKeyClassName() {

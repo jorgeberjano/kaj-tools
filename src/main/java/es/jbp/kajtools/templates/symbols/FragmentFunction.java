@@ -8,7 +8,7 @@ import java.util.List;
 
 public class FragmentFunction extends AbstractFunction {
 
-  private TextTemplate textTemplate;
+  private final TextTemplate textTemplate;
 
   public FragmentFunction(TextTemplate textTemplate) {
     this.textTemplate = textTemplate;

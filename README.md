@@ -223,7 +223,7 @@ acliclas
 
 `metadatos.json`
 
-````json
+````
 {
   "user": ${username},
   "date": ${dateTime("yyyy-MM-dd")},
@@ -235,7 +235,7 @@ acliclas
 
 JSON con expresiones:
 
-``` json
+``` 
 {
   "flag": ${any(true, false, false, false)},
   "flag_string": $S{any(true, false)}

@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import es.jbp.expressions.ExpressionException;
-import es.jbp.kajtools.reflexion.Conversion;
 import es.jbp.kajtools.templates.TextTemplate;
 import es.jbp.kajtools.util.JsonUtils;
 import es.jbp.kajtools.util.ResourceUtil;

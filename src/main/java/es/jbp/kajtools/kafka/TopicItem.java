@@ -1,4 +1,4 @@
-package es.jbp.kajtools.ui.entities;
+package es.jbp.kajtools.kafka;
 
 import lombok.Builder;
 import lombok.Data;

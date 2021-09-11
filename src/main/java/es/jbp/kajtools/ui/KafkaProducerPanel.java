@@ -4,16 +4,19 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import es.jbp.kajtools.Environment;
-import es.jbp.kajtools.configuration.Configuration;
-import es.jbp.kajtools.GenericClient;
+import es.jbp.kajtools.kafka.GenericClient;
 import es.jbp.kajtools.IMessageClient;
-import es.jbp.kajtools.ui.entities.TopicItem;
-import es.jbp.kajtools.ui.InfoMessage.Type;
+import es.jbp.kajtools.KajException;
 import es.jbp.kajtools.KajToolsApp;
+import es.jbp.kajtools.configuration.Configuration;
+import es.jbp.kajtools.ui.InfoMessage.Type;
+import es.jbp.kajtools.kafka.TopicItem;
 import es.jbp.kajtools.util.JsonFirstComparator;
 import es.jbp.kajtools.util.JsonUtils;
 import es.jbp.kajtools.util.ResourceUtil;
 import es.jbp.kajtools.util.SchemaRegistryService;
+import es.jbp.kajtools.util.SchemaRegistryService.SubjectType;
+import es.jbp.kajtools.util.TemplateExecutor;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -55,7 +58,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
 
   private final SchemaRegistryService schemaRegistryService;
   private String currentDirectory;
-//  private int counter;
+  //  private int counter;
   private final Map<String, SchemaCheckStatus> checkedSchemaTopics = new HashMap<>();
 
   @Getter
@@ -261,8 +264,10 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     printAction("Enviando evento a " + topic);
     String key = keyEditor.getText();
     String event = valueEditor.getText();
+    templateExecutor.setVariables(variablesEditor.getText());
+
     int quantity = (int) quantityComboBox.getSelectedItem();
-    executeAsyncTask(() -> sendEvent(environment, producer, topic, key, event, quantity));
+    executeAsyncTask(() -> sendMessage(environment, producer, topic, key, event, quantity));
   }
 
   private boolean warnUserAboutCheckSchema(SchemaCheckStatus status, String topic) {
@@ -289,24 +294,22 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     return response == JOptionPane.YES_OPTION;
   }
 
-  private Void sendEvent(Environment environment, IMessageClient producer, String topic, String key,
-      String event, int quantity) {
+  private Void sendMessage(Environment environment, IMessageClient producer,
+      String topic, String key, String value, int quantity) {
 
-    String variablesProperties = variablesEditor.getText();
-    templateExecutor.setVariables(variablesProperties);
     templateExecutor.resetIndexCounter();
     for (int i = 1; i <= quantity; i++) {
-      sendEvent(environment, producer, topic, key, event);
+      sendMessage(environment, producer, topic, key, value);
       templateExecutor.avanceCounters();
     }
     return null;
   }
 
-  private void sendEvent(Environment environment, IMessageClient producer, String topic, String key,
+  private void sendMessage(Environment environment, IMessageClient producer, String topic, String key,
       String event) {
 
-    String jsonKey = getJson(key, "KEY");
-    String jsonEvent = getJson(event, "EVENT");
+    String jsonKey = getJsonFromTemplate(key, "KEY");
+    String jsonEvent = getJsonFromTemplate(event, "EVENT");
 
     if (StringUtils.isBlank(jsonKey)) {
       enqueueError("No se va a mandar el mensaje porque no se ha indicado ninguna KEY");
@@ -323,18 +326,16 @@ public class KafkaProducerPanel extends KafkaBasePanel {
 
     try {
       producer.sendFromJson(environment, topic, jsonKey, jsonEvent);
-    } catch (Exception ex) {
-      enqueueError("Error enviando un evento al topic");
-      enqueueInfo(ex.getMessage());
-      enqueueInfo("Causa: " + ex.getCause().getMessage());
+    } catch (KajException ex) {
+      enqueueException(ex);
       return;
     }
     enqueueSuccessful("Enviado el evento correctamente");
   }
 
-  private String getJson(String json, String name) {
+  private String getJsonFromTemplate(String json, String name) {
 
-    if (!templateExecutor.containsTemplateExpressions(json)) {
+    if (!TemplateExecutor.containsTemplateExpressions(json)) {
       return json;
     }
 
@@ -362,16 +363,22 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     String topic = comboTopic.getEditor().getItem().toString();
     printAction("Comprobando esquemas del topic " + topic);
 
-    executeAsyncTask(() -> checkSchema(producer, topic, getEnvironment()));
+    String jsonKey = keyEditor.getText();
+    String jsonValue = valueEditor.getText();
+    templateExecutor.setVariables(variablesEditor.getText());
+
+    executeAsyncTask(() -> checkSchema(producer, topic, jsonKey, jsonValue, getEnvironment()));
   }
 
-  private Void checkSchema(IMessageClient producer, String topic, Environment environment) {
-    SchemaCheckStatus keySchemaOk = checkSchema(producer, topic, environment, true);
-    SchemaCheckStatus eventSchemaOk = checkSchema(producer, topic, environment, false);
+  private Void checkSchema(IMessageClient producer, String topic, String jsonKey,
+      String jsonValue, Environment environment) {
 
-    if (keySchemaOk != null && eventSchemaOk != null) {
+    SchemaCheckStatus keySchemaOk = checkSchema(producer, topic, environment, jsonKey, SubjectType.key);
+    SchemaCheckStatus valueSchemaOk = checkSchema(producer, topic, environment, jsonValue, SubjectType.value);
+
+    if (keySchemaOk != null && valueSchemaOk != null) {
       checkedSchemaTopics
-          .put(environment.getName() + "$" + topic, SchemaCheckStatus.getMoreSignificant(keySchemaOk, eventSchemaOk));
+          .put(environment.getName() + "$" + topic, SchemaCheckStatus.getMoreSignificant(keySchemaOk, valueSchemaOk));
     } else if (checkedSchemaTopics.get(topic) != null) {
       checkedSchemaTopics.remove(topic);
     }
@@ -390,18 +397,19 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   }
 
   private SchemaCheckStatus checkSchema(IMessageClient producer, String topic,
-      Environment environment,
-      boolean isKey) {
-    String registeredSchema, avroSchema;
-    String objectName = isKey ? "Key" : "Event";
+      Environment environment, String json, SubjectType type) {
 
+    boolean isKey = type == SubjectType.key;
+    json = getJsonFromTemplate(json, type.name());
+
+    String registeredSchema;
     try {
       registeredSchema =
           schemaRegistryService
-              .getLatestTopicSchema(topic, isKey, environment);
+              .getLatestTopicSchema(topic, type, environment);
     } catch (Exception e) {
       enqueueError(
-          "Error obteniendo esquema del " + objectName + " del topic " + topic
+          "Error obteniendo esquema del " + type + " del topic " + topic
               + " desde el Schema Registry");
       enqueueInfo(e.getMessage());
       if (e instanceof NotFound) {
@@ -410,9 +418,9 @@ public class KafkaProducerPanel extends KafkaBasePanel {
       return SchemaCheckStatus.NOT_CHECKED;
     }
 
+    String avroSchema;
     try {
-      avroSchema = isKey ? producer.getKeySchema(keyEditor.getText())
-          : producer.getValueSchema(valueEditor.getText());
+      avroSchema = isKey ? producer.getKeySchema(json) : producer.getValueSchema(json);
     } catch (Exception e) {
       enqueueError("Error obteniendo esquema AVRO de " +
           (isKey ? producer.getKeyClassName() : producer.getValueClassName()));
@@ -422,7 +430,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
 
     enqueueInfo("Comparando con el esquema AVRO de " +
         (isKey ? producer.getKeyClassName() : producer.getValueClassName()));
-    return compareSchemas(registeredSchema, avroSchema, objectName);
+    return compareSchemas(registeredSchema, avroSchema, type.name());
   }
 
   private SchemaCheckStatus compareSchemas(String registeredSchema, String avroSchema,

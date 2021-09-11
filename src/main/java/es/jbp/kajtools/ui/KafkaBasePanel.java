@@ -1,10 +1,10 @@
 package es.jbp.kajtools.ui;
 
 import es.jbp.kajtools.Environment;
-import es.jbp.kajtools.KafkaInvestigator;
+import es.jbp.kajtools.kafka.KafkaInvestigator;
 import es.jbp.kajtools.KajException;
 import es.jbp.tabla.ModeloTablaGenerico;
-import es.jbp.kajtools.ui.entities.TopicItem;
+import es.jbp.kajtools.kafka.TopicItem;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;

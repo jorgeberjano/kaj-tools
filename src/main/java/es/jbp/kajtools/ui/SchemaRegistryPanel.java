@@ -5,6 +5,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import es.jbp.kajtools.Environment;
+import es.jbp.kajtools.KajException;
 import es.jbp.kajtools.configuration.Configuration;
 import es.jbp.kajtools.IMessageClient;
 import es.jbp.kajtools.ui.InfoMessage.Type;
@@ -52,6 +53,7 @@ import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
+import org.springframework.web.client.RestClientException;
 
 public class SchemaRegistryPanel extends KafkaBasePanel {
 
@@ -362,11 +364,15 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   private Void deleteSelectedSchemaVersion(Environment environment, String schemaSubject,
       String version) {
     SchemaRegistryService schemaRegistryService = KajToolsApp.getInstance().getSchemaRegistryService();
-    schemaRegistryService
-        .deleteSubjectSchemaVersion(schemaSubject, version, environment);
 
-    enqueueSuccessful("Se ha borrado correctamente la versión " + version);
-    versions.remove(version);
+    try {
+      schemaRegistryService
+          .deleteSubjectSchemaVersion(schemaSubject, version, environment);
+      enqueueSuccessful("Se ha borrado correctamente la versión " + version);
+      versions.remove(version);
+    } catch (KajException ex) {
+      enqueueException(ex);
+    }
     return null;
   }
 

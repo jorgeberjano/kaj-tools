@@ -1,44 +1,36 @@
-package es.jbp.kajtools;
+package es.jbp.kajtools.kafka;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Lists;
-import es.jbp.kajtools.filter.MessageFilter;
-import es.jbp.kajtools.ui.entities.RecordItem;
+import es.jbp.kajtools.Environment;
+import es.jbp.kajtools.IMessageClient;
+import es.jbp.kajtools.KajException;
 import es.jbp.kajtools.util.AvroUtils;
 import es.jbp.kajtools.util.JsonUtils;
 import es.jbp.kajtools.util.ResourceUtil;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
-import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.TimeZone;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import lombok.Getter;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
-import org.apache.kafka.common.TopicPartition;
 
 
 public abstract class AbstractClient<K, V> implements IMessageClient {
@@ -68,7 +60,7 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
     try (Producer<K, V> producer = createProducer(environment)) {
       sendDataFromJson(producer, topic, keyJson, valueJson);
     } catch (Throwable ex) {
-      throw new KajException("No se ha podido realizar el envío. " + ex.getLocalizedMessage());
+      throw new KajException("No se ha podido realizar el envío. ", ex);
     }
   }
 
@@ -237,6 +229,7 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
     putNotNull(props, ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class.getName());
     putNotNull(props, ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class.getName());
 
+    props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 100);
     props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
     props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
@@ -273,94 +266,22 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
     }
   }
 
-  public List<RecordItem> consumeLastRecords(Environment environment, String topic,
-      MessageFilter filter, long maxRecordsPerPartition, AtomicBoolean abort) throws KajException {
+  @Override
+  public void consumeLastRecords(Environment environment, String topic, LocalDateTime dateTimeToRewind,
+      AtomicBoolean abort, ConsumerFeedback feedback) throws KajException {
+
     try (KafkaConsumer<K, V> consumer = new KafkaConsumer<>(createConsumerProperties(environment))) {
-      consumer.subscribe(Collections.singletonList(topic));
 
-      consumer.poll(Duration.ofSeconds(2));
+      RecordConsumer<K, V> recordConsumer = new RecordConsumer<>(consumer, keyType, valueType,
+          dateTimeToRewind, abort, feedback);
+      consumer.subscribe(Collections.singletonList(topic), recordConsumer);
 
-      List<RecordItem> latestRecords = new ArrayList<>();
+      recordConsumer.startConsumption();
 
-      Map<TopicPartition, Long> offsets = consumer.endOffsets(consumer.assignment());
-
-      for (Map.Entry<TopicPartition, Long> offsetEntry : offsets.entrySet()) {
-        if (abort.get()) {
-          break;
-        }
-        TopicPartition topicPartition = offsetEntry.getKey();
-        Long offset = offsetEntry.getValue();
-        final long newOffset = offset - maxRecordsPerPartition;
-        consumer.seek(topicPartition, newOffset < 0 ? 0 : newOffset);
-      }
-
-      comsumeRecords(filter, abort, consumer, latestRecords);
-
-      return latestRecords;
-    } catch (KajException ex) {
-      throw ex;
     } catch (Exception ex) {
-      throw new KajException("Error al consumir mensajes", ex);
+      throw new KajException("Error al suscribir el consumidor", ex);
     }
   }
 
-  private void comsumeRecords(MessageFilter filter, AtomicBoolean abort, KafkaConsumer<K, V> consumer,
-      List<RecordItem> latestRecords) throws KajException {
-    Instant start = Instant.now();
-    ConsumerRecords<K, V> records;
-    do {
-      records = consumer.poll(Duration.ofSeconds(1));
-      for (ConsumerRecord<K, V> r : records) {
-        if (abort.get()) {
-          break;
-        }
-        if (filter.satisfyCondition(Objects.toString(r.key()), Objects.toString(r.value()))) {
-          latestRecords.add(createRecordItem(r));
-        }
-      }
-    } while (!abort.get() && mustWait(records.isEmpty(), start));
-  }
 
-  private boolean mustWait(boolean noRecordsReceived, Instant start) {
-    int secondsOfWaiting = noRecordsReceived ? 5 : 10;
-    return Duration.between(start, Instant.now()).compareTo(Duration.ofSeconds(secondsOfWaiting)) < 0;
-  }
-
-  private RecordItem createRecordItem(ConsumerRecord<K, V> rec) {
-
-    String jsonKey = String.valueOf(rec.key());
-    String jsonValue = String.valueOf(rec.value());
-
-    String keyError = null;
-    String valueError = null;
-    if (!keyType.equals(GenericRecord.class)) {
-      try {
-        K key = JsonUtils.createFromJson(jsonKey, keyType);
-      } catch (IOException e) {
-        keyError = e.getMessage();
-      }
-    }
-
-    if (!valueType.equals(GenericRecord.class)) {
-      try {
-        V value = JsonUtils.createFromJson(jsonValue, valueType);
-      } catch (IOException e) {
-        valueError = e.getMessage();
-      }
-    }
-
-    LocalDateTime dateTime =
-        LocalDateTime.ofInstant(Instant.ofEpochMilli(rec.timestamp()),
-            TimeZone.getDefault().toZoneId());
-
-    return RecordItem.builder()
-        .partition(rec.partition())
-        .offset(rec.offset())
-        .dateTime(dateTime)
-        .key(jsonKey)
-        .keyError(keyError)
-        .value(jsonValue)
-        .valueError(valueError)
-        .build();
-  }
 }

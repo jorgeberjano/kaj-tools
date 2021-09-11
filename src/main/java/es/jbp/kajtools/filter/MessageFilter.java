@@ -1,8 +1,8 @@
 package es.jbp.kajtools.filter;
 
 import es.jbp.kajtools.KajException;
-import javax.script.ScriptException;
+import es.jbp.kajtools.kafka.RecordItem;
 
 public interface MessageFilter {
-  boolean satisfyCondition(String key, String value) throws KajException;
+  boolean satisfyCondition(RecordItem rec) throws KajException;
 }

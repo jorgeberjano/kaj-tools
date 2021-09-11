@@ -1,8 +1,8 @@
 package es.jbp.kajtools.filter;
 
 import es.jbp.kajtools.KajException;
-import es.jbp.kajtools.Key;
 import es.jbp.kajtools.reflexion.Conversion;
+import es.jbp.kajtools.kafka.RecordItem;
 import java.util.List;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
@@ -37,13 +37,13 @@ public class ScriptMessageFilter implements MessageFilter {
   }
 
   @Override
-  public boolean satisfyCondition(String key, String value)  throws KajException{
+  public boolean satisfyCondition(RecordItem rec)  throws KajException{
     if (invocableFunction == null) {
       return true;
     }
     Object result = null;
     try {
-      result = invocableFunction.invokeFunction("satisfy", key, value);
+      result = invocableFunction.invokeFunction("satisfy", rec.getKey(), rec.getValue());
     } catch (ScriptException | NoSuchMethodException e) {
       throw new KajException("Error al invocar a la función de filtro", e);
     }

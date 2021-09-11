@@ -83,6 +83,9 @@ public abstract class BasePanel {
     enqueueError(ex.getMessage());
     if (ex.getCause() != null) {
       enqueueInfo(ex.getCause().getMessage());
+      if (ex.getCause().getCause() != null) {
+        enqueueInfo(ex.getCause().getCause().getMessage());
+      }
     }
   }
 

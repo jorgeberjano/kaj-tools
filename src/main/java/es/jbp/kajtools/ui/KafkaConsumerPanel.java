@@ -4,30 +4,32 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import es.jbp.kajtools.Environment;
-import es.jbp.kajtools.configuration.Configuration;
 import es.jbp.kajtools.IMessageClient;
 import es.jbp.kajtools.KajException;
 import es.jbp.kajtools.KajToolsApp;
+import es.jbp.kajtools.configuration.Configuration;
 import es.jbp.kajtools.filter.MessageFilter;
 import es.jbp.kajtools.filter.ScriptMessageFilter;
+import es.jbp.kajtools.kafka.ConsumerFeedback;
+import es.jbp.kajtools.kafka.HeaderItem;
+import es.jbp.kajtools.kafka.RecordItem;
+import es.jbp.kajtools.kafka.RewindPolicy;
+import es.jbp.kajtools.kafka.TopicItem;
+import es.jbp.kajtools.util.JsonUtils;
 import es.jbp.tabla.ColoreadorFila;
 import es.jbp.tabla.ModeloTablaGenerico;
 import es.jbp.tabla.TablaGenerica;
-import es.jbp.kajtools.ui.entities.RecordItem;
-import es.jbp.kajtools.ui.entities.TopicItem;
-import es.jbp.kajtools.util.JsonUtils;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.Future;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
@@ -44,6 +46,7 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.plaf.FontUIResource;
@@ -58,6 +61,8 @@ import org.fife.ui.rtextarea.RTextScrollPane;
 public class KafkaConsumerPanel extends KafkaBasePanel {
 
 
+  public static final int CONTIENE_TEXTO = 1;
+  public static final int FILTRO_JAVASCRIPT = 2;
   private JButton consumeButtom;
   @Getter
   private JPanel contentPane;
@@ -74,7 +79,7 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
   private JPanel tabValue;
   private RTextScrollPane valueScrollPane;
   private JTextField searchTextField;
-  private JTextField fieldRewindRecords;
+  private JTextField fieldMaxRecords;
   private JPanel tabFilter;
   private RTextScrollPane filterScrollPane;
   private JButton cleanButton;
@@ -85,13 +90,23 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
   private JButton buttonFindTopic;
   private JButton buttonCheckEnvironment;
   private JButton buttonStop;
+  private JLabel labelCounter;
+  private JComboBox<RewindPolicy> comboRewind;
+  private JPanel tabHeaders;
+  private JScrollPane headersScrollPane;
+  private JTable headersTable;
+  private final ModeloTablaGenerico<HeaderItem> headersTableModel = new ModeloTablaGenerico<>();
 
   private RSyntaxTextArea jsonEditorValue;
   private RSyntaxTextArea jsonEditorKey;
   private RSyntaxTextArea scriptEditorFilter;
 
-  private ModeloTablaGenerico<RecordItem> recordTableModel = new ModeloTablaGenerico<>();
-  private Future<List<RecordItem>> futureRecords;
+  private final ModeloTablaGenerico<RecordItem> recordTableModel = new ModeloTablaGenerico<>();
+  private List<RecordItem> recordItemsList = new ArrayList<>();
+  private MessageFilter filter;
+  private int maxRecords = 50;
+  private int recordConsumedCount = 0;
+
 
   public KafkaConsumerPanel() {
 
@@ -114,6 +129,9 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     comboConsumer.addActionListener(e -> updateTopics());
     updateTopics();
 
+    // Combo rebobinado
+    comboRewind.setModel(new DefaultComboBoxModel<>(RewindPolicy.values()));
+
     // Combo tipo de filtro
     comboFilterType.addActionListener(e -> {
       textFieldFilter.setEnabled(comboFilterType.getSelectedIndex() == 1);
@@ -133,6 +151,9 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     buttonStop.addActionListener(e -> stopAsyncTasks());
 
     scriptEditorFilter.setEnabled(false);
+
+    jsonEditorValue.setEditable(false);
+    jsonEditorKey.setEditable(false);
 
     enableTextSearch(searchTextField, jsonEditorValue, jsonEditorKey);
   }
@@ -159,6 +180,9 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     jsonEditorKey.setCaretPosition(0);
     jsonEditorValue.setText(JsonUtils.formatJson(selected.getValue()));
     jsonEditorValue.setCaretPosition(0);
+
+    headersTableModel.setListaObjetos(selected.getHeaders());
+    headersTableModel.actualizar();
   }
 
   private void updateTopics() {
@@ -191,16 +215,14 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     }
     IMessageClient client = (IMessageClient) consumerSelectedItem;
 
-    long maxRecordsPerPartition = NumberUtils.toLong(fieldRewindRecords.getText(), 50);
+    maxRecords = NumberUtils.toInt(fieldMaxRecords.getText(), 0);
     int filterType = comboFilterType.getSelectedIndex();
     String textFilter = textFieldFilter.getText().trim();
     String script = scriptEditorFilter.getText().trim();
 
-    MessageFilter filter;
-
-    if (filterType == 1 && StringUtils.isNotBlank(textFilter)) {
-      filter = (k, v) -> k.contains(textFilter) || v.contains(textFilter);
-    } else if (filterType == 2 && StringUtils.isNotBlank(script)) {
+    if (filterType == CONTIENE_TEXTO && StringUtils.isNotBlank(textFilter)) {
+      filter = (rec) -> rec.getKey().contains(textFilter) || rec.getValue().contains(textFilter);
+    } else if (filterType == FILTRO_JAVASCRIPT && StringUtils.isNotBlank(script)) {
       try {
         filter = new ScriptMessageFilter(script);
       } catch (KajException ex) {
@@ -208,54 +230,103 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
         return;
       }
     } else {
-      filter = (k, v) -> true;
+      filter = (rec) -> true;
     }
 
-    recordTableModel.setListaObjetos(new ArrayList<>());
+    labelCounter.setText("0");
+
+    recordItemsList = new ArrayList<>();
+    recordTableModel.setListaObjetos(recordItemsList);
     recordTableModel.actualizar();
 
-    printAction("Consumiendo mensajes del topic " + topic);
+    final LocalDateTime dateTimeToRewind = calculateDateTimeToRewind();
 
     buttonStop.setEnabled(true);
+    recordConsumedCount = 0;
 
-    futureRecords = this.<List<RecordItem>>executeAsyncTask(
-        () -> requestRecords(getEnvironment(), topic, client, filter, maxRecordsPerPartition),
-        this::recordsReceived);
+    printAction("Consumiendo mensajes del topic " + topic);
+    this.<Void>executeAsyncTask(() -> requestRecords(getEnvironment(), topic, dateTimeToRewind, client));
   }
 
+  private LocalDateTime calculateDateTimeToRewind() {
+    LocalDateTime dateTimeToRewind = null;
+    switch ((RewindPolicy) Objects.requireNonNull(comboRewind.getSelectedItem())) {
 
-  private List<RecordItem> requestRecords(Environment environment, String topic, IMessageClient client,
-      MessageFilter filter, long maxRecordsPerPartition) {
+      case LAST_MINUTE:
+        dateTimeToRewind = LocalDateTime.now().minusMinutes(1);
+        break;
+      case LAST_HOUR:
+        dateTimeToRewind = LocalDateTime.now().minusHours(1);
+        break;
+      case LAST_DAY:
+        dateTimeToRewind = LocalDateTime.now().minusDays(1);
+        break;
+      case LAST_WEEK:
+        dateTimeToRewind = LocalDateTime.now().minusWeeks(1);
+        break;
+      case LAST_MONTH:
+        dateTimeToRewind = LocalDateTime.now().minusMonths(1);
+        break;
+      case LAST_YEAR:
+        dateTimeToRewind = LocalDateTime.now().minusYears(1);
+        break;
+    }
+    return dateTimeToRewind;
+  }
+
+  private void showMoreRecords(List<RecordItem> recordItems) {
+
+    for (RecordItem rec : recordItems) {
+      try {
+        if (maxRecords > 0 && recordItemsList.size() >= maxRecords) {
+          abortTasks.set(true);
+          break;
+        }
+        recordConsumedCount++;
+        if (filter.satisfyCondition(rec)) {
+          recordItemsList.add(rec);
+        }
+      } catch (KajException ex) {
+        printException(ex);
+      }
+    }
+    recordTableModel.actualizar();
+    int matches = recordItemsList.size();
+
+    labelCounter.setText(matches == recordConsumedCount ? "" + recordConsumedCount
+        : matches + "/" + recordConsumedCount);
+  }
+
+  private Void requestRecords(Environment environment, String topic, LocalDateTime dateTimeToRewind,
+      IMessageClient client) {
     try {
-      List<RecordItem> records = client
-          .consumeLastRecords(environment, topic, filter, maxRecordsPerPartition, abortTasks);
-      enqueueSuccessful("Consumidos " + records.size() + " mensajes");
-      return records;
+      client.consumeLastRecords(environment, topic, dateTimeToRewind, abortTasks, new ConsumerFeedback() {
+        @Override
+        public void consumedRecords(List<RecordItem> records) {
+          SwingUtilities.invokeLater(() -> {
+            showMoreRecords(records);
+          });
+        }
+
+        @Override
+        public void message(String message) {
+          SwingUtilities.invokeLater(() -> {
+            printInfo(message);
+          });
+        }
+
+        @Override
+        public void finished() {
+          buttonStop.setEnabled(false);
+        }
+      });
+      enqueueSuccessful("Consumidos " + recordItemsList.size() + " mensajes");
     } catch (KajException ex) {
-      //enqueueError("No se ha podido consumir ningún registro");
       enqueueException(ex);
     }
-    return Collections.emptyList();
+    return null;
   }
 
-  private void recordsReceived() {
-
-    buttonStop.setEnabled(false);
-
-    List<RecordItem> records = null;
-    try {
-      records = futureRecords.get();
-    } catch (Exception ex) {
-      enqueueError("No de han podido obtener los registros recibidos");
-      enqueueInfo(ex.getMessage());
-    }
-    if (records != null) {
-      recordTableModel.setListaObjetos(records);
-    }
-
-    records.forEach(this::printRecordErrors);
-
-  }
 
   private void printRecordErrors(RecordItem recordItem) {
     if (recordItem.getKeyError() != null) {
@@ -413,6 +484,12 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     tabValue.setLayout(new BorderLayout(0, 0));
     tabbedPane.addTab("Value", tabValue);
     tabValue.add(valueScrollPane, BorderLayout.CENTER);
+    tabHeaders = new JPanel();
+    tabHeaders.setLayout(new BorderLayout(0, 0));
+    tabbedPane.addTab("Headers", tabHeaders);
+    headersScrollPane = new JScrollPane();
+    tabHeaders.add(headersScrollPane, BorderLayout.CENTER);
+    headersScrollPane.setViewportView(headersTable);
     final JPanel panel4 = new JPanel();
     panel4.setLayout(new GridLayoutManager(4, 1, new Insets(0, 0, 0, 0), -1, -1));
     panel3.add(panel4, BorderLayout.EAST);
@@ -436,7 +513,7 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     panel4.add(spacer2, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_NONE, 1,
         GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(-1, 30), null, 0, false));
     final JPanel panel5 = new JPanel();
-    panel5.setLayout(new GridLayoutManager(1, 8, new Insets(0, 0, 0, 0), -1, -1));
+    panel5.setLayout(new GridLayoutManager(1, 10, new Insets(0, 0, 0, 0), -1, -1));
     contentPane.add(panel5,
         new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, 1, null, null, null, 0,
@@ -446,19 +523,19 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     panel5.add(consumeButtom, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-    fieldRewindRecords = new JTextField();
-    fieldRewindRecords.setText("50");
-    panel5.add(fieldRewindRecords,
-        new GridConstraints(0, 4, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
-            GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(40, -1), null, 0,
-            false));
+    fieldMaxRecords = new JTextField();
+    fieldMaxRecords.setText("50");
+    fieldMaxRecords.setToolTipText("Número máximo de registros a consumir");
+    panel5.add(fieldMaxRecords, new GridConstraints(0, 6, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+        GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(40, -1), null, 0,
+        false));
     final JLabel label6 = new JLabel();
-    label6.setText("Rebobinar:");
+    label6.setText("Mostrar solo:");
     label6.setToolTipText("Número registros por partición a rebobinar");
-    panel5.add(label6, new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+    panel5.add(label6, new GridConstraints(0, 5, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     final Spacer spacer3 = new Spacer();
-    panel5.add(spacer3, new GridConstraints(0, 7, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+    panel5.add(spacer3, new GridConstraints(0, 9, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
         GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
     final Spacer spacer4 = new Spacer();
     panel5.add(spacer4, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
@@ -470,20 +547,30 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     defaultComboBoxModel4.addElement("Filtro JavaScript");
     comboFilterType.setModel(defaultComboBoxModel4);
     panel5.add(comboFilterType,
-        new GridConstraints(0, 5, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+        new GridConstraints(0, 7, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
             GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(80, -1), null, 0,
             false));
     textFieldFilter = new JTextField();
     panel5.add(textFieldFilter,
-        new GridConstraints(0, 6, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+        new GridConstraints(0, 8, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
             GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null,
             0, false));
     buttonStop = new JButton();
     buttonStop.setEnabled(false);
     buttonStop.setIcon(new ImageIcon(getClass().getResource("/images/stop.png")));
     buttonStop.setText("");
-    panel5.add(buttonStop, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+    panel5.add(buttonStop, new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+    labelCounter = new JLabel();
+    labelCounter.setHorizontalAlignment(0);
+    labelCounter.setText("0");
+    panel5.add(labelCounter, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+        GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, new Dimension(80, -1),
+        new Dimension(80, -1), null, 0, false));
+    comboRewind = new JComboBox();
+    panel5.add(comboRewind,
+        new GridConstraints(0, 4, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+            GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
   }
 
   /**
@@ -529,14 +616,14 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     scriptEditorFilter = createScriptEditor();
     filterScrollPane = createEditorScroll(scriptEditorFilter);
 
-    TablaGenerica tablaGenerica = new TablaGenerica();
+    TablaGenerica recordTable = new TablaGenerica();
     recordTableModel.agregarColumna("partition", "Partition", 20);
     recordTableModel.agregarColumna("offset", "Offset", 20);
     recordTableModel.agregarColumna("dateTime", "Timestamp", 50);
     recordTableModel.agregarColumna("key", "Key", 200);
     recordTableModel.agregarColumna("value", "Value", 200);
-    tablaGenerica.setModel(recordTableModel);
-    tablaGenerica.setColoreador(new ColoreadorFila<RecordItem>() {
+    recordTable.setModel(recordTableModel);
+    recordTable.setColoreador(new ColoreadorFila<RecordItem>() {
       @Override
       public Color determinarColorTexto(RecordItem entidad) {
         if (entidad.getKeyError() != null || entidad.getValueError() != null) {
@@ -555,7 +642,13 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
         }
       }
     });
-    recordTable = tablaGenerica;
+    this.recordTable = recordTable;
+
+    TablaGenerica headersTable = new TablaGenerica();
+    headersTableModel.agregarColumna("key", "Header key", 20);
+    headersTableModel.agregarColumna("value", "Header value", 20);
+    headersTable.setModel(headersTableModel);
+    this.headersTable = headersTable;
   }
 
   @Override
@@ -573,17 +666,6 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
 
     int index = tabbedPane.getSelectedIndex();
     return getUmpteenthEditor(index, infoTextPane, scriptEditorFilter, jsonEditorKey, jsonEditorValue);
-//    if (index == 0) {
-//      return Optional.of(infoTextPane);
-//    } else if (index == 1) {
-//      return Optional.of(scriptEditorFilter);
-//    } else if (index == 2) {
-//      return Optional.of(jsonEditorKey);
-//    } else if (index == 3) {
-//      return Optional.of(jsonEditorValue);
-//    } else {
-//      return Optional.empty();
-//    }
   }
 
   @Override
