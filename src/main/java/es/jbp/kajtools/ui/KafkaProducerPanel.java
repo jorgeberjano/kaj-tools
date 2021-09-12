@@ -12,7 +12,6 @@ import es.jbp.kajtools.configuration.Configuration;
 import es.jbp.kajtools.ui.InfoMessage.Type;
 import es.jbp.kajtools.kafka.TopicItem;
 import es.jbp.kajtools.util.JsonFirstComparator;
-import es.jbp.kajtools.util.JsonUtils;
 import es.jbp.kajtools.util.ResourceUtil;
 import es.jbp.kajtools.util.SchemaRegistryService;
 import es.jbp.kajtools.util.SchemaRegistryService.SubjectType;
@@ -58,7 +57,6 @@ public class KafkaProducerPanel extends KafkaBasePanel {
 
   private final SchemaRegistryService schemaRegistryService;
   private String currentDirectory;
-  //  private int counter;
   private final Map<String, SchemaCheckStatus> checkedSchemaTopics = new HashMap<>();
 
   @Getter
@@ -81,6 +79,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   private JButton cleanButton;
   private JButton copyButton;
   private JComboBox quantityComboBox;
+  @Getter
   private JTextField searchTextField;
   private JLabel dangerLabel;
   private JComboBox comboDomain;
@@ -96,6 +95,8 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   public KafkaProducerPanel() {
 
     $$$setupUI$$$();
+
+    super.initialize();
 
     variablesEditor.setText(ResourceUtil.readResourceString("variables.properties"));
 
@@ -243,7 +244,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
       jsonEditor.setCaretPosition(0);
     } catch (Exception ex) {
       printError("No se ha podido cargar el archivo.");
-      printInfo(ex.getMessage());
+      printTrace(ex.getMessage());
     }
   }
 
@@ -344,11 +345,10 @@ public class KafkaProducerPanel extends KafkaBasePanel {
       generatedJson = templateExecutor.templateToJson(json);
     } catch (Throwable ex) {
       enqueueError("No se ha podido generar el JSON del EVENT a partir de la plantilla");
-      enqueueInfo("[" + ex.getClass().getName() + "] " + ex.getMessage());
+      enqueueInfoMessage("[" + ex.getClass().getName() + "] " + ex.getMessage());
       return null;
     }
-    enqueueInfo("Se ha generado el " + name + ":");
-    enqueueInfo(generatedJson);
+    enqueueLink("generated json " + name, generatedJson);
     return generatedJson;
   }
 
@@ -411,7 +411,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
       enqueueError(
           "Error obteniendo esquema del " + type + " del topic " + topic
               + " desde el Schema Registry");
-      enqueueInfo(e.getMessage());
+      enqueueInfoMessage(e.getMessage());
       if (e instanceof NotFound) {
         return SchemaCheckStatus.NOT_FOUND;
       }
@@ -424,11 +424,11 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     } catch (Exception e) {
       enqueueError("Error obteniendo esquema AVRO de " +
           (isKey ? producer.getKeyClassName() : producer.getValueClassName()));
-      enqueueInfo(e.getMessage());
+      enqueueInfoMessage(e.getMessage());
       return SchemaCheckStatus.NOT_CHECKED;
     }
 
-    enqueueInfo("Comparando con el esquema AVRO de " +
+    enqueueInfoMessage("Comparando con el esquema AVRO de " +
         (isKey ? producer.getKeyClassName() : producer.getValueClassName()));
     return compareSchemas(registeredSchema, avroSchema, type.name());
   }
@@ -447,21 +447,19 @@ public class KafkaProducerPanel extends KafkaBasePanel {
 
     if (!registeredSchema.equals(avroSchema)) {
       enqueueError("Los esquemas del " + objectName + " no coinciden");
-      enqueueText(" ", Type.ADDED);
-      enqueueInfo(" AVRO");
-      enqueueText(" ", Type.DELETED);
-      enqueueInfo(" Schema Registry");
-      enqueueTextDifferences(JsonUtils.formatJson(registeredSchema),
-          JsonUtils.formatJson(avroSchema));
+      printTextDifferences("Schema Registry", registeredSchema, "AVRO", avroSchema);
+
       return SchemaCheckStatus.NOT_EQUALS;
     } else {
       enqueueSuccessful("El esquema del " + objectName + " es correcto");
-      enqueueInfo(avroSchema);
+      InfoMessage infoMessage = InfoMessage.builder().mensaje(avroSchema).type(Type.TRACE).build();
+      enqueueLink(objectName + " schema", InfoDocument.builder().message(infoMessage).build());
       return SchemaCheckStatus.EQUALS;
     }
   }
 
   private void createUIComponents() {
+    infoTextPane = new InfoTextPane();
     valueEditor = createJsonEditor();
     valueScrollPane = createEditorScroll(valueEditor);
     keyEditor = createJsonEditor();
@@ -477,19 +475,25 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   }
 
   @Override
-  protected Optional<JTextComponent> getCurrentEditor() {
+  public Optional<JTextComponent> getCurrentEditor() {
     int index = tabbedPane.getSelectedIndex();
     return getUmpteenthEditor(index, infoTextPane, keyEditor, valueEditor, variablesEditor);
   }
 
   @Override
   protected void showConnectionStatus(Boolean ok) {
-    buttonCheckEnvironment.setIcon(ok == null ? iconCheckUndefined : (ok ? iconCheckOk : iconCheckFail));
+    buttonCheckEnvironment.setIcon(Optional.ofNullable(ok)
+        .map(b -> b ? iconCheckOk : iconCheckFail)
+        .orElse(iconCheckUndefined));
   }
 
   @Override
   protected Environment getEnvironment() {
     return (Environment) comboEnvironment.getSelectedItem();
+  }
+
+  public InfoTextPane getInfoTextPane() {
+    return (InfoTextPane) infoTextPane;
   }
 
   /**
@@ -669,7 +673,6 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     tabbedPane.addTab("Información", tabInfo);
     final JScrollPane scrollPane1 = new JScrollPane();
     tabInfo.add(scrollPane1, BorderLayout.CENTER);
-    infoTextPane = new JTextPane();
     infoTextPane.setBackground(new Color(-16777216));
     infoTextPane.setCaretColor(new Color(-1));
     infoTextPane.setEditable(false);

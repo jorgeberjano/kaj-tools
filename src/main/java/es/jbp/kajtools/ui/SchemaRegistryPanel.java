@@ -8,7 +8,6 @@ import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.KajException;
 import es.jbp.kajtools.configuration.Configuration;
 import es.jbp.kajtools.IMessageClient;
-import es.jbp.kajtools.ui.InfoMessage.Type;
 import es.jbp.kajtools.KajToolsApp;
 import es.jbp.kajtools.util.JsonUtils;
 import es.jbp.kajtools.util.SchemaRegistryService;
@@ -53,7 +52,6 @@ import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
-import org.springframework.web.client.RestClientException;
 
 public class SchemaRegistryPanel extends KafkaBasePanel {
 
@@ -68,6 +66,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   private RTextScrollPane schemaScrollPane;
   private JButton cleanButton;
   private JButton copyButton;
+  @Getter
   private JTextField searchTextField;
   @Getter
   private JPanel contentPane;
@@ -101,6 +100,8 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   public SchemaRegistryPanel() {
 
     $$$setupUI$$$();
+
+    super.initialize();
 
     dangerLabel.setVisible(false);
 
@@ -226,7 +227,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
           .getSubjectSchemaVersions(schemaSubject, environment);
     } catch (Throwable ex) {
       enqueueError("No se han podido obtener las versiones de los esquemas de " + schemaSubject);
-      enqueueInfo("[" + ex.getClass().getName() + "] " + ex.getMessage());
+      enqueueInfoMessage("[" + ex.getClass().getName() + "] " + ex.getMessage());
       return Collections.emptyList();
     }
     int n = versionList.size();
@@ -245,7 +246,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
       updateVersionList();
     } catch (Throwable ex) {
       printError("Error al recibir las versiones");
-      printInfo("[" + ex.getClass().getName() + "] " + ex.getMessage());
+      printTrace("[" + ex.getClass().getName() + "] " + ex.getMessage());
     }
 
     if (versions != null && !versions.isEmpty()) {
@@ -287,7 +288,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
           .collect(Collectors.toMap(Entry::getKey, entry -> new SchemaInfo(entry.getValue())));
     } catch (Throwable ex) {
       printError("Error al recibir las versiones");
-      printInfo("[" + ex.getClass().getName() + "] " + ex.getMessage());
+      printTrace("[" + ex.getClass().getName() + "] " + ex.getMessage());
     }
 
     // Se formatean todos los esquemas
@@ -311,18 +312,15 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     String previousSchema = schemas.get(previousVersion).content;
 
     printAction("Comparando la versión " + selectedVersion + " con la " + previousVersion);
-    printText(" ", Type.ADDED);
-    printInfo(" Versión " + selectedVersion);
-    printText(" ", Type.DELETED);
-    printInfo(" Versión " + previousVersion);
-    enqueueTextDifferences(previousSchema, selectedSchema);
-    flushMessages();
+
+    printTextDifferences(" Versión " + selectedVersion, selectedSchema,
+        " Versión " + previousVersion, previousSchema);
   }
 
   private Map<String, String> requestSchemas(Environment environment, String schemaSubject,
       List<String> versions) {
     if (versions == null || versions.isEmpty()) {
-      enqueueInfo("No hay ninguna versión");
+      enqueueInfoMessage("No hay ninguna versión");
       return Collections.<String, String>emptyMap();
     }
 
@@ -507,13 +505,19 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
     final JPanel panel5 = new JPanel();
-    panel5.setLayout(new BorderLayout(0, 0));
+    panel5.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
     panel4.add(panel5, BorderLayout.WEST);
     final JLabel label5 = new JLabel();
     label5.setText("Versiones");
-    panel5.add(label5, BorderLayout.NORTH);
+    panel5.add(label5, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
+        null, new Dimension(80, -1), new Dimension(80, -1), 0, false));
     final JScrollPane scrollPane1 = new JScrollPane();
-    panel5.add(scrollPane1, BorderLayout.CENTER);
+    panel5.add(scrollPane1,
+        new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL,
+            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, new Dimension(80, -1),
+            new Dimension(80, -1), 0, false));
     versionsList = new JList();
     scrollPane1.setViewportView(versionsList);
     tabbedPane = new JTabbedPane();
@@ -523,7 +527,6 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     tabbedPane.addTab("Información", tabInfo);
     final JScrollPane scrollPane2 = new JScrollPane();
     tabInfo.add(scrollPane2, BorderLayout.CENTER);
-    infoTextPane = new JTextPane();
     infoTextPane.setBackground(new Color(-16777216));
     infoTextPane.setCaretColor(new Color(-1));
     infoTextPane.setEditable(false);
@@ -600,8 +603,8 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   }
 
   @Override
-  protected JTextPane getInfoTextPane() {
-    return infoTextPane;
+  public InfoTextPane getInfoTextPane() {
+    return (InfoTextPane) infoTextPane;
   }
 
   @Override
@@ -611,7 +614,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   }
 
   @Override
-  protected Optional<JTextComponent> getCurrentEditor() {
+  public Optional<JTextComponent> getCurrentEditor() {
     int index = tabbedPane.getSelectedIndex();
     if (index == 0) {
       return Optional.of(infoTextPane);
@@ -634,5 +637,6 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   private void createUIComponents() {
     schemaEditor = createJsonEditor();
     schemaScrollPane = createEditorScroll(schemaEditor);
+    infoTextPane = new InfoTextPane();
   }
 }

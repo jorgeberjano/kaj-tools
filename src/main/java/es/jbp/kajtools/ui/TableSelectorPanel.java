@@ -2,12 +2,12 @@ package es.jbp.kajtools.ui;
 
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import es.jbp.kajtools.ui.interfaces.DialogueablePanel;
 import es.jbp.tabla.ModeloTablaGenerico;
 import es.jbp.tabla.TablaGenerica;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
-import java.awt.PopupMenu;
 import java.util.Locale;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -24,14 +24,15 @@ import javax.swing.plaf.FontUIResource;
 import javax.swing.text.StyleContext;
 import lombok.Getter;
 
-public class TableSelectorPanel<T> {
+public class TableSelectorPanel<T> implements DialogueablePanel {
 
   private JTable table;
   @Getter
-  private JPanel contentPane;
+  private JPanel mainPanel;
   private JTextField textFieldFilter;
   private JButton buttonOk;
   private JButton buttonUpdate;
+
   private boolean okButtonPressed;
 
   public interface ModelProvider<T> {
@@ -80,7 +81,7 @@ public class TableSelectorPanel<T> {
   }
 
   public void bindDialog(JDialog dialog) {
-    contentPane.getRootPane().setDefaultButton(buttonOk);
+    mainPanel.getRootPane().setDefaultButton(buttonOk);
     buttonOk.addActionListener(e -> {
       okButtonPressed = true;
       dialog.setVisible(false);
@@ -102,22 +103,22 @@ public class TableSelectorPanel<T> {
    */
   private void $$$setupUI$$$() {
     createUIComponents();
-    contentPane = new JPanel();
-    contentPane.setLayout(new GridLayoutManager(3, 2, new Insets(8, 8, 8, 8), -1, -1));
+    mainPanel = new JPanel();
+    mainPanel.setLayout(new GridLayoutManager(3, 2, new Insets(8, 8, 8, 8), -1, -1));
     final JScrollPane scrollPane1 = new JScrollPane();
-    contentPane.add(scrollPane1,
+    mainPanel.add(scrollPane1,
         new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
     scrollPane1.setViewportView(table);
     textFieldFilter = new JTextField();
-    contentPane.add(textFieldFilter,
+    mainPanel.add(textFieldFilter,
         new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
             GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null,
             0, false));
     buttonOk = new JButton();
     buttonOk.setText("Aceptar");
-    contentPane.add(buttonOk, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+    mainPanel.add(buttonOk, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
         null, null, null, 0, false));
     buttonUpdate = new JButton();
@@ -128,7 +129,7 @@ public class TableSelectorPanel<T> {
     buttonUpdate.setIcon(new ImageIcon(getClass().getResource("/images/update.png")));
     buttonUpdate.setText("");
     buttonUpdate.setToolTipText("Actualizar");
-    contentPane.add(buttonUpdate,
+    mainPanel.add(buttonUpdate,
         new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
             GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, new Dimension(24, 24),
             new Dimension(24, 24), new Dimension(24, 24), 0, false));
@@ -164,7 +165,7 @@ public class TableSelectorPanel<T> {
    * @noinspection ALL
    */
   public JComponent $$$getRootComponent$$$() {
-    return contentPane;
+    return mainPanel;
   }
 
   public T getSelectedItem() {

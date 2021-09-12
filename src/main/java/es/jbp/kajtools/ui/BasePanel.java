@@ -1,139 +1,114 @@
 package es.jbp.kajtools.ui;
 
-import static org.fife.ui.rsyntaxtextarea.TokenTypes.LITERAL_STRING_DOUBLE_QUOTE;
-import static org.fife.ui.rsyntaxtextarea.TokenTypes.SEPARATOR;
-import static org.fife.ui.rsyntaxtextarea.TokenTypes.VARIABLE;
-
 import es.jbp.expressions.ExpressionException;
 import es.jbp.kajtools.KajException;
-import es.jbp.kajtools.KajToolsApp;
 import es.jbp.kajtools.ui.InfoMessage.Type;
+import es.jbp.kajtools.ui.interfaces.DialogueablePanel;
+import es.jbp.kajtools.ui.interfaces.InfoReportablePanel;
+import es.jbp.kajtools.ui.interfaces.SearchablePanel;
 import es.jbp.kajtools.util.JsonUtils;
 import es.jbp.kajtools.util.TemplateExecutor;
-import java.awt.Color;
 import java.awt.Component;
-import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.swing.JTextField;
+import javax.swing.JDialog;
+import javax.swing.JPanel;
 import javax.swing.JTextPane;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.JTextComponent;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
-import name.fraser.neil.plaintext.diff_match_patch;
-import name.fraser.neil.plaintext.diff_match_patch.Diff;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
+import javax.swing.text.html.HTMLDocument;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
-import org.fife.ui.rsyntaxtextarea.SyntaxScheme;
-import org.fife.ui.rsyntaxtextarea.Theme;
 import org.fife.ui.rtextarea.RTextScrollPane;
-import org.fife.ui.rtextarea.SearchContext;
-import org.fife.ui.rtextarea.SearchEngine;
-import org.fife.ui.rtextarea.SearchResult;
 
-public abstract class BasePanel {
+public abstract class BasePanel implements InfoReportablePanel, SearchablePanel {
 
   protected TemplateExecutor templateExecutor = new TemplateExecutor();
+  protected TextComparator comparator = new TextComparator();
 
   protected AtomicBoolean abortTasks = new AtomicBoolean();
 
-  private final List<InfoMessage> messages = new ArrayList<>();
-  private JTextField field;
+  private final Map<String, InfoDocument> linksMap = new HashMap<>();
 
-  protected abstract JTextPane getInfoTextPane();
+  protected abstract Component getContentPane();
 
-  protected void enqueueAction(String message) {
-    enqueueText(message + "\n", Type.ACTION);
-  }
-
-  protected void enqueueInfo(String message) {
-    enqueueText(message + "\n", Type.INFO);
-  }
-
-  protected void enqueueError(String message) {
-    enqueueText(message + "\n", Type.ERROR);
-  }
-
-  protected void enqueueSuccessful(String message) {
-    enqueueText(message + "\n", Type.SUCCESS);
-  }
-
-  protected synchronized void enqueueText(String message, Type type) {
-    messages.add(new InfoMessage(message, type));
-  }
-
-  protected void enqueueException(KajException ex) {
-    enqueueError(ex.getMessage());
-    if (ex.getCause() != null) {
-      enqueueInfo(ex.getCause().getMessage());
-      if (ex.getCause().getCause() != null) {
-        enqueueInfo(ex.getCause().getCause().getMessage());
+  public void initialize() {
+    JTextPane textPane = getInfoTextPane();
+    textPane.addHyperlinkListener(e -> {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+        showLinkContent(e.getDescription());
       }
-    }
-  }
-
-  protected void flushMessages() {
-    messages.forEach(m -> printText(m.getMensaje(), m.getType()));
-    messages.clear();
+    });
+    textPane.setContentType("text/html");
+    textPane.setHighlighter(null);
   }
 
   protected synchronized void asyncTaskFinished() {
-    flushMessages();
-    printInfo("");
+    printTrace("");
     enableButtons(true);
   }
 
   protected abstract void enableButtons(boolean enable);
 
-  protected void printAction(String message) {
-    printText(message + "\n", Type.ACTION);
+  protected void enqueueException(KajException ex) {
+    enqueueError(ex.getMessage());
+    if (ex.getCause() != null) {
+      enqueueLink("excepcion", ex.getCause().getMessage());
+
+      if (ex.getCause().getCause() != null) {
+        enqueueLink("{cause}", ex.getCause().getCause().getMessage());
+      }
+    }
   }
 
-  protected void printInfo(String message) {
-    printText(message + "\n", Type.INFO);
+  protected void enqueueLink(String text, String documentText) {
+    enqueueLink(text, InfoDocument.builder().message(
+        InfoMessage.builder().mensaje(documentText).build()
+    ).build());
   }
 
-  protected void printError(String message) {
-    printText(message + "\n", Type.ERROR);
+  protected void enqueueLink(String text, InfoDocument infoDocument) {
+    SwingUtilities.invokeLater(() -> {
+      printLink(text, infoDocument);
+    });
   }
 
-  protected void printSuccessful(String message) {
-    printText(message + "\n", Type.SUCCESS);
+  protected void printTextDifferences(String rightTitle, String rightText, String leftTitle, String leftText) {
+
+    InfoDocument differencesDocument = comparator.compare(
+        leftTitle, JsonUtils.formatJson(leftText),
+        rightTitle, JsonUtils.formatJson(rightText));
+    printLink("differences", differencesDocument);
+  }
+
+  protected void printLink(String text, InfoDocument infoDocument) {
+    String key = text + "_" + UUID.randomUUID();
+
+    linksMap.put(key, infoDocument);
+
+    HTMLDocument doc = (HTMLDocument) getInfoTextPane().getStyledDocument();
+    try {
+      doc.insertAfterEnd(doc.getCharacterElement(doc.getLength()), "<a href=\"" + key + "\">" + text + "</a><br>");
+    } catch (BadLocationException | IOException ex) {
+      System.err.println("No se pudo insertar el link en la consola de información");
+    }
   }
 
   protected void printException(KajException ex) {
     printError(ex.getMessage());
     if (ex.getCause() != null) {
-      printInfo(ex.getCause().getMessage());
-    }
-  }
-
-  protected void printText(String message, Type type) {
-    StyledDocument doc = getInfoTextPane().getStyledDocument();
-    SimpleAttributeSet attr = new SimpleAttributeSet();
-    StyleConstants.setForeground(attr, type == null ? Color.white : type.color);
-    StyleConstants.setBackground(attr, type == null ? Color.black : type.backgroundColor);
-    try {
-      doc.insertString(doc.getLength(), message, attr);
-    } catch (BadLocationException ex) {
-      System.err.println("No se puede insertar el texto en la consola de información");
+      printTrace(ex.getCause().getMessage());
     }
   }
 
@@ -154,7 +129,8 @@ public abstract class BasePanel {
   }
 
   protected RSyntaxTextArea createJsonEditor() {
-    final RSyntaxTextArea jsonEditor = createEditor(SyntaxConstants.SYNTAX_STYLE_JSON);
+    final RSyntaxTextArea jsonEditor = ComponentFactory.createSyntaxEditor();
+    jsonEditor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JSON);
     jsonEditor.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
@@ -183,31 +159,15 @@ public abstract class BasePanel {
   }
 
   protected RSyntaxTextArea createScriptEditor() {
-    return createEditor(SyntaxConstants.SYNTAX_STYLE_JAVASCRIPT);
+    RSyntaxTextArea editor = ComponentFactory.createSyntaxEditor();
+    editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVASCRIPT);
+    return editor;
   }
 
   protected RSyntaxTextArea createPropertiesEditor() {
-    return createEditor(SyntaxConstants.SYNTAX_STYLE_PROPERTIES_FILE);
-  }
-
-  protected RSyntaxTextArea createEditor(String styleKey) {
-    final RSyntaxTextArea jsonEditor = new RSyntaxTextArea();
-    jsonEditor.setSyntaxEditingStyle(styleKey);
-    jsonEditor.setCodeFoldingEnabled(true);
-    jsonEditor.setAlignmentX(0.0F);
-    Font font = new Font("Courier New", Font.PLAIN, 12);
-    jsonEditor.setFont(font);
-    Theme theme = KajToolsApp.getInstance().getTheme();
-    if (theme != null) {
-      theme.apply(jsonEditor);
-    } else {
-      SyntaxScheme scheme = jsonEditor.getSyntaxScheme();
-      scheme.getStyle(SEPARATOR).foreground = Color.black;
-      scheme.getStyle(VARIABLE).foreground = Color.blue;
-      scheme.getStyle(LITERAL_STRING_DOUBLE_QUOTE).foreground = Color.green.darker();
-    }
-
-    return jsonEditor;
+    RSyntaxTextArea editor = ComponentFactory.createSyntaxEditor();
+    editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_PROPERTIES_FILE);
+    return editor;
   }
 
   protected interface AsyncTask<T> {
@@ -249,93 +209,48 @@ public abstract class BasePanel {
     return worker;
   }
 
-  protected void enableTextSearch(JTextField searchTextField, JTextComponent... editors) {
-    this.field = searchTextField;
-    searchTextField.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        findText(true, true);
-        getCurrentEditor().ifPresent(JTextComponent::grabFocus);
-      }
-    });
-    searchTextField.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        findText(true, true);
-      }
-    });
-    Arrays.stream(editors).forEach(editor -> editor.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        super.keyPressed(e);
-        if (e.getKeyCode() == KeyEvent.VK_F3) {
-          if (e.isControlDown()) {
-            searchTextField.setText(editor.getSelectedText());
-          }
-          findText(!e.isShiftDown(), false);
-        }
-      }
-    }));
-  }
-
-  protected void findText(boolean forward, boolean retryOppositeDirection) {
-
-    String text = field.getText();
-    boolean wasFound = findText(forward, text);
-    if (!wasFound && retryOppositeDirection) {
-      findText(!forward, text);
-    }
-  }
-
-  private boolean findText(boolean forward, String text) {
-    Optional<JTextComponent> editor = getCurrentEditor();
-    if (!editor.isPresent() || !(editor.get() instanceof RSyntaxTextArea)) {
-      return false;
-    }
-    SearchContext context = new SearchContext();
-    context.setSearchFor(text);
-    context.setMatchCase(false);
-    context.setRegularExpression(false);
-    context.setSearchForward(forward);
-    context.setWholeWord(false);
-    SearchResult result = SearchEngine.find((RSyntaxTextArea) editor.get(), context);
-    return result.wasFound();
-  }
 
   protected void cleanEditor() {
-    getCurrentEditor().ifPresent(editor -> editor.setText(""));
+    getCurrentEditor().ifPresent(editor -> {
+      editor.setText("");
+      if (editor == getInfoTextPane()) {
+        linksMap.clear();
+      }
+    });
   }
-
-  protected abstract Optional<JTextComponent> getCurrentEditor();
 
   protected void copyToClipboard() {
     getCurrentEditor().ifPresent(editor -> copyToClipboard(editor.getText()));
   }
 
-  protected void enqueueTextDifferences(String textLeft, String textRight) {
-    diff_match_patch difference = new diff_match_patch();
-    LinkedList<Diff> deltas = difference.diff_main(textLeft, textRight);
-    List<Pair<String, Type>> result = new ArrayList<>();
-
-    for (Diff delta : deltas) {
-      switch (delta.operation) {
-        case EQUAL:
-          result.add(new ImmutablePair<>(delta.text, Type.INFO));
-          break;
-        case INSERT:
-          result.add(new ImmutablePair<>(delta.text, Type.ADDED));
-          break;
-        case DELETE:
-          result.add(new ImmutablePair<>(delta.text, Type.DELETED));
-          break;
-      }
+  protected void showLinkContent(String key) {
+    InfoDocument infoDocument = linksMap.get(key);
+    if (key.contains("json") || key.contains("schema")) {
+      RSyntaxPanel panel = new RSyntaxPanel();
+      panel.setContent(JsonUtils.formatJson(infoDocument.plainText()), SyntaxConstants.SYNTAX_STYLE_JSON);
+      showInModalDialog(panel);
+    } else {
+      InfoPanel panel = new InfoPanel();
+      panel.setDocument(infoDocument);
+      showInModalDialog(panel);
     }
-
-    result.forEach(p -> enqueueText(p.getLeft(), p.getRight()));
-    enqueueInfo("");
   }
 
-  protected abstract Component getContentPane();
-
+  protected void showInModalDialog(DialogueablePanel dialogable) {
+    JPanel panel = dialogable.getMainPanel();
+    panel.setBounds(0, 0, 400, 450);
+    JDialog dialog = new JDialog();
+    dialog.setTitle("Topics");
+    dialog.setSize(800, 450);
+    dialog.setResizable(true);
+    dialog.setLocationRelativeTo(getContentPane());
+    dialog.setContentPane(panel);
+    dialogable.bindDialog(dialog);
+    dialog.setModal(true);
+    dialog.setVisible(true);
+  }
 
 }
+
+
+

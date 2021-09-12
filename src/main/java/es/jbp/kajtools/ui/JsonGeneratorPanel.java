@@ -6,18 +6,13 @@ import com.intellij.uiDesigner.core.Spacer;
 import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.util.ClassScanner;
 import es.jbp.kajtools.util.DeepTestObjectCreator;
+import es.jbp.kajtools.util.ResourceUtil;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -48,15 +43,14 @@ public class JsonGeneratorPanel extends BasePanel {
   private Future<GeneratedResult> futureResult;
 
   private JTextField filterTextField;
-  private JComboBox classComboBox;
+  private JComboBox<String> classComboBox;
   private JTabbedPane tabbedPane;
   private JPanel topPanel;
-  @Getter
   private JTextPane infoTextPane;
   private JPanel tabJson;
   private JPanel tabInfo;
   private JPanel tabSchema;
-  private JButton generarteButton;
+  private JButton generateJsonButton;
   private JButton copyButton;
   @Getter
   private JPanel contentPane;
@@ -65,27 +59,23 @@ public class JsonGeneratorPanel extends BasePanel {
   private RTextScrollPane schemaScrollPane;
   private JButton cleanButton;
   private JTextField searchTextField;
-  private JButton generatrFromJsonButton;
+  private JButton checkJsonButton;
   private RSyntaxTextArea jsonEditor;
   private RSyntaxTextArea schemaEditor;
 
   public JsonGeneratorPanel() {
     $$$setupUI$$$();
-    InputStream inputStream = JsonGeneratorPanel.class.getClassLoader()
-        .getResourceAsStream("clases.txt");
-    List<String> lineList = new BufferedReader(new InputStreamReader(inputStream,
-        StandardCharsets.UTF_8)).lines().collect(Collectors.toList());
-    classSet = ClassScanner.create().findClasses(lineList).stream().map(c -> c.getName())
+
+    super.initialize();
+
+    List<String> lineList = ResourceUtil.readResourceStringList("clases.txt");
+
+    classSet = ClassScanner.create().findClasses(lineList).stream().map(Class::getName)
         .collect(Collectors.toSet());
 
-    String[] arr = classSet.stream().sorted().toArray(size -> new String[size]);
-    classComboBox.setModel(new DefaultComboBoxModel(arr));
-    generarteButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        asyncGenerateAll();
-      }
-    });
+    String[] arr = classSet.stream().sorted().toArray(String[]::new);
+    classComboBox.setModel(new DefaultComboBoxModel<>(arr));
+    generateJsonButton.addActionListener(e -> asyncGenerateAll());
     filterTextField.addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
@@ -93,30 +83,20 @@ public class JsonGeneratorPanel extends BasePanel {
         filterClasses();
       }
     });
-    copyButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        copyToClipboard();
-      }
-    });
-    cleanButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        cleanEditor();
-      }
-    });
+    copyButton.addActionListener(e -> copyToClipboard());
+    cleanButton.addActionListener(e -> cleanEditor());
 
     enableTextSearch(searchTextField, jsonEditor, schemaEditor);
 
-    generatrFromJsonButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        asyncGenerateFromJson();
-      }
-    });
+    checkJsonButton.addActionListener(e -> asyncGenerateFromJson());
   }
 
-  protected Optional<JTextComponent> getCurrentEditor() {
+  @Override
+  public JTextField getSearchTextField() {
+    return searchTextField;
+  }
+
+  public Optional<JTextComponent> getCurrentEditor() {
     int index = tabbedPane.getSelectedIndex();
     if (index == 0) {
       return Optional.of(infoTextPane);
@@ -136,21 +116,20 @@ public class JsonGeneratorPanel extends BasePanel {
     String[] arr = classSet.stream()
         .filter(s -> containsAll(s, listaFiltros))
         .sorted()
-        .toArray(size -> new String[size]);
-    classComboBox.setModel(new DefaultComboBoxModel(arr));
+        .toArray(String[]::new);
+    classComboBox.setModel(new DefaultComboBoxModel<>(arr));
   }
 
   private boolean containsAll(String texto, List<String> filterList) {
     String lowercaseText = texto.toLowerCase();
-    return filterList.stream().allMatch(s -> lowercaseText.contains(s));
+    return filterList.stream().allMatch(lowercaseText::contains);
   }
 
-  private class GeneratedResult {
+  private static class GeneratedResult {
 
     Object object;
     String json;
     String schema;
-//    String template;
   }
 
   private void asyncGenerateFromJson() {
@@ -208,9 +187,9 @@ public class JsonGeneratorPanel extends BasePanel {
       enqueueError("No se ha podido crear la instancia el objeto");
     } else {
       enqueueSuccessful("Se ha creado la instancia del objeto correctamente");
-      enqueueInfo(generatedObject.toString());
+      enqueueLink("Object::toString", generatedObject.toString());
     }
-    creator.getErrors().forEach(m -> enqueueError(m));
+    creator.getErrors().forEach(this::enqueueError);
     return generatedObject;
   }
 
@@ -236,7 +215,7 @@ public class JsonGeneratorPanel extends BasePanel {
     } else {
       enqueueSuccessful("Se ha generado el esquema AVRO correctamente");
     }
-    creator.getErrors().forEach(m -> enqueueError(m));
+    creator.getErrors().forEach(this::enqueueError);
     return schema;
   }
 
@@ -249,7 +228,7 @@ public class JsonGeneratorPanel extends BasePanel {
     Object generatedObject = creator.createObjectFromJson(nombreClase, json);
     if (generatedObject != null) {
       enqueueSuccessful("Se ha creado la instancia del Objeto desde el JSON correctamente");
-      enqueueInfo(generatedObject.toString());
+      enqueueInfoMessage(generatedObject.toString());
     } else {
       enqueueError("No se ha podido crear la instancia el Objeto desde el JSON");
     }
@@ -296,20 +275,20 @@ public class JsonGeneratorPanel extends BasePanel {
     contentPane.add(panel1, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
         null, null, null, 0, false));
-    generarteButton = new JButton();
-    generarteButton.setText("Generar");
-    generarteButton.setToolTipText("Generar objeto, JSON y esquema");
-    panel1.add(generarteButton,
+    generateJsonButton = new JButton();
+    generateJsonButton.setText("Generar JSON");
+    generateJsonButton.setToolTipText("Generar objeto, JSON y esquema");
+    panel1.add(generateJsonButton,
         new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
     final Spacer spacer1 = new Spacer();
     panel1.add(spacer1, new GridConstraints(0, 2, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
         GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
-    generatrFromJsonButton = new JButton();
-    generatrFromJsonButton.setText("Generar desde JSON");
-    generatrFromJsonButton.setToolTipText("Generar objeto, esquema y plantilla desde el JSON");
-    panel1.add(generatrFromJsonButton,
+    checkJsonButton = new JButton();
+    checkJsonButton.setText("Comprobar JSON");
+    checkJsonButton.setToolTipText("Comprobar si el JSON se puede deserializar en un objeto");
+    panel1.add(checkJsonButton,
         new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
@@ -337,7 +316,6 @@ public class JsonGeneratorPanel extends BasePanel {
     tabbedPane.addTab("Información", tabInfo);
     infoScrollPane = new JScrollPane();
     tabInfo.add(infoScrollPane, BorderLayout.CENTER);
-    infoTextPane = new JTextPane();
     infoTextPane.setAutoscrolls(false);
     infoTextPane.setBackground(new Color(-16777216));
     infoTextPane.setCaretColor(new Color(-1));
@@ -388,11 +366,19 @@ public class JsonGeneratorPanel extends BasePanel {
   }
 
   private void createUIComponents() {
+
+    infoTextPane = new InfoTextPane();
+
     jsonEditor = createJsonEditor();
     jsonScrollPane = createEditorScroll(jsonEditor);
 
     schemaEditor = createJsonEditor();
     schemaScrollPane = createEditorScroll(schemaEditor);
+  }
+
+  @Override
+  public InfoTextPane getInfoTextPane() {
+    return (InfoTextPane) infoTextPane;
   }
 
   @Override

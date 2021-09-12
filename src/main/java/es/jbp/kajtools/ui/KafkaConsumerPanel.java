@@ -73,11 +73,11 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
   private JTable recordTable;
   private JTabbedPane tabbedPane;
   private JPanel tabInfo;
-  private JTextPane infoTextPane;
   private JPanel tabKey;
   private RTextScrollPane keyScrollPane;
   private JPanel tabValue;
   private RTextScrollPane valueScrollPane;
+  @Getter
   private JTextField searchTextField;
   private JTextField fieldMaxRecords;
   private JPanel tabFilter;
@@ -106,6 +106,7 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
   private MessageFilter filter;
   private int maxRecords = 50;
   private int recordConsumedCount = 0;
+  private JTextPane infoTextPane;
 
 
   public KafkaConsumerPanel() {
@@ -311,7 +312,7 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
         @Override
         public void message(String message) {
           SwingUtilities.invokeLater(() -> {
-            printInfo(message);
+            printTrace(message);
           });
         }
 
@@ -333,13 +334,13 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
       printError(
           "Error en el Key del mensaje de la partición " + recordItem.getPartition() + " con offset " + recordItem
               .getOffset());
-      printInfo(recordItem.getKeyError());
+      printTrace(recordItem.getKeyError());
     }
     if (recordItem.getValueError() != null) {
       printError(
           "Error en el Value del mensaje de la partición " + recordItem.getPartition() + " con offset " + recordItem
               .getOffset());
-      printInfo(recordItem.getValueError());
+      printTrace(recordItem.getValueError());
     }
   }
 
@@ -608,6 +609,8 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
 
   private void createUIComponents() {
 
+    infoTextPane = new InfoTextPane();
+
     jsonEditorValue = createJsonEditor();
     valueScrollPane = createEditorScroll(jsonEditorValue);
     jsonEditorKey = createJsonEditor();
@@ -652,8 +655,8 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
   }
 
   @Override
-  protected JTextPane getInfoTextPane() {
-    return infoTextPane;
+  public InfoTextPane getInfoTextPane() {
+    return (InfoTextPane) infoTextPane;
   }
 
   @Override
@@ -662,7 +665,7 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
   }
 
   @Override
-  protected Optional<JTextComponent> getCurrentEditor() {
+  public Optional<JTextComponent> getCurrentEditor() {
 
     int index = tabbedPane.getSelectedIndex();
     return getUmpteenthEditor(index, infoTextPane, scriptEditorFilter, jsonEditorKey, jsonEditorValue);

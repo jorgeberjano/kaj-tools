@@ -56,16 +56,7 @@ public abstract class KafkaBasePanel extends BasePanel {
 
     TableSelectorPanel<TopicItem> tableSelectorPanel = new TableSelectorPanel<>(this::createTopicModel);
 
-    JPanel panel = tableSelectorPanel.getContentPane();
-    panel.setBounds(0, 0, 400, 450);
-    JDialog dialog = new JDialog();
-    dialog.setTitle("Topics");
-    dialog.setSize(800, 450);
-    dialog.setLocationRelativeTo(getContentPane());
-    dialog.setContentPane(panel);
-    tableSelectorPanel.bindDialog(dialog);
-    dialog.setModal(true);
-    dialog.setVisible(true);
+    showInModalDialog(tableSelectorPanel);
 
     return tableSelectorPanel.getSelectedItem();
   }

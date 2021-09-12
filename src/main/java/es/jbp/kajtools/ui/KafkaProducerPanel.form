@@ -274,7 +274,7 @@
                     <properties/>
                     <border type="none"/>
                     <children>
-                      <component id="7cdf1" class="javax.swing.JTextPane" binding="infoTextPane">
+                      <component id="7cdf1" class="javax.swing.JTextPane" binding="infoTextPane" custom-create="true">
                         <constraints/>
                         <properties>
                           <background color="-16777216"/>
