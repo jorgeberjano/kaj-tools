@@ -7,9 +7,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public interface IMessageClient {
 
+  List<String> getAvailableKeys();
+
   List<String> getAvailableValues();
 
-  List<String> getAvailableKeys();
+  List<String> getAvailableHeaders();
 
   String getDefaultTopic();
 
@@ -19,7 +21,7 @@ public interface IMessageClient {
 
   String getKeySchema(String json) throws KajException;
 
-  void sendFromJson(Environment environment, String topic, String keyJson, String valueJson)
+  void sendFromJson(Environment environment, String topic, String keyJson, String valueJson, String headers)
       throws KajException;
 
   void consumeLastRecords(Environment environment, String topic, LocalDateTime dateTimeToRewind,

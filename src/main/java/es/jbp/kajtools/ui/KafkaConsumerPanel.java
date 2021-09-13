@@ -106,12 +106,14 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
   private MessageFilter filter;
   private int maxRecords = 50;
   private int recordConsumedCount = 0;
-  private JTextPane infoTextPane;
-
+  @Getter
+  private InfoTextPane infoTextPane;
 
   public KafkaConsumerPanel() {
 
     $$$setupUI$$$();
+
+    super.initialize();
 
     // Combo Entorno
     Configuration.getEnvironmentList().forEach(comboEnvironment::addItem);
@@ -287,15 +289,28 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
         if (filter.satisfyCondition(rec)) {
           recordItemsList.add(rec);
         }
+        if (StringUtils.isNotBlank(rec.getValueError())) {
+          printError("Error en el value del mensaje con partición " + rec.getPartition()
+               + " y offset " + rec.getOffset());
+          printLink("error", InfoDocument.of(rec.getValueError()));
+        }
+        if (StringUtils.isNotBlank(rec.getKeyError())) {
+          printError("Error en el key del mensaje con partición " + rec.getPartition()
+              + " y offset " + rec.getOffset());
+          printLink("error", InfoDocument.of(rec.getKeyError()));
+        }
       } catch (KajException ex) {
         printException(ex);
       }
+
     }
     recordTableModel.actualizar();
     int matches = recordItemsList.size();
 
     labelCounter.setText(matches == recordConsumedCount ? "" + recordConsumedCount
         : matches + "/" + recordConsumedCount);
+
+
   }
 
   private Void requestRecords(Environment environment, String topic, LocalDateTime dateTimeToRewind,
@@ -462,7 +477,7 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     tabbedPane.addTab("Información", tabInfo);
     final JScrollPane scrollPane2 = new JScrollPane();
     tabInfo.add(scrollPane2, BorderLayout.CENTER);
-    infoTextPane = new JTextPane();
+    infoTextPane = new InfoTextPane();
     infoTextPane.setBackground(new Color(-16777216));
     infoTextPane.setCaretColor(new Color(-1));
     infoTextPane.setEditable(false);
@@ -471,7 +486,6 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
       infoTextPane.setFont(infoTextPaneFont);
     }
     infoTextPane.setForeground(new Color(-1));
-    infoTextPane.putClientProperty("charset", "");
     scrollPane2.setViewportView(infoTextPane);
     tabFilter = new JPanel();
     tabFilter.setLayout(new BorderLayout(0, 0));
@@ -654,10 +668,10 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     this.headersTable = headersTable;
   }
 
-  @Override
-  public InfoTextPane getInfoTextPane() {
-    return (InfoTextPane) infoTextPane;
-  }
+//  @Override
+//  public InfoTextPane getInfoTextPane() {
+//    return (InfoTextPane) infoTextPane;
+//  }
 
   @Override
   protected void enableButtons(boolean enable) {

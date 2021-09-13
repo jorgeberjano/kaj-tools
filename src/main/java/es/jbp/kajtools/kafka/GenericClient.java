@@ -66,7 +66,7 @@ public class GenericClient extends AbstractClient<GenericRecord, GenericRecord> 
   }
 
   @Override
-  public void sendFromJson(Environment environment, String topic, String keyJson, String valueJson)
+  public void sendFromJson(Environment environment, String topic, String keyJson, String valueJson, String headers)
       throws KajException {
 
     String keySchema, valueSchema;

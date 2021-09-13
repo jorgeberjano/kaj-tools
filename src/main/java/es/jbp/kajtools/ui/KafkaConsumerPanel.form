@@ -190,7 +190,7 @@
                         <properties/>
                         <border type="none"/>
                         <children>
-                          <component id="e6ec0" class="javax.swing.JTextPane" binding="infoTextPane">
+                          <component id="8baa3" class="es.jbp.kajtools.ui.InfoTextPane" binding="infoTextPane">
                             <constraints/>
                             <properties>
                               <background color="-16777216"/>
@@ -199,9 +199,6 @@
                               <font name="Consolas" size="12"/>
                               <foreground color="-1"/>
                             </properties>
-                            <clientProperties>
-                              <charset class="java.lang.String" value=""/>
-                            </clientProperties>
                           </component>
                         </children>
                       </scrollpane>

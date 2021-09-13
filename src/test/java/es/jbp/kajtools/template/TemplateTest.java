@@ -68,7 +68,7 @@ public class TemplateTest {
         TemplateExecutor templateExecutor = new TemplateExecutor();
 
         for (long i = 0; i < 10; i++) {
-            String actual = templateExecutor.templateToJson(template);
+            String actual = templateExecutor.processTemplate(template);
             Map<String, Object> map = JsonUtils.toMap(actual);
             assertEquals(BigInteger.valueOf(i), new BigDecimal(Objects.toString(map.get("index"))).toBigInteger());
             assertEquals(BigInteger.valueOf(i), new BigDecimal(Objects.toString(map.get("counter"))).toBigInteger());
@@ -78,7 +78,7 @@ public class TemplateTest {
         templateExecutor.resetIndexCounter();
 
         for (long i = 0; i < 10; i++) {
-            String actual = templateExecutor.templateToJson(template);
+            String actual = templateExecutor.processTemplate(template);
             Map<String, Object> map = JsonUtils.toMap(actual);
             assertEquals(BigInteger.valueOf(i), new BigDecimal(Objects.toString(map.get("index"))).toBigInteger());
             assertEquals(BigInteger.valueOf(i + 10),

@@ -27,7 +27,7 @@ public class TemplateExecutor {
     textTemplate.setVariableValue(COUNTER_VARIABLE_NAME, BigInteger.ZERO);
   }
 
-  public String templateToJson(String template) throws ExpressionException {
+  public String processTemplate(String template) throws ExpressionException {
 
     return textTemplate.process(template);
   }

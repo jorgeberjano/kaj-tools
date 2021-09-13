@@ -62,21 +62,16 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
   protected abstract void enableButtons(boolean enable);
 
   protected void enqueueException(KajException ex) {
-    enqueueError(ex.getMessage());
-    if (ex.getCause() != null) {
-      enqueueLink("excepcion", ex.getCause().getMessage());
-
-      if (ex.getCause().getCause() != null) {
-        enqueueLink("{cause}", ex.getCause().getCause().getMessage());
-      }
-    }
+    SwingUtilities.invokeLater(() -> {
+      printException(ex);
+    });
   }
 
-  protected void enqueueLink(String text, String documentText) {
-    enqueueLink(text, InfoDocument.builder().message(
-        InfoMessage.builder().mensaje(documentText).build()
-    ).build());
-  }
+//  protected void enqueueLink(String text, String documentText) {
+//    enqueueLink(text, InfoDocument.builder().message(
+//        InfoMessage.builder().mensaje(documentText).build()
+//    ).build());
+//  }
 
   protected void enqueueLink(String text, InfoDocument infoDocument) {
     SwingUtilities.invokeLater(() -> {
@@ -108,7 +103,11 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
   protected void printException(KajException ex) {
     printError(ex.getMessage());
     if (ex.getCause() != null) {
-      printTrace(ex.getCause().getMessage());
+      String text = ex.getCause().getMessage();
+      if (ex.getCause().getCause() != null) {
+        text = "\nCAUSA:\n" + ex.getCause().getCause().getMessage();
+      }
+      printLink("exception", InfoDocument.of(text));
     }
   }
 
@@ -236,8 +235,8 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
     }
   }
 
-  protected void showInModalDialog(DialogueablePanel dialogable) {
-    JPanel panel = dialogable.getMainPanel();
+  protected void showInModalDialog(DialogueablePanel dialogueable) {
+    JPanel panel = dialogueable.getMainPanel();
     panel.setBounds(0, 0, 400, 450);
     JDialog dialog = new JDialog();
     dialog.setTitle("Topics");
@@ -245,7 +244,7 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
     dialog.setResizable(true);
     dialog.setLocationRelativeTo(getContentPane());
     dialog.setContentPane(panel);
-    dialogable.bindDialog(dialog);
+    dialogueable.bindDialog(dialog);
     dialog.setModal(true);
     dialog.setVisible(true);
   }

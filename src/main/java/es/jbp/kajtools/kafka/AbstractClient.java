@@ -11,19 +11,20 @@ import es.jbp.kajtools.util.ResourceUtil;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
+import java.io.IOException;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import lombok.Getter;
-import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -54,11 +55,11 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
   }
 
   @Override
-  public void sendFromJson(Environment environment, String topic, String keyJson, String valueJson)
+  public void sendFromJson(Environment environment, String topic, String keyJson, String valueJson, String headers)
       throws KajException {
 
     try (Producer<K, V> producer = createProducer(environment)) {
-      sendDataFromJson(producer, topic, keyJson, valueJson);
+      sendDataFromJson(producer, topic, keyJson, valueJson, headers);
     } catch (Throwable ex) {
       throw new KajException("No se ha podido realizar el envío. ", ex);
     }
@@ -68,8 +69,8 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
     return new KafkaProducer<>(createProducerProperties(environment));
   }
 
-  private void sendDataFromJson(Producer<K, V> producer, String topic, String keyJson,
-      String valueJson) throws KajException {
+  private void sendDataFromJson(Producer<K, V> producer, String topic,
+      String keyJson, String valueJson, String headers) throws KajException {
     List<K> keyList;
     if (JsonUtils.isArray(keyJson)) {
       keyList = buildKeyListFromJson(keyJson);
@@ -82,25 +83,36 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
     } else {
       valueList = Collections.singletonList(buildValueFromJson(valueJson));
     }
-
-    sendDataList(producer, topic, keyList, valueList);
+    Properties headersProperties = new Properties();
+    try {
+      headersProperties.load(new StringReader(headers));
+    } catch (IOException e) {
+      throw new KajException("No se han podido parsear las cabeceras", e);
+    }
+    sendDataList(producer, topic, keyList, valueList, headersProperties);
   }
 
-  protected void sendDataList(Producer<K, V> producer, String topic, List<K> keyList, List<V> valueList)
+  protected void sendDataList(Producer<K, V> producer, String topic, List<K> keyList, List<V> valueList,
+      Properties headers)
       throws KajException {
     int n = Math.min(keyList.size(), valueList.size());
 
     for (int i = 0; i < n; i++) {
-      sendData(producer, topic, keyList.get(i), valueList.get(i));
+      sendData(producer, topic, keyList.get(i), valueList.get(i), headers);
     }
   }
 
-  private void sendData(Producer<K, V> producer, String topic, K key, V value)
+  private void sendData(Producer<K, V> producer, String topic, K key, V value, Properties headers)
       throws KajException {
     final ProducerRecord<K, V> producerRecord = new ProducerRecord<>(topic, key, value);
-    producerRecord.headers().add("app.name", "kaj-tools".getBytes(StandardCharsets.UTF_8));
-    producerRecord.headers()
-        .add("user.name", System.getProperty("user.name").getBytes(StandardCharsets.UTF_8));
+
+    headers.forEach((key1, value1) -> producerRecord.headers().add(Objects.toString(key1),
+        Objects.toString(value1).getBytes(StandardCharsets.UTF_8)));
+
+//    producerRecord.headers().add("app.name", "kaj-tools".getBytes(StandardCharsets.UTF_8));
+//    producerRecord.headers()
+//        .add("user.name", System.getProperty("user.name").getBytes(StandardCharsets.UTF_8));
+
     Future<RecordMetadata> futureResponse = producer.send(producerRecord);
 
     RecordMetadata recordMetadata = null;
@@ -179,16 +191,19 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
   }
 
   @Getter(lazy = true)
-  private final List<String> availableKeys = ResourceUtil.getResourceFileNames(getFolder()).stream()
-      .filter(s -> s.toLowerCase().contains("key."))
-      .map(s -> Paths.get(s).getFileName().toString())
-      .collect(Collectors.toList());
+  private final List<String> availableKeys = getAvailableResources("key.json");
 
   @Getter(lazy = true)
-  private final List<String> availableValues = ResourceUtil.getResourceFileNames(getFolder())
-      .stream().filter(s -> s.toLowerCase().contains("value."))
-      .map(s -> Paths.get(s).getFileName().toString())
-      .collect(Collectors.toList());
+  private final List<String> availableValues = getAvailableResources("value.json");
+
+  @Getter(lazy = true)
+  private final List<String> availableHeaders = getAvailableResources("headers.properties");
+
+  private List<String> getAvailableResources(String containing) {
+    return ResourceUtil.getResourceFileNames(getFolder())
+        .stream().filter(s -> s.toLowerCase().contains(containing))
+        .collect(Collectors.toList());
+  }
 
   public String getFolder() {
     return ".";
@@ -200,11 +215,9 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
     return nameSplit.length > 2 ? nameSplit[nameSplit.length - 2] : "";
   }
 
-  // CONSUMER
-
-  protected Consumer<K, V> createConsumer(Environment environment) {
-    return new KafkaConsumer<>(createConsumerProperties(environment));
-  }
+//  protected Consumer<K, V> createConsumer(Environment environment) {
+//    return new KafkaConsumer<>(createConsumerProperties(environment));
+//  }
 
   public static Map<String, Object> createProducerProperties(Environment environment) {
     Map<String, Object> props = createCommonProperties(environment);

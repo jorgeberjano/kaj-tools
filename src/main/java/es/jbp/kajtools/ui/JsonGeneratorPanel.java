@@ -140,7 +140,7 @@ public class JsonGeneratorPanel extends BasePanel {
   }
 
   private void asyncGenerateAll() {
-    printAction("Generando JSON, AVRO y Plantilla...");
+    printAction("Generando JSON...");
     String nombreClase = classComboBox.getEditor().getItem().toString();
     futureResult = executeAsyncTask(() -> this.generateAll(nombreClase), this::generateDone);
   }
@@ -178,7 +178,6 @@ public class JsonGeneratorPanel extends BasePanel {
   }
 
   private Object instantiateObjet(String nombreClase) {
-    enqueueAction("Generando la instancia del objeto...");
 
     DeepTestObjectCreator creator = new DeepTestObjectCreator();
 
@@ -187,7 +186,7 @@ public class JsonGeneratorPanel extends BasePanel {
       enqueueError("No se ha podido crear la instancia el objeto");
     } else {
       enqueueSuccessful("Se ha creado la instancia del objeto correctamente");
-      enqueueLink("Object::toString", generatedObject.toString());
+      enqueueLink("Object::toString", InfoDocument.of(generatedObject.toString()));
     }
     creator.getErrors().forEach(this::enqueueError);
     return generatedObject;
