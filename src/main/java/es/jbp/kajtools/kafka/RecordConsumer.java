@@ -35,6 +35,8 @@ public class RecordConsumer<K, V> implements ConsumerRebalanceListener {
   private final AtomicBoolean abort;
   private final ConsumerFeedback feedback;
 
+  private static final int WAITING_TIMEOUT = 5;
+
   @Override
   public void onPartitionsRevoked(Collection<TopicPartition> collection) {
     feedback.message("Partitions revoked");
@@ -106,8 +108,7 @@ public class RecordConsumer<K, V> implements ConsumerRebalanceListener {
   }
 
   private boolean mustWait(Instant start) {
-    int secondsOfWaiting = 20;
-    return Duration.between(start, Instant.now()).compareTo(Duration.ofSeconds(secondsOfWaiting)) < 0;
+    return Duration.between(start, Instant.now()).compareTo(Duration.ofSeconds(WAITING_TIMEOUT)) < 0;
   }
 
   private RecordItem createRecordItem(ConsumerRecord<K, V> rec) {
