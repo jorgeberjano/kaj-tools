@@ -14,41 +14,49 @@ import java.util.Map;
 
 public class JsonUtils {
 
-    private static ObjectMapper getObjectMapper() {
-        return new ObjectMapper().setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
-            .configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
-    }
+  private JsonUtils() {
+  }
 
-    public static <T> T createFromJson(String json, Class<T> valueType) throws IOException {
-        return getObjectMapper().readValue(json, valueType);
-    }
+  private static ObjectMapper getObjectMapper() {
+    return new ObjectMapper().setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
+        .configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
+  }
 
-    public static <T> T createFromJson(String json, TypeReference<T> valueType) throws IOException {
-        return getObjectMapper().readValue(json, valueType);
-    }
+  public static <T> T createFromJson(String json, Class<T> valueType) throws IOException {
+    return getObjectMapper().readValue(json, valueType);
+  }
 
-    public static String toJson(Object object) throws JsonProcessingException {
-        return getObjectMapper().writeValueAsString(object);
-    }
+  public static <T> T createFromJson(String json, TypeReference<T> valueType) throws IOException {
+    return getObjectMapper().readValue(json, valueType);
+  }
 
-    public static boolean isArray(String json) {
-        return json.trim().startsWith("[");
-    }
+  public static String toJson(Object object) throws JsonProcessingException {
+    return getObjectMapper().writeValueAsString(object);
+  }
 
-    public static String formatJson(String json) {
-        if (json == null) {
-            return null;
-        }
-        Gson gson = new GsonBuilder()
-            .setPrettyPrinting()
-            .serializeNulls()
-            .create();
-        JsonElement jsonElement = gson.fromJson(json, JsonElement.class);
-        return gson.toJson(jsonElement);
+  public static boolean isArray(String json) {
+    return json.trim().startsWith("[");
+  }
+
+  public static String formatJson(String json) {
+    if (json == null) {
+      return null;
     }
+    Gson gson = new GsonBuilder()
+        .setPrettyPrinting()
+        .serializeNulls()
+        .create();
+    try {
+      JsonElement jsonElement = gson.fromJson(json, JsonElement.class);
+      return gson.toJson(jsonElement);
+    } catch (Exception e) {
+      return json;
+    }
+  }
 
   public static Map<String, Object> toMap(String json) {
-      Gson gson = new Gson();
-      return gson.fromJson(json, new TypeToken<Map<String, Object>>(){}.getType());
+    Gson gson = new Gson();
+    return gson.fromJson(json, new TypeToken<Map<String, Object>>() {
+    }.getType());
   }
 }

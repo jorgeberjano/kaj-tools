@@ -10,6 +10,7 @@ import java.awt.Font;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxScheme;
 import org.fife.ui.rsyntaxtextarea.Theme;
+import org.fife.ui.rtextarea.RTextScrollPane;
 
 public class ComponentFactory {
 
@@ -30,5 +31,15 @@ public class ComponentFactory {
     }
 
     return jsonEditor;
+  }
+
+  public static RTextScrollPane createEditorScroll(RSyntaxTextArea syntaxTextArea) {
+    RTextScrollPane scrollPane = new RTextScrollPane(syntaxTextArea);
+    scrollPane.setFoldIndicatorEnabled(true);
+    scrollPane.setIconRowHeaderEnabled(true);
+    scrollPane.setLineNumbersEnabled(true);
+    scrollPane.setAlignmentX(0.0F);
+    scrollPane.setAlignmentY(0.0F);
+    return scrollPane;
   }
 }

@@ -70,9 +70,7 @@ Para enviar mensajes, en primer lugar, hay que seleccionar el entorno al que van
 
 Luego hay que seleccionar el productor `GenericProducer`.
 
-A continuación, seleccionar o introducir directamente el nombre del *topic* por el que se desean inyectar los mensajes. Con el productor genérico en el combo se muestran todos los *topics* declarados por los productores específicos. Pero no hay que limitarse a ese conjunto, por el contrario, se puede usar cualquiera escribiendo su nombre directamente en el campo de edición. También se puede seleccionar con el botón  ![folder](./src/main/resources/images/glasses.png?at=refs%2Fheads%2Fdevelop) de la lista de topic creados en el ecosistema Kafka que corresponda al entorno seleccionado.
-
-
+A continuación, seleccionar o introducir directamente el nombre del *topic* por el que se desean inyectar los mensajes. Con el productor genérico en el combo se muestran todos los *topics* declarados por los productores específicos. Pero no hay que limitarse a ese conjunto, por el contrario, se puede usar cualquiera escribiendo su nombre directamente en el campo de edición. También se puede seleccionar con el botón  ![folder](./src/main/resources/images/glasses.png?at=refs%2Fheads%2Fdevelop) de la lista de topic creados en el ecosistema Kafka que corresponda al entorno seleccionado. 
 
 También hay que indicar el KEY y VALUE a enviar. Esto se puede hacer de varias formas:
 
@@ -288,6 +286,12 @@ Para una referencia mas exhaustiva se puede consultar el manual y los ejemplos q
 
 
 
+Borrado de un topic
+
+Desde la ventana de selección de topics se puede borrar un topic
+
+
+
 ## Consumición de mensajes Kafka
 
 ![json](./src/main/resources/images/akfak.png?at=refs%2Fheads%2Fdevelop)
@@ -318,6 +322,10 @@ Para especificar un filtro usando Javascript, se debe introducir en la pestaña 
 | value     | objeto javascript que contiene la estructura de datos del valor del mensaje. |
 | jsonKey   | string que contiene el JSON de la clave del mensaje.         |
 | jsonValue | string que contiene el JSON del valor del mensaje.           |
+| partition | entero que indica la partición de la que se lee el mensaje   |
+| offset    | entero que indica el offset del mensaje dentro de la partición |
+| date      | string con la fecha del mensaje en formato YYYY/MM/DD hh:mm:ss |
+| headers   | objeto  javascript que contiene las cabeceras del mensaje    |
 
 Ejemplos de filtro:
 

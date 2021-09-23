@@ -5,6 +5,7 @@ import es.jbp.kajtools.ui.interfaces.InfoReportablePanel;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Window;
 import java.util.Locale;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
@@ -27,8 +28,7 @@ public class InfoPanel implements DialogueablePanel, InfoReportablePanel {
 
 
   @Override
-  public void bindDialog(JDialog dialog) {
-
+  public void bindDialog(Window dialog) {
   }
 
   {
@@ -107,7 +107,7 @@ public class InfoPanel implements DialogueablePanel, InfoReportablePanel {
   }
 
   public void setDocument(InfoDocument document) {
-    document.getMessages().forEach(this::printMessage);
+    document.getLeftMessages().forEach(this::printMessage);
     infoTextPane.setCaretPosition(0);
   }
 

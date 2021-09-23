@@ -3,6 +3,7 @@ package es.jbp.kajtools.ui;
 import es.jbp.kajtools.ui.interfaces.DialogueablePanel;
 import es.jbp.kajtools.ui.interfaces.SearchablePanel;
 import java.awt.BorderLayout;
+import java.awt.Window;
 import java.util.Optional;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
@@ -28,11 +29,12 @@ public class RSyntaxPanel implements DialogueablePanel, SearchablePanel {
 
   public RSyntaxPanel() {
     $$$setupUI$$$();
+
     enableTextSearch(searchTextField, syntaxTextArea);
   }
 
   @Override
-  public void bindDialog(JDialog dialog) {
+  public void bindDialog(Window dialog) {
   }
 
   public void setContent(String plainText, String styleKey) {
@@ -43,6 +45,7 @@ public class RSyntaxPanel implements DialogueablePanel, SearchablePanel {
 
   private void createUIComponents() {
     syntaxTextArea = ComponentFactory.createSyntaxEditor();
+    scrollPane = ComponentFactory.createEditorScroll(syntaxTextArea);
   }
 
   /**
@@ -55,7 +58,6 @@ public class RSyntaxPanel implements DialogueablePanel, SearchablePanel {
     createUIComponents();
     mainPanel = new JPanel();
     mainPanel.setLayout(new BorderLayout(0, 0));
-    scrollPane = new RTextScrollPane();
     mainPanel.add(scrollPane, BorderLayout.CENTER);
     scrollPane.setViewportView(syntaxTextArea);
     final JPanel panel1 = new JPanel();

@@ -35,6 +35,7 @@ public class RecordConsumer<K, V> implements ConsumerRebalanceListener {
   private final AtomicBoolean abort;
   private final ConsumerFeedback feedback;
 
+  private static final int START_TIMEOUT = 20;
   private static final int WAITING_TIMEOUT = 5;
 
   @Override
@@ -84,15 +85,16 @@ public class RecordConsumer<K, V> implements ConsumerRebalanceListener {
   private void consumeRecords(AtomicBoolean abort, ConsumerFeedback feedback, KafkaConsumer<K, V> consumer) {
 
     ConsumerRecords<K, V> records;
-    Instant start = Instant.now();
+    Instant baseInstant = Instant.now();
+    boolean starting = true;
     do {
       records = consumer.poll(Duration.ofMillis(100));
       if (!records.isEmpty()) {
         List<RecordItem> messages = consume(records);
         feedback.consumedRecords(messages);
-        start = Instant.now();
+        baseInstant = Instant.now();
       }
-      if (!mustWait(start)) {
+      if (!mustWait(baseInstant, starting)) {
         feedback.message("Timeout");
         break;
       }
@@ -107,8 +109,9 @@ public class RecordConsumer<K, V> implements ConsumerRebalanceListener {
     return messages;
   }
 
-  private boolean mustWait(Instant start) {
-    return Duration.between(start, Instant.now()).compareTo(Duration.ofSeconds(WAITING_TIMEOUT)) < 0;
+  private boolean mustWait(Instant baseInstant, boolean starting) {
+    return Duration.between(baseInstant, Instant.now())
+        .compareTo(Duration.ofSeconds(starting ? START_TIMEOUT : WAITING_TIMEOUT)) < 0;
   }
 
   private RecordItem createRecordItem(ConsumerRecord<K, V> rec) {

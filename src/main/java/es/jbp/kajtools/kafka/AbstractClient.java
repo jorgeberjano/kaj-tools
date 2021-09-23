@@ -109,10 +109,6 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
     headers.forEach((key1, value1) -> producerRecord.headers().add(Objects.toString(key1),
         Objects.toString(value1).getBytes(StandardCharsets.UTF_8)));
 
-//    producerRecord.headers().add("app.name", "kaj-tools".getBytes(StandardCharsets.UTF_8));
-//    producerRecord.headers()
-//        .add("user.name", System.getProperty("user.name").getBytes(StandardCharsets.UTF_8));
-
     Future<RecordMetadata> futureResponse = producer.send(producerRecord);
 
     RecordMetadata recordMetadata = null;
@@ -148,7 +144,7 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
     try {
       return JsonUtils.createFromJson(keyJson, keyType);
     } catch (Exception ex) {
-      throw new KajException("No se puede generar el Key desde el JSON. Causa: " + ex.getMessage());
+      throw new KajException("No se puede generar el Key desde el JSON", ex);
     }
   }
 
@@ -158,7 +154,7 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
       });
     } catch (Exception ex) {
       throw new KajException(
-          "No se puede generar la lista de Keys desde el JSON. Causa: " + ex.getMessage());
+          "No se puede generar la lista de Keys desde el JSON", ex);
     }
   }
 
@@ -166,7 +162,7 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
     try {
       return JsonUtils.createFromJson(valueJson, valueType);
     } catch (Exception ex) {
-      throw new KajException("No se puede generar el Value desde el JSON. Causa: " + ex.getMessage());
+      throw new KajException("No se puede generar el Value desde el JSON", ex);
     }
   }
 
@@ -176,7 +172,7 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
       });
     } catch (Exception ex) {
       throw new KajException(
-          "No se puede generar la lista de Values desde el JSON. Causa: " + ex.getMessage());
+          "No se puede generar la lista de Values desde el JSON", ex);
     }
   }
 

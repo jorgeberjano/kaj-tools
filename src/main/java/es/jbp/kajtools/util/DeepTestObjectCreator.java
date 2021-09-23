@@ -426,10 +426,9 @@ public class DeepTestObjectCreator {
     private void reportError(String message, Throwable ex) {
         String errorMessage = message;
         if (ex != null) {
-            errorMessage += ". Causa: [" + ex.getClass().getName() + "] " + ex.getMessage();
+            errorMessage += "\n\nExcepción: " + ex.getClass().getName() + "\n\n" + ex.getMessage();
         }
         errors.add(errorMessage);
-        System.err.println(errorMessage);
     }
 
     public String extractAvroSchema(Object object) {

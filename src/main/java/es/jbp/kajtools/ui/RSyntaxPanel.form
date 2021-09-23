@@ -7,7 +7,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <scrollpane id="c3957" class="org.fife.ui.rtextarea.RTextScrollPane" binding="scrollPane">
+      <scrollpane id="c3957" class="org.fife.ui.rtextarea.RTextScrollPane" binding="scrollPane" custom-create="true">
         <constraints border-constraint="Center"/>
         <properties/>
         <border type="none"/>

@@ -45,7 +45,7 @@ public interface InfoReportablePanel {
   }
 
   default void printTypedMessage(String message, Type type) {
-    printMessage(InfoMessage.builder().mensaje(message).type(type).build());
+    printMessage(new InfoMessage(message, type));
   }
 
   default void printMessage(InfoMessage infoMessage) {

@@ -10,18 +10,35 @@ import lombok.Singular;
 @Builder
 public class InfoDocument {
 
-  @Singular
-  private List<InfoMessage> messages;
+  public static enum Type {
+    INFO,
+    JSON,
+    PROPERTIES,
+    DIFF
+  }
+
+  private String title;
+
+  private Type type;
+
+  @Singular("left")
+  private List<InfoMessage> leftMessages;
+
+  @Singular("right")
+  private List<InfoMessage> rightMessages;
 
   public String plainText() {
-    return messages.stream()
+    return leftMessages.stream()
         .map(InfoMessage::getMensaje)
         .collect(Collectors.joining());
   }
 
-  public static InfoDocument of(String text) {
-    return InfoDocument.builder().message(
-        InfoMessage.builder().mensaje(text).build()
+  public static InfoDocument simpleDocument(String title, Type type, String text) {
+    return InfoDocument.builder()
+        .type(type)
+        .title(title)
+        .left(InfoMessage.builder().mensaje(text).build()
     ).build();
   }
+
 }

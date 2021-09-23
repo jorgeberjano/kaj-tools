@@ -193,10 +193,10 @@
                           <component id="8baa3" class="es.jbp.kajtools.ui.InfoTextPane" binding="infoTextPane">
                             <constraints/>
                             <properties>
-                              <background color="-16777216"/>
+                              <background color="-13948117"/>
                               <caretColor color="-1"/>
                               <editable value="false"/>
-                              <font name="Consolas" size="12"/>
+                              <font/>
                               <foreground color="-1"/>
                             </properties>
                           </component>

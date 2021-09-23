@@ -313,7 +313,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
 
     printAction("Comparando la versión " + selectedVersion + " con la " + previousVersion);
 
-    printTextDifferences(" Versión " + selectedVersion, selectedSchema,
+    enqueueTextDifferences(" Versión " + selectedVersion, selectedSchema,
         " Versión " + previousVersion, previousSchema);
   }
 
@@ -324,15 +324,23 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
       return Collections.<String, String>emptyMap();
     }
 
-    SchemaRegistryService schemaRegistryService = KajToolsApp.getInstance().getSchemaRegistryService();
     Map<String, String> schemas = versions.stream()
         .collect(Collectors.toMap(Function.identity(),
-            version -> schemaRegistryService
-                .getSubjectSchemaVersion(schemaSubject, version, environment)));
+            version -> getSubjectSchemaVersion(schemaSubject, version, environment)));
 
     enqueueSuccessful("Esquemas obtenidos: " + versions.size());
 
     return schemas;
+  }
+
+  private String getSubjectSchemaVersion(String schemaSubject, String version, Environment environment) {
+    SchemaRegistryService schemaRegistryService = KajToolsApp.getInstance().getSchemaRegistryService();
+    try {
+      return schemaRegistryService.getSubjectSchemaVersion(schemaSubject, version, environment);
+    } catch (KajException e) {
+      enqueueException(e);
+      return "";
+    }
   }
 
   // Borrado de esquemas
@@ -527,7 +535,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     tabbedPane.addTab("Información", tabInfo);
     final JScrollPane scrollPane2 = new JScrollPane();
     tabInfo.add(scrollPane2, BorderLayout.CENTER);
-    infoTextPane.setBackground(new Color(-16777216));
+    infoTextPane.setBackground(new Color(-13948117));
     infoTextPane.setCaretColor(new Color(-1));
     infoTextPane.setEditable(false);
     Font infoTextPaneFont = this.$$$getFont$$$("Consolas", -1, 12, infoTextPane.getFont());
@@ -636,7 +644,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
 
   private void createUIComponents() {
     schemaEditor = createJsonEditor();
-    schemaScrollPane = createEditorScroll(schemaEditor);
+    schemaScrollPane = ComponentFactory.createEditorScroll(schemaEditor);
     infoTextPane = new InfoTextPane();
   }
 }

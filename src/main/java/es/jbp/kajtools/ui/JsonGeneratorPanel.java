@@ -4,6 +4,9 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import es.jbp.kajtools.Environment;
+import es.jbp.kajtools.ui.InfoDocument.InfoDocumentBuilder;
+import es.jbp.kajtools.ui.InfoMessage.Type;
+import es.jbp.kajtools.ui.interfaces.InfoReportablePanel;
 import es.jbp.kajtools.util.ClassScanner;
 import es.jbp.kajtools.util.DeepTestObjectCreator;
 import es.jbp.kajtools.util.ResourceUtil;
@@ -32,11 +35,13 @@ import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.text.JTextComponent;
 import lombok.Getter;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
+import org.springframework.util.CollectionUtils;
 
-public class JsonGeneratorPanel extends BasePanel {
+public class JsonGeneratorPanel extends BasePanel implements InfoReportablePanel {
 
   private final Set<String> classSet;
 
@@ -88,7 +93,7 @@ public class JsonGeneratorPanel extends BasePanel {
 
     enableTextSearch(searchTextField, jsonEditor, schemaEditor);
 
-    checkJsonButton.addActionListener(e -> asyncGenerateFromJson());
+    checkJsonButton.addActionListener(e -> asyncCheckJson());
   }
 
   @Override
@@ -132,11 +137,12 @@ public class JsonGeneratorPanel extends BasePanel {
     String schema;
   }
 
-  private void asyncGenerateFromJson() {
+  private void asyncCheckJson() {
 
     String nombreClase = classComboBox.getEditor().getItem().toString();
     String json = jsonEditor.getText();
-    futureResult = executeAsyncTask(() -> this.generateFromJson(nombreClase, json), this::generateDone);
+    futureResult = executeAsyncTask(() -> this.checkJson(nombreClase, json), () -> {
+    });
   }
 
   private void asyncGenerateAll() {
@@ -151,7 +157,7 @@ public class JsonGeneratorPanel extends BasePanel {
     try {
       result = futureResult.get();
     } catch (Exception e) {
-      printError("No se ha podido obtener el resultado. Causa: " + e.getMessage());
+      printException(e);
       return;
     }
 
@@ -170,10 +176,9 @@ public class JsonGeneratorPanel extends BasePanel {
     return result;
   }
 
-  private GeneratedResult generateFromJson(String nombreClase, String json) {
+  private GeneratedResult checkJson(String nombreClase, String json) {
     GeneratedResult result = new GeneratedResult();
     result.object = instantiateObjetFromJson(nombreClase, json);
-    result.schema = generateSchema(result.object);
     return result;
   }
 
@@ -186,9 +191,9 @@ public class JsonGeneratorPanel extends BasePanel {
       enqueueError("No se ha podido crear la instancia el objeto");
     } else {
       enqueueSuccessful("Se ha creado la instancia del objeto correctamente");
-      enqueueLink("Object::toString", InfoDocument.of(generatedObject.toString()));
+      enqueueLink(InfoDocument.simpleDocument("Object::toString", InfoDocument.Type.INFO, generatedObject.toString()));
     }
-    creator.getErrors().forEach(this::enqueueError);
+    enqueueErrors(creator.getErrors());
     return generatedObject;
   }
 
@@ -202,8 +207,17 @@ public class JsonGeneratorPanel extends BasePanel {
     } else {
       enqueueSuccessful("Se ha generado el JSON correctamente");
     }
-    creator.getErrors().forEach(this::enqueueError);
+    enqueueErrors(creator.getErrors());
     return json;
+  }
+
+  private void enqueueErrors(List<String> errors) {
+    if (CollectionUtils.isEmpty(errors)) {
+      return;
+    }
+    InfoDocumentBuilder documentBuilder = InfoDocument.builder().title("errores").type(InfoDocument.Type.INFO);
+    ListUtils.emptyIfNull(errors).forEach(e -> documentBuilder.left(new InfoMessage(e, Type.TRACE)));
+    enqueueLink(documentBuilder.build());
   }
 
   private String generateSchema(Object generatedObject) {
@@ -214,7 +228,7 @@ public class JsonGeneratorPanel extends BasePanel {
     } else {
       enqueueSuccessful("Se ha generado el esquema AVRO correctamente");
     }
-    creator.getErrors().forEach(this::enqueueError);
+    enqueueErrors(creator.getErrors());
     return schema;
   }
 
@@ -227,11 +241,12 @@ public class JsonGeneratorPanel extends BasePanel {
     Object generatedObject = creator.createObjectFromJson(nombreClase, json);
     if (generatedObject != null) {
       enqueueSuccessful("Se ha creado la instancia del Objeto desde el JSON correctamente");
-      enqueueInfoMessage(generatedObject.toString());
+      enqueueLink(InfoDocument.simpleDocument("Object::toString()",
+          InfoDocument.Type.INFO, generatedObject.toString()));
     } else {
       enqueueError("No se ha podido crear la instancia el Objeto desde el JSON");
     }
-    creator.getErrors().forEach(this::enqueueError);
+    enqueueErrors(creator.getErrors());
     return generatedObject;
   }
 
@@ -316,7 +331,7 @@ public class JsonGeneratorPanel extends BasePanel {
     infoScrollPane = new JScrollPane();
     tabInfo.add(infoScrollPane, BorderLayout.CENTER);
     infoTextPane.setAutoscrolls(false);
-    infoTextPane.setBackground(new Color(-16777216));
+    infoTextPane.setBackground(new Color(-13948117));
     infoTextPane.setCaretColor(new Color(-1));
     infoTextPane.setEditable(false);
     infoTextPane.setForeground(new Color(-1));
@@ -369,10 +384,10 @@ public class JsonGeneratorPanel extends BasePanel {
     infoTextPane = new InfoTextPane();
 
     jsonEditor = createJsonEditor();
-    jsonScrollPane = createEditorScroll(jsonEditor);
+    jsonScrollPane = ComponentFactory.createEditorScroll(jsonEditor);
 
     schemaEditor = createJsonEditor();
-    schemaScrollPane = createEditorScroll(schemaEditor);
+    schemaScrollPane = ComponentFactory.createEditorScroll(schemaEditor);
   }
 
   @Override

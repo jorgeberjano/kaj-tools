@@ -1,6 +1,5 @@
 package es.jbp.kajtools.filter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import es.jbp.kajtools.KajException;
 import es.jbp.kajtools.kafka.HeaderItem;
 import es.jbp.kajtools.reflexion.Conversion;

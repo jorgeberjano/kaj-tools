@@ -15,6 +15,7 @@ import es.jbp.kajtools.kafka.HeaderItem;
 import es.jbp.kajtools.kafka.RecordItem;
 import es.jbp.kajtools.kafka.RewindPolicy;
 import es.jbp.kajtools.kafka.TopicItem;
+import es.jbp.kajtools.ui.InfoDocument.Type;
 import es.jbp.kajtools.util.JsonUtils;
 import es.jbp.tabla.ColoreadorFila;
 import es.jbp.tabla.ModeloTablaGenerico;
@@ -44,7 +45,6 @@ import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.JTextPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
@@ -258,6 +258,15 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
       case LAST_MINUTE:
         dateTimeToRewind = LocalDateTime.now().minusMinutes(1);
         break;
+      case LAST_5_MINUTES:
+        dateTimeToRewind = LocalDateTime.now().minusMinutes(5);
+        break;
+      case LAST_15_MINUTES:
+        dateTimeToRewind = LocalDateTime.now().minusMinutes(15);
+        break;
+      case LAST_30_MINUTES:
+        dateTimeToRewind = LocalDateTime.now().minusMinutes(30);
+        break;
       case LAST_HOUR:
         dateTimeToRewind = LocalDateTime.now().minusHours(1);
         break;
@@ -291,13 +300,13 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
         }
         if (StringUtils.isNotBlank(rec.getValueError())) {
           printError("Error en el value del mensaje con partición " + rec.getPartition()
-               + " y offset " + rec.getOffset());
-          printLink("error", InfoDocument.of(rec.getValueError()));
+              + " y offset " + rec.getOffset());
+          printLink(InfoDocument.simpleDocument("error", Type.INFO, rec.getValueError()));
         }
         if (StringUtils.isNotBlank(rec.getKeyError())) {
           printError("Error en el key del mensaje con partición " + rec.getPartition()
               + " y offset " + rec.getOffset());
-          printLink("error", InfoDocument.of(rec.getKeyError()));
+          printLink(InfoDocument.simpleDocument("error", Type.INFO, rec.getKeyError()));
         }
       } catch (KajException ex) {
         printException(ex);
@@ -478,10 +487,10 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     final JScrollPane scrollPane2 = new JScrollPane();
     tabInfo.add(scrollPane2, BorderLayout.CENTER);
     infoTextPane = new InfoTextPane();
-    infoTextPane.setBackground(new Color(-16777216));
+    infoTextPane.setBackground(new Color(-13948117));
     infoTextPane.setCaretColor(new Color(-1));
     infoTextPane.setEditable(false);
-    Font infoTextPaneFont = this.$$$getFont$$$("Consolas", -1, 12, infoTextPane.getFont());
+    Font infoTextPaneFont = this.$$$getFont$$$(null, -1, -1, infoTextPane.getFont());
     if (infoTextPaneFont != null) {
       infoTextPane.setFont(infoTextPaneFont);
     }
@@ -623,15 +632,12 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
 
   private void createUIComponents() {
 
-    infoTextPane = new InfoTextPane();
-
     jsonEditorValue = createJsonEditor();
-    valueScrollPane = createEditorScroll(jsonEditorValue);
+    valueScrollPane = ComponentFactory.createEditorScroll(jsonEditorValue);
     jsonEditorKey = createJsonEditor();
-    keyScrollPane = createEditorScroll(jsonEditorKey);
-
+    keyScrollPane = ComponentFactory.createEditorScroll(jsonEditorKey);
     scriptEditorFilter = createScriptEditor();
-    filterScrollPane = createEditorScroll(scriptEditorFilter);
+    filterScrollPane = ComponentFactory.createEditorScroll(scriptEditorFilter);
 
     TablaGenerica recordTable = new TablaGenerica();
     recordTableModel.agregarColumna("partition", "Partition", 20);

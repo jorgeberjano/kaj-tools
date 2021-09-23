@@ -9,8 +9,8 @@ import es.jbp.kajtools.IMessageClient;
 import es.jbp.kajtools.KajException;
 import es.jbp.kajtools.KajToolsApp;
 import es.jbp.kajtools.configuration.Configuration;
-import es.jbp.kajtools.ui.InfoMessage.Type;
 import es.jbp.kajtools.kafka.TopicItem;
+import es.jbp.kajtools.ui.InfoDocument.Type;
 import es.jbp.kajtools.util.ResourceUtil;
 import es.jbp.kajtools.util.SchemaRegistryService;
 import es.jbp.kajtools.util.SchemaRegistryService.SubjectType;
@@ -40,7 +40,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
-import javax.swing.JTextPane;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.StyleContext;
@@ -260,7 +259,6 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     if (StringUtils.isBlank(path)) {
       return;
     }
-    IMessageClient producer = (IMessageClient) comboProducer.getSelectedItem();
     String json = ResourceUtil.readResourceString(path);
     jsonEditor.setText(json);
     jsonEditor.setCaretPosition(0);
@@ -273,7 +271,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
       jsonEditor.setCaretPosition(0);
     } catch (Exception ex) {
       printError("No se ha podido cargar el archivo.");
-      printTrace(ex.getMessage());
+      printException(ex);
     }
   }
 
@@ -347,9 +345,9 @@ public class KafkaProducerPanel extends KafkaBasePanel {
       return;
     }
 
-    key = processTemplate(key, "key json");
-    value = processTemplate(value, "value json");
-    headers = processTemplate(headers, "headers properties");
+    key = processTemplate(key, Type.JSON, "key");
+    value = processTemplate(value, Type.JSON, "value");
+    headers = processTemplate(headers, Type.PROPERTIES, "headers");
 
     if (StringUtils.isBlank(key)) {
       enqueueError("No se va a mandar el mensaje porque no se ha indicado ninguna key");
@@ -369,7 +367,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     enqueueSuccessful("Enviado el evento correctamente");
   }
 
-  private String processTemplate(String text, String name) {
+  private String processTemplate(String text, Type type, String name) {
 
     if (!TemplateExecutor.containsTemplateExpressions(text)) {
       return text;
@@ -378,21 +376,19 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     String generatedText;
     try {
       generatedText = templateExecutor.processTemplate(text);
-    } catch (Throwable ex) {
+    } catch (Exception ex) {
       enqueueError("No se ha podido generar el JSON del EVENT a partir de la plantilla");
-      enqueueInfoMessage("[" + ex.getClass().getName() + "] " + ex.getMessage());
+      enqueueException(ex);
       return null;
     }
-    enqueueLink("generated " + name, InfoDocument.of(generatedText));
+    enqueueLink(InfoDocument.simpleDocument("generated " + name, type, generatedText));
     return generatedText;
   }
-
 
   private void asyncCheckSchema() {
     IMessageClient producer = (IMessageClient) comboProducer.getSelectedItem();
     if (producer instanceof GenericClient) {
-      printError(
-          "No es posible comparar los esquemas con el " + producer.getClass().getSimpleName());
+      printError("No es posible comparar los esquemas con el GenericClient");
       return;
     }
     String topic = comboTopic.getEditor().getItem().toString();
@@ -435,31 +431,24 @@ public class KafkaProducerPanel extends KafkaBasePanel {
       Environment environment, String json, SubjectType type) {
 
     boolean isKey = type == SubjectType.key;
-    json = processTemplate(json, type.name());
+    json = processTemplate(json, Type.JSON, type.name());
 
     String registeredSchema;
     try {
-      registeredSchema =
-          schemaRegistryService
-              .getLatestTopicSchema(topic, type, environment);
-    } catch (Exception e) {
-      enqueueError(
-          "Error obteniendo esquema del " + type + " del topic " + topic
-              + " desde el Schema Registry");
-      enqueueInfoMessage(e.getMessage());
-      if (e instanceof NotFound) {
-        return SchemaCheckStatus.NOT_FOUND;
-      }
+      registeredSchema = schemaRegistryService.getLatestTopicSchema(topic, type, environment);
+    } catch (KajException e) {
+      enqueueException(e);
       return SchemaCheckStatus.NOT_CHECKED;
+    }
+    if (registeredSchema == null) {
+      return SchemaCheckStatus.NOT_FOUND;
     }
 
     String avroSchema;
     try {
       avroSchema = isKey ? producer.getKeySchema(json) : producer.getValueSchema(json);
-    } catch (Exception e) {
-      enqueueError("Error obteniendo esquema AVRO de " +
-          (isKey ? producer.getKeyClassName() : producer.getValueClassName()));
-      enqueueInfoMessage(e.getMessage());
+    } catch (KajException e) {
+      enqueueException(e);
       return SchemaCheckStatus.NOT_CHECKED;
     }
 
@@ -482,27 +471,25 @@ public class KafkaProducerPanel extends KafkaBasePanel {
 
     if (!registeredSchema.equals(avroSchema)) {
       enqueueError("Los esquemas del " + objectName + " no coinciden");
-      printTextDifferences("Schema Registry", registeredSchema, "AVRO", avroSchema);
+      enqueueTextDifferences("AVRO", avroSchema, "Schema Registry", registeredSchema);
 
       return SchemaCheckStatus.NOT_EQUALS;
     } else {
       enqueueSuccessful("El esquema del " + objectName + " es correcto");
-      InfoMessage infoMessage = InfoMessage.builder().mensaje(avroSchema).type(Type.TRACE).build();
-      enqueueLink(objectName + " schema", InfoDocument.builder().message(infoMessage).build());
+      enqueueLink(InfoDocument.simpleDocument(objectName + " schema", Type.JSON, avroSchema));
       return SchemaCheckStatus.EQUALS;
     }
   }
 
   private void createUIComponents() {
-    infoTextPane = new InfoTextPane();
     valueEditor = createJsonEditor();
-    valueScrollPane = createEditorScroll(valueEditor);
+    valueScrollPane = ComponentFactory.createEditorScroll(valueEditor);
     keyEditor = createJsonEditor();
-    keyScrollPane = createEditorScroll(keyEditor);
+    keyScrollPane = ComponentFactory.createEditorScroll(keyEditor);
     headersEditor = createPropertiesEditor();
-    headersScrollPane = createEditorScroll(headersEditor);
+    headersScrollPane = ComponentFactory.createEditorScroll(headersEditor);
     variablesEditor = createPropertiesEditor();
-    variablesScrollPane = createEditorScroll(variablesEditor);
+    variablesScrollPane = ComponentFactory.createEditorScroll(variablesEditor);
   }
 
   @Override
@@ -733,10 +720,11 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     final JScrollPane scrollPane1 = new JScrollPane();
     tabInfo.add(scrollPane1, BorderLayout.CENTER);
     infoTextPane = new InfoTextPane();
-    infoTextPane.setBackground(new Color(-16777216));
+    infoTextPane.setBackground(new Color(-13948117));
     infoTextPane.setCaretColor(new Color(-1));
     infoTextPane.setEditable(false);
-    Font infoTextPaneFont = this.$$$getFont$$$("Consolas", -1, 12, infoTextPane.getFont());
+    infoTextPane.setEnabled(true);
+    Font infoTextPaneFont = this.$$$getFont$$$(null, -1, -1, infoTextPane.getFont());
     if (infoTextPaneFont != null) {
       infoTextPane.setFont(infoTextPaneFont);
     }

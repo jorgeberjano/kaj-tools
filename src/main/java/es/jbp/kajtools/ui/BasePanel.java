@@ -1,8 +1,7 @@
 package es.jbp.kajtools.ui;
 
 import es.jbp.expressions.ExpressionException;
-import es.jbp.kajtools.KajException;
-import es.jbp.kajtools.ui.InfoMessage.Type;
+import es.jbp.kajtools.ui.InfoDocument.Type;
 import es.jbp.kajtools.ui.interfaces.DialogueablePanel;
 import es.jbp.kajtools.ui.interfaces.InfoReportablePanel;
 import es.jbp.kajtools.ui.interfaces.SearchablePanel;
@@ -17,12 +16,15 @@ import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTextPane;
+import javax.swing.JWindow;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.HyperlinkEvent;
@@ -30,7 +32,6 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.html.HTMLDocument;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
-import org.fife.ui.rtextarea.RTextScrollPane;
 
 public abstract class BasePanel implements InfoReportablePanel, SearchablePanel {
 
@@ -41,17 +42,18 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
 
   private final Map<String, InfoDocument> linksMap = new HashMap<>();
 
+
   protected abstract Component getContentPane();
 
+
   public void initialize() {
-    JTextPane textPane = getInfoTextPane();
+    InfoTextPane textPane = getInfoTextPane();
+    textPane.enableLinks();
     textPane.addHyperlinkListener(e -> {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
         showLinkContent(e.getDescription());
       }
     });
-    textPane.setContentType("text/html");
-    textPane.setHighlighter(null);
   }
 
   protected synchronized void asyncTaskFinished() {
@@ -61,54 +63,52 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
 
   protected abstract void enableButtons(boolean enable);
 
-  protected void enqueueException(KajException ex) {
+  protected void enqueueException(Exception ex) {
     SwingUtilities.invokeLater(() -> {
       printException(ex);
     });
   }
 
-//  protected void enqueueLink(String text, String documentText) {
-//    enqueueLink(text, InfoDocument.builder().message(
-//        InfoMessage.builder().mensaje(documentText).build()
-//    ).build());
-//  }
-
-  protected void enqueueLink(String text, InfoDocument infoDocument) {
+  protected void enqueueLink(InfoDocument infoDocument) {
     SwingUtilities.invokeLater(() -> {
-      printLink(text, infoDocument);
+      printLink(infoDocument);
     });
   }
 
-  protected void printTextDifferences(String rightTitle, String rightText, String leftTitle, String leftText) {
+  protected void enqueueTextDifferences(String leftTitle, String leftText, String rightTitle, String rightText) {
 
     InfoDocument differencesDocument = comparator.compare(
         leftTitle, JsonUtils.formatJson(leftText),
         rightTitle, JsonUtils.formatJson(rightText));
-    printLink("differences", differencesDocument);
+    enqueueLink(differencesDocument);
   }
 
-  protected void printLink(String text, InfoDocument infoDocument) {
-    String key = text + "_" + UUID.randomUUID();
+  protected void printLink(InfoDocument infoDocument) {
+    String key = UUID.randomUUID().toString();
 
     linksMap.put(key, infoDocument);
 
     HTMLDocument doc = (HTMLDocument) getInfoTextPane().getStyledDocument();
     try {
-      doc.insertAfterEnd(doc.getCharacterElement(doc.getLength()), "<a href=\"" + key + "\">" + text + "</a><br>");
+      doc.insertAfterEnd(doc.getCharacterElement(doc.getLength()), "<a href=\"" + key + "\">" + infoDocument.getTitle() +
+          "</a><br>");
     } catch (BadLocationException | IOException ex) {
       System.err.println("No se pudo insertar el link en la consola de información");
     }
   }
 
-  protected void printException(KajException ex) {
+  protected void printException(Exception ex) {
     printError(ex.getMessage());
+
     if (ex.getCause() != null) {
-      String text = ex.getCause().getMessage();
-      if (ex.getCause().getCause() != null) {
-        text = "\nCAUSA:\n" + ex.getCause().getCause().getMessage();
-      }
-      printLink("exception", InfoDocument.of(text));
+      printLink(InfoDocument.simpleDocument("exception", Type.INFO, ex.getCause().toString()));
     }
+//      String text = ex.getCause().getMessage();
+//      if (ex.getCause().getCause() != null) {
+//        text = "\nCAUSA:\n" + ex.getCause().getCause().getMessage();
+//      }
+//      printLink(InfoDocument.simpleDocument("exception", Type.INFO, text));
+//    }
   }
 
   protected void copyToClipboard(String json) {
@@ -117,15 +117,15 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
     clipboard.setContents(stringSelection, null);
   }
 
-  protected RTextScrollPane createEditorScroll(RSyntaxTextArea editor) {
-    RTextScrollPane jsonScrollPane = new RTextScrollPane(editor);
-    jsonScrollPane.setFoldIndicatorEnabled(true);
-    jsonScrollPane.setIconRowHeaderEnabled(true);
-    jsonScrollPane.setLineNumbersEnabled(true);
-    jsonScrollPane.setAlignmentX(0.0F);
-    jsonScrollPane.setAlignmentY(0.0F);
-    return jsonScrollPane;
-  }
+//  protected RTextScrollPane createEditorScroll(RSyntaxTextArea editor) {
+//    RTextScrollPane jsonScrollPane = new RTextScrollPane(editor);
+//    jsonScrollPane.setFoldIndicatorEnabled(true);
+//    jsonScrollPane.setIconRowHeaderEnabled(true);
+//    jsonScrollPane.setLineNumbersEnabled(true);
+//    jsonScrollPane.setAlignmentX(0.0F);
+//    jsonScrollPane.setAlignmentY(0.0F);
+//    return jsonScrollPane;
+//  }
 
   protected RSyntaxTextArea createJsonEditor() {
     final RSyntaxTextArea jsonEditor = ComponentFactory.createSyntaxEditor();
@@ -149,7 +149,8 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
     try {
       text = templateExecutor.formatJson(text);
     } catch (ExpressionException e) {
-      System.err.println("No de pudo formatear el JSON");
+      printError("No de pudo formatear el JSON");
+      printException(e);
       return;
     }
 
@@ -224,28 +225,40 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
 
   protected void showLinkContent(String key) {
     InfoDocument infoDocument = linksMap.get(key);
-    if (key.contains("json") || key.contains("schema")) {
-      RSyntaxPanel panel = new RSyntaxPanel();
-      panel.setContent(JsonUtils.formatJson(infoDocument.plainText()), SyntaxConstants.SYNTAX_STYLE_JSON);
-      showInModalDialog(panel);
-    } else {
-      InfoPanel panel = new InfoPanel();
-      panel.setDocument(infoDocument);
-      showInModalDialog(panel);
+    if (infoDocument == null) {
+      return;
+    }
+    String title = infoDocument.getTitle();
+    switch (Optional.ofNullable(infoDocument.getType()).orElse(Type.INFO)) {
+      case DIFF:
+        DiffPanel diffPanel = new DiffPanel();
+        diffPanel.setDocument(infoDocument);
+        showInModalDialog(diffPanel, title);
+        break;
+      case JSON:
+        RSyntaxPanel syntaxPanel = new RSyntaxPanel();
+        syntaxPanel.setContent(JsonUtils.formatJson(infoDocument.plainText()), SyntaxConstants.SYNTAX_STYLE_JSON);
+        showInModalDialog(syntaxPanel, title);
+        break;
+      default:
+        InfoPanel infoPanel = new InfoPanel();
+        infoPanel.setDocument(infoDocument);
+        showInModalDialog(infoPanel, title);
     }
   }
 
-  protected void showInModalDialog(DialogueablePanel dialogueable) {
+  protected void showInModalDialog(DialogueablePanel dialogueable, String title) {
     JPanel panel = dialogueable.getMainPanel();
     panel.setBounds(0, 0, 400, 450);
-    JDialog dialog = new JDialog();
-    dialog.setTitle("Topics");
+    JFrame dialog = new JFrame();
+    //JDialog dialog = new JDialog();
+    dialog.setTitle(title);
     dialog.setSize(800, 450);
     dialog.setResizable(true);
     dialog.setLocationRelativeTo(getContentPane());
     dialog.setContentPane(panel);
     dialogueable.bindDialog(dialog);
-    dialog.setModal(true);
+    //dialog.setModal(true);
     dialog.setVisible(true);
   }
 

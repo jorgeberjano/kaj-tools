@@ -8,11 +8,11 @@ import es.jbp.tabla.TablaGenerica;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.Window;
 import java.util.Locale;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
@@ -26,6 +26,7 @@ import lombok.Getter;
 
 public class TableSelectorPanel<T> implements DialogueablePanel {
 
+  @Getter
   private JTable table;
   @Getter
   private JPanel mainPanel;
@@ -80,7 +81,7 @@ public class TableSelectorPanel<T> implements DialogueablePanel {
     tableModel.filtrarPorPredicado(t -> t.toString().toLowerCase().contains(filterText));
   }
 
-  public void bindDialog(JDialog dialog) {
+  public void bindDialog(Window dialog) {
     mainPanel.getRootPane().setDefaultButton(buttonOk);
     buttonOk.addActionListener(e -> {
       okButtonPressed = true;
@@ -168,10 +169,14 @@ public class TableSelectorPanel<T> implements DialogueablePanel {
     return mainPanel;
   }
 
-  public T getSelectedItem() {
+  public T getAcceptedItem() {
     if (!okButtonPressed) {
       return null;
     }
+    return getSelectedItem();
+  }
+
+  public T getSelectedItem() {
     int index = table.getSelectedRow();
     return tableModel.getFila(index);
   }
