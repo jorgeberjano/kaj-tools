@@ -18,7 +18,8 @@ public class InfoMessage {
     SUCCESS(new Color(0x598C2A), DARK),
     ERROR(new Color(0xF96966), DARK),
     DELETED(Color.BLACK, new Color(0xF96966)),
-    ADDED(Color.BLACK, new Color(0x598C2A));
+    ADDED(Color.BLACK, new Color(0x598C2A)),
+    MISSING(new Color(0xA5B3C2), DARK);
 
     public final Color color;
     public final Color backgroundColor;

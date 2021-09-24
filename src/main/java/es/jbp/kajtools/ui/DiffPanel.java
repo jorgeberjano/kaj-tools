@@ -1,12 +1,17 @@
 package es.jbp.kajtools.ui;
 
+import es.jbp.kajtools.ui.InfoMessage.Type;
 import es.jbp.kajtools.ui.interfaces.DialogueablePanel;
 import java.awt.BorderLayout;
 import java.awt.Window;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class DiffPanel implements DialogueablePanel {
 
@@ -53,6 +58,7 @@ public class DiffPanel implements DialogueablePanel {
     mainPanel.setLayout(new BorderLayout(0, 0));
     final JSplitPane splitPane1 = new JSplitPane();
     splitPane1.setDividerLocation(400);
+    splitPane1.setResizeWeight(0.5);
     mainPanel.add(splitPane1, BorderLayout.CENTER);
     leftScroll = new JScrollPane();
     leftScroll.setHorizontalScrollBarPolicy(32);
@@ -82,12 +88,21 @@ public class DiffPanel implements DialogueablePanel {
   }
 
   public void setDocument(InfoDocument document) {
-
-    document.getLeftMessages().forEach(leftTextPane::printInfoMessage);
-    document.getRightMessages().forEach(rightTextPane::printInfoMessage);
-
-    leftTextPane.setCaretPosition(0);
-    rightTextPane.setCaretPosition(0);
+    printMessages(document.getLeftMessages(), leftTextPane);
+    printMessages(document.getRightMessages(), rightTextPane);
   }
 
+  private void printMessages(List<InfoMessage> messages, InfoTextPane textPane) {
+    Set<Pair<Integer, Integer>> highlightLocations = new TreeSet<>();
+
+    for (InfoMessage message : messages) {
+      int position = textPane.getCaretPosition();
+      textPane.printInfoMessage(message);
+      if (message.getType() == Type.DELETED || message.getType() == Type.ADDED || message.getType() == Type.MISSING) {
+        highlightLocations.add(Pair.of(position, textPane.getCaretPosition()));
+      }
+    }
+    textPane.highlightLines(highlightLocations);
+    textPane.setCaretPosition(0);
+  }
 }

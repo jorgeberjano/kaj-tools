@@ -34,14 +34,14 @@ public class TextComparator {
           infoDocumentBuilder.left(new InfoMessage(delta.text, Type.ADDED));
           lines = StringUtils.countMatches(delta.text, '\n');
           if (lines > 0) {
-            infoDocumentBuilder.right(new InfoMessage(StringUtils.repeat("\n", lines), Type.TRACE));
+            infoDocumentBuilder.right(new InfoMessage(StringUtils.repeat("\n", lines), Type.MISSING));
           }
           break;
         case DELETE:
           infoDocumentBuilder.right(new InfoMessage(delta.text, Type.DELETED));
           lines = StringUtils.countMatches(delta.text, '\n');
           if (lines > 0) {
-            infoDocumentBuilder.left(new InfoMessage(StringUtils.repeat("\n", lines), Type.TRACE));
+            infoDocumentBuilder.left(new InfoMessage(StringUtils.repeat("\n", lines), Type.MISSING));
           }
           break;
       }

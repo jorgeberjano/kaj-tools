@@ -5,15 +5,12 @@ import es.jbp.kajtools.kafka.KafkaInvestigator;
 import es.jbp.kajtools.KajException;
 import es.jbp.tabla.ModeloTablaGenerico;
 import es.jbp.kajtools.kafka.TopicItem;
-import java.awt.Component;
-import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import javax.swing.ImageIcon;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPopupMenu;
+import javax.swing.JDialog;
+import javax.swing.JPanel;
 import javax.swing.text.JTextComponent;
 import lombok.Getter;
 
@@ -57,49 +54,11 @@ public abstract class KafkaBasePanel extends BasePanel {
 
   protected TopicItem selectTopic() {
 
-    final TableSelectorPanel<TopicItem> tableSelectorPanel = new TableSelectorPanel<>(this::createTopicModel);
-    JPopupMenu popupMenu = new JPopupMenu() {
-      @Override
-      public void show(Component invoker, int x, int y) {
-        int row = tableSelectorPanel.getTable().rowAtPoint(new Point(x, y));
-        if (row >= 0) {
-          tableSelectorPanel.getTable().getSelectionModel().setSelectionInterval(row, row);
-//          versionsList.setSelectedIndex(row);
-          super.show(invoker, x, y);
-        }
-      }
-    };
-    JMenuItem deleteActionListener = new JMenuItem("Borrar");
-    deleteActionListener.addActionListener(e -> asyncDeleteTopic(tableSelectorPanel));
-    popupMenu.add(deleteActionListener);
-    tableSelectorPanel.setTablePopupMenu(popupMenu);
+    TableSelectorPanel<TopicItem> tableSelectorPanel = new TableSelectorPanel<>(this::createTopicModel);
 
     showInModalDialog(tableSelectorPanel, "Topics");
 
-    return tableSelectorPanel.getAcceptedItem();
-  }
-
-  protected void asyncDeleteTopic(TableSelectorPanel<TopicItem> tableSelectorPanel) {
-    TopicItem item = tableSelectorPanel.getSelectedItem();
-    if (item == null) {
-      return;
-    }
-    String topicName = item.getName();
-    Environment environment = getEnvironment();
-    int response = JOptionPane.showConfirmDialog(tableSelectorPanel.getTable(),
-        "!CUIDADO! Se va a borrar el topic " + topicName + " del entono " + environment.getName() +
-            "\n¿Esta seguro de lo que lo quiere borrar?",
-        "Atención", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-    if (response != JOptionPane.YES_OPTION) {
-      return;
-    }
-    printAction("Borrando el topic " + topicName + " del entono " + environment.getName());
-    KafkaInvestigator kafka = new KafkaInvestigator();
-    try {
-      kafka.deleteTopic(topicName, environment);
-    } catch(KajException ex) {
-      printException(ex);
-    }
+    return tableSelectorPanel.getSelectedItem();
   }
 
   protected ModeloTablaGenerico<TopicItem> createTopicModel(boolean update) {
@@ -112,6 +71,7 @@ public abstract class KafkaBasePanel extends BasePanel {
     tableModel.setListaObjetos(topics);
     return tableModel;
   }
+
 
   protected Optional<JTextComponent> getUmpteenthEditor(int index, JTextComponent... editors) {
     if (editors.length > index) {

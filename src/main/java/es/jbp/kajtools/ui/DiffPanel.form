@@ -11,6 +11,7 @@
         <constraints border-constraint="Center"/>
         <properties>
           <dividerLocation value="400"/>
+          <resizeWeight value="0.5"/>
         </properties>
         <border type="none"/>
         <children>

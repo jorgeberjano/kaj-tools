@@ -6,6 +6,8 @@ import java.awt.Component;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.io.InputStream;
+import java.util.Collection;
+import java.util.List;
 import javax.swing.JEditorPane;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
@@ -17,6 +19,7 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class InfoTextPane extends JTextPane {
 
@@ -38,8 +41,10 @@ public class InfoTextPane extends JTextPane {
   public InfoTextPane() {
     setBackground(InfoMessage.DARK);
     setCaretColor(new Color(-1));
+  }
 
-    setUI (new LineHighlightTextPaneUI(this));
+  public void highlightLines(Collection<Pair<Integer, Integer>> lines) {
+    setUI(new LineHighlightTextPaneUI(this, lines));
   }
 
   public void enableLinks() {
@@ -68,7 +73,6 @@ public class InfoTextPane extends JTextPane {
 
     printString(infoMessage.getMensaje(), attr);
   }
-
 
   public void printString(String text, AttributeSet attr) {
     StyledDocument doc = getStyledDocument();

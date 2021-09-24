@@ -13,6 +13,7 @@ import java.util.Locale;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
@@ -26,7 +27,6 @@ import lombok.Getter;
 
 public class TableSelectorPanel<T> implements DialogueablePanel {
 
-  @Getter
   private JTable table;
   @Getter
   private JPanel mainPanel;
@@ -169,14 +169,10 @@ public class TableSelectorPanel<T> implements DialogueablePanel {
     return mainPanel;
   }
 
-  public T getAcceptedItem() {
+  public T getSelectedItem() {
     if (!okButtonPressed) {
       return null;
     }
-    return getSelectedItem();
-  }
-
-  public T getSelectedItem() {
     int index = table.getSelectedRow();
     return tableModel.getFila(index);
   }
