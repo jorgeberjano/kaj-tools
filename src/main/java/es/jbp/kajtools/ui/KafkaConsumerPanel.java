@@ -109,7 +109,9 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
   @Getter
   private InfoTextPane infoTextPane;
 
-  public KafkaConsumerPanel() {
+  public KafkaConsumerPanel(ComponentFactory componentFactory, List<IMessageClient> clientList) {
+
+    super(componentFactory, clientList);
 
     $$$setupUI$$$();
 
@@ -121,7 +123,6 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     buttonCheckEnvironment.addActionListener(e -> asyncRetrieveTopics());
 
     // Combo Dominio
-    final List<IMessageClient> clientList = KajToolsApp.getInstance().getClientList();
     clientList.stream().map(IMessageClient::getDomain).distinct().forEach(comboDomain::addItem);
     comboDomain.addActionListener(e -> updateConsumers());
     updateConsumers();
@@ -201,8 +202,7 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
   private void updateConsumers() {
     comboConsumer.removeAllItems();
     String domain = Objects.toString(comboDomain.getSelectedItem());
-    final List<IMessageClient> consumerList = KajToolsApp.getInstance().getClientList();
-    consumerList.stream()
+    clientList.stream()
         .filter(c -> StringUtils.isBlank(domain) || domain.equals(c.getDomain()))
         .forEach(comboConsumer::addItem);
   }
@@ -633,11 +633,11 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
   private void createUIComponents() {
 
     jsonEditorValue = createJsonEditor();
-    valueScrollPane = ComponentFactory.createEditorScroll(jsonEditorValue);
+    valueScrollPane = componentFactory.createEditorScroll(jsonEditorValue);
     jsonEditorKey = createJsonEditor();
-    keyScrollPane = ComponentFactory.createEditorScroll(jsonEditorKey);
+    keyScrollPane = componentFactory.createEditorScroll(jsonEditorKey);
     scriptEditorFilter = createScriptEditor();
-    filterScrollPane = ComponentFactory.createEditorScroll(scriptEditorFilter);
+    filterScrollPane = componentFactory.createEditorScroll(scriptEditorFilter);
 
     TablaGenerica recordTable = new TablaGenerica();
     recordTableModel.agregarColumna("partition", "Partition", 20);

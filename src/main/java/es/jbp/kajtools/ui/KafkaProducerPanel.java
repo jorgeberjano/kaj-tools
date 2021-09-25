@@ -47,13 +47,14 @@ import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
-import org.springframework.web.client.HttpClientErrorException.NotFound;
 
 public class KafkaProducerPanel extends KafkaBasePanel {
 
   private static final int MAXIMUM_QUANTITY = 10;
 
   private final SchemaRegistryService schemaRegistryService;
+  private List<IMessageClient> clientList;
+
   private String currentDirectory;
   private final Map<String, SchemaCheckStatus> checkedSchemaTopics = new HashMap<>();
 
@@ -97,7 +98,11 @@ public class KafkaProducerPanel extends KafkaBasePanel {
 
   private String globalHeaders;
 
-  public KafkaProducerPanel() {
+  public KafkaProducerPanel(ComponentFactory componentFactory,
+      SchemaRegistryService schemaRegistryService,
+      List<IMessageClient> clientList) {
+    super(componentFactory, clientList);
+    this.clientList = clientList;
 
     $$$setupUI$$$();
 
@@ -107,7 +112,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     variablesEditor.setText(ResourceUtil.readResourceString("variables.properties"));
 
     currentDirectory = new File(System.getProperty("user.home")).getPath();
-    this.schemaRegistryService = KajToolsApp.getInstance().getSchemaRegistryService();
+    this.schemaRegistryService = schemaRegistryService;
 
     dangerLabel.setVisible(false);
 
@@ -125,7 +130,6 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     buttonCheckEnvironment.addActionListener(e -> asyncRetrieveTopics());
 
     // Combo Dominio
-    final List<IMessageClient> clientList = KajToolsApp.getInstance().getClientList();
     clientList.stream().map(IMessageClient::getDomain).distinct().forEach(comboDomain::addItem);
     comboDomain.addActionListener(e -> updateProducers());
 
@@ -166,8 +170,8 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   private void updateProducers() {
     comboProducer.removeAllItems();
     String domain = Objects.toString(comboDomain.getSelectedItem());
-    final List<IMessageClient> producerList = KajToolsApp.getInstance().getClientList();
-    producerList.stream()
+    //final List<IMessageClient> producerList = KajToolsApp.getInstance().getClientList();
+    clientList.stream()
         .filter(p -> StringUtils.isBlank(domain) || domain.equals(p.getDomain()))
         .forEach(comboProducer::addItem);
   }
@@ -483,13 +487,13 @@ public class KafkaProducerPanel extends KafkaBasePanel {
 
   private void createUIComponents() {
     valueEditor = createJsonEditor();
-    valueScrollPane = ComponentFactory.createEditorScroll(valueEditor);
+    valueScrollPane = componentFactory.createEditorScroll(valueEditor);
     keyEditor = createJsonEditor();
-    keyScrollPane = ComponentFactory.createEditorScroll(keyEditor);
+    keyScrollPane = componentFactory.createEditorScroll(keyEditor);
     headersEditor = createPropertiesEditor();
-    headersScrollPane = ComponentFactory.createEditorScroll(headersEditor);
+    headersScrollPane = componentFactory.createEditorScroll(headersEditor);
     variablesEditor = createPropertiesEditor();
-    variablesScrollPane = ComponentFactory.createEditorScroll(variablesEditor);
+    variablesScrollPane = componentFactory.createEditorScroll(variablesEditor);
   }
 
   @Override

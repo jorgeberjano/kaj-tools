@@ -9,8 +9,13 @@ import es.jbp.kajtools.util.ResourceUtil;
 import java.io.IOException;
 import java.util.List;
 import lombok.Getter;
+import lombok.Setter;
 
 public class Configuration {
+
+  @Getter
+  @Setter
+  private static boolean lightTheme;
 
   @Getter
   private static List<Environment> environmentList;

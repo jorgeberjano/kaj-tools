@@ -1,6 +1,7 @@
 package es.jbp.kajtools.ui;
 
 import es.jbp.kajtools.Environment;
+import es.jbp.kajtools.IMessageClient;
 import es.jbp.kajtools.kafka.KafkaInvestigator;
 import es.jbp.kajtools.KajException;
 import es.jbp.tabla.ModeloTablaGenerico;
@@ -16,12 +17,19 @@ import lombok.Getter;
 
 public abstract class KafkaBasePanel extends BasePanel {
 
+  protected final List<IMessageClient> clientList;
+
   protected final ImageIcon iconCheckOk = new ImageIcon(getClass().getResource("/images/check_green.png"));
   protected final ImageIcon iconCheckFail = new ImageIcon(getClass().getResource("/images/check_red.png"));
   protected final ImageIcon iconCheckUndefined = new ImageIcon(getClass().getResource("/images/check_grey.png"));
 
   @Getter
   protected List<TopicItem> topics;
+
+  public KafkaBasePanel(ComponentFactory componentFactory, List<IMessageClient> clientList) {
+    super(componentFactory);
+    this.clientList = clientList;
+  }
 
   protected void asyncRetrieveTopics() {
 

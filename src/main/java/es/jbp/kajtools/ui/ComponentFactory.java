@@ -11,16 +11,23 @@ import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxScheme;
 import org.fife.ui.rsyntaxtextarea.Theme;
 import org.fife.ui.rtextarea.RTextScrollPane;
+import org.springframework.stereotype.Component;
 
+@Component
 public class ComponentFactory {
 
-  public static RSyntaxTextArea createSyntaxEditor() {
+  private Theme theme;
+
+  public ComponentFactory(Theme theme) {
+    this.theme = theme;
+  }
+
+  public RSyntaxTextArea createSyntaxEditor() {
     final RSyntaxTextArea jsonEditor = new RSyntaxTextArea();
     jsonEditor.setCodeFoldingEnabled(true);
     jsonEditor.setAlignmentX(0.0F);
     Font font = new Font("Courier New", Font.PLAIN, 12);
     jsonEditor.setFont(font);
-    Theme theme = KajToolsApp.getInstance().getTheme();
     if (theme != null) {
       theme.apply(jsonEditor);
     } else {
@@ -33,7 +40,7 @@ public class ComponentFactory {
     return jsonEditor;
   }
 
-  public static RTextScrollPane createEditorScroll(RSyntaxTextArea syntaxTextArea) {
+  public RTextScrollPane createEditorScroll(RSyntaxTextArea syntaxTextArea) {
     RTextScrollPane scrollPane = new RTextScrollPane(syntaxTextArea);
     scrollPane.setFoldIndicatorEnabled(true);
     scrollPane.setIconRowHeaderEnabled(true);

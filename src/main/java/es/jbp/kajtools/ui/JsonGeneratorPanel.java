@@ -68,7 +68,10 @@ public class JsonGeneratorPanel extends BasePanel implements InfoReportablePanel
   private RSyntaxTextArea jsonEditor;
   private RSyntaxTextArea schemaEditor;
 
-  public JsonGeneratorPanel() {
+  public JsonGeneratorPanel(ComponentFactory componentFactory) {
+
+    super(componentFactory);
+
     $$$setupUI$$$();
 
     super.initialize();
@@ -384,10 +387,10 @@ public class JsonGeneratorPanel extends BasePanel implements InfoReportablePanel
     infoTextPane = new InfoTextPane();
 
     jsonEditor = createJsonEditor();
-    jsonScrollPane = ComponentFactory.createEditorScroll(jsonEditor);
+    jsonScrollPane = componentFactory.createEditorScroll(jsonEditor);
 
     schemaEditor = createJsonEditor();
-    schemaScrollPane = ComponentFactory.createEditorScroll(schemaEditor);
+    schemaScrollPane = componentFactory.createEditorScroll(schemaEditor);
   }
 
   @Override
