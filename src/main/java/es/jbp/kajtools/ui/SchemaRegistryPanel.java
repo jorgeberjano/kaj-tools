@@ -55,6 +55,7 @@ import org.fife.ui.rtextarea.RTextScrollPane;
 
 public class SchemaRegistryPanel extends KafkaBasePanel {
 
+  private final SchemaRegistryService schemaRegistryService;
   private JComboBox comboSchemaSubject;
   private JComboBox comboEnvironment;
   private JComboBox comboDomain;
@@ -97,7 +98,10 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   }
 
 
-  public SchemaRegistryPanel() {
+  public SchemaRegistryPanel(ComponentFactory componentFactory, List<IMessageClient> clientList,
+      SchemaRegistryService schemaRegistryService) {
+    super(componentFactory, clientList);
+    this.schemaRegistryService = schemaRegistryService;
 
     $$$setupUI$$$();
 
@@ -113,7 +117,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     });
 
     // Combo Dominio
-    final List<IMessageClient> clientList = KajToolsApp.getInstance().getClientList();
+    //final List<IMessageClient> clientList = KajToolsApp.getInstance().getClientList();
     clientList.stream().map(IMessageClient::getDomain).distinct().forEach(comboDomain::addItem);
     comboDomain.addActionListener(e -> updateSchemaSubjects());
 
@@ -192,7 +196,6 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     currentVersion = null;
 
     String domain = Objects.toString(comboDomain.getSelectedItem());
-    final List<IMessageClient> clientList = KajToolsApp.getInstance().getClientList();
     clientList.stream()
         .filter(p -> StringUtils.isBlank(domain) || domain.equals(p.getDomain()))
         .map(IMessageClient::getAvailableTopics)
@@ -219,7 +222,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   }
 
   private List<String> requestVersions(Environment environment, String schemaSubject) {
-    SchemaRegistryService schemaRegistryService = KajToolsApp.getInstance().getSchemaRegistryService();
+//    SchemaRegistryService schemaRegistryService = KajToolsApp.getInstance().getSchemaRegistryService();
 
     List<String> versionList;
     try {
@@ -334,7 +337,6 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   }
 
   private String getSubjectSchemaVersion(String schemaSubject, String version, Environment environment) {
-    SchemaRegistryService schemaRegistryService = KajToolsApp.getInstance().getSchemaRegistryService();
     try {
       return schemaRegistryService.getSubjectSchemaVersion(schemaSubject, version, environment);
     } catch (KajException e) {
@@ -369,8 +371,6 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
 
   private Void deleteSelectedSchemaVersion(Environment environment, String schemaSubject,
       String version) {
-    SchemaRegistryService schemaRegistryService = KajToolsApp.getInstance().getSchemaRegistryService();
-
     try {
       schemaRegistryService
           .deleteSubjectSchemaVersion(schemaSubject, version, environment);
@@ -414,7 +414,6 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   }
 
   private Void writeSchema(Environment environment, String schemaSubject, String jsonSchema) {
-    SchemaRegistryService schemaRegistryService = KajToolsApp.getInstance().getSchemaRegistryService();
     schemaRegistryService.writeSubjectSchema(schemaSubject, environment, jsonSchema);
 
     enqueueSuccessful("Se ha escrito correctamente la nueva versión ");
@@ -644,7 +643,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
 
   private void createUIComponents() {
     schemaEditor = createJsonEditor();
-    schemaScrollPane = ComponentFactory.createEditorScroll(schemaEditor);
+    schemaScrollPane = componentFactory.createEditorScroll(schemaEditor);
     infoTextPane = new InfoTextPane();
   }
 }

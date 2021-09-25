@@ -18,8 +18,8 @@ import org.fife.ui.rtextarea.RTextScrollPane;
 
 public class RSyntaxPanel implements DialogueablePanel, SearchablePanel {
 
+  private final ComponentFactory componentFactory;
   private RTextScrollPane scrollPane;
-
   private RSyntaxTextArea syntaxTextArea;
   @Getter
   private JPanel mainPanel;
@@ -27,7 +27,10 @@ public class RSyntaxPanel implements DialogueablePanel, SearchablePanel {
   private JTextField searchTextField;
 
 
-  public RSyntaxPanel() {
+
+  public RSyntaxPanel(ComponentFactory componentFactory) {
+    this.componentFactory = componentFactory;
+
     $$$setupUI$$$();
 
     enableTextSearch(searchTextField, syntaxTextArea);
@@ -44,8 +47,8 @@ public class RSyntaxPanel implements DialogueablePanel, SearchablePanel {
   }
 
   private void createUIComponents() {
-    syntaxTextArea = ComponentFactory.createSyntaxEditor();
-    scrollPane = ComponentFactory.createEditorScroll(syntaxTextArea);
+    syntaxTextArea = componentFactory.createSyntaxEditor();
+    scrollPane = componentFactory.createEditorScroll(syntaxTextArea);
   }
 
   /**

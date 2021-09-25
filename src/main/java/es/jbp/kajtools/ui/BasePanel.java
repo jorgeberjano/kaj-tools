@@ -42,6 +42,11 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
 
   private final Map<String, InfoDocument> linksMap = new HashMap<>();
 
+  protected ComponentFactory componentFactory;
+
+  public BasePanel(ComponentFactory componentFactory) {
+    this.componentFactory = componentFactory;
+  }
 
   protected abstract Component getContentPane();
 
@@ -128,7 +133,7 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
 //  }
 
   protected RSyntaxTextArea createJsonEditor() {
-    final RSyntaxTextArea jsonEditor = ComponentFactory.createSyntaxEditor();
+    final RSyntaxTextArea jsonEditor = componentFactory.createSyntaxEditor();
     jsonEditor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JSON);
     jsonEditor.addKeyListener(new KeyAdapter() {
       @Override
@@ -159,13 +164,13 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
   }
 
   protected RSyntaxTextArea createScriptEditor() {
-    RSyntaxTextArea editor = ComponentFactory.createSyntaxEditor();
+    RSyntaxTextArea editor = componentFactory.createSyntaxEditor();
     editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVASCRIPT);
     return editor;
   }
 
   protected RSyntaxTextArea createPropertiesEditor() {
-    RSyntaxTextArea editor = ComponentFactory.createSyntaxEditor();
+    RSyntaxTextArea editor = componentFactory.createSyntaxEditor();
     editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_PROPERTIES_FILE);
     return editor;
   }
@@ -236,7 +241,7 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
         showInModalDialog(diffPanel, title);
         break;
       case JSON:
-        RSyntaxPanel syntaxPanel = new RSyntaxPanel();
+        RSyntaxPanel syntaxPanel = new RSyntaxPanel(componentFactory);
         syntaxPanel.setContent(JsonUtils.formatJson(infoDocument.plainText()), SyntaxConstants.SYNTAX_STYLE_JSON);
         showInModalDialog(syntaxPanel, title);
         break;
