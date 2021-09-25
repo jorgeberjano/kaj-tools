@@ -93,16 +93,16 @@ public class DiffPanel implements DialogueablePanel {
   }
 
   private void printMessages(List<InfoMessage> messages, InfoTextPane textPane) {
-    Set<Pair<Integer, Integer>> highlightLocations = new TreeSet<>();
+    Set<Pair<Integer, Integer>> highlightPositions = new TreeSet<>();
 
     for (InfoMessage message : messages) {
       int position = textPane.getCaretPosition();
       textPane.printInfoMessage(message);
       if (message.getType() == Type.DELETED || message.getType() == Type.ADDED || message.getType() == Type.MISSING) {
-        highlightLocations.add(Pair.of(position, textPane.getCaretPosition()));
+        highlightPositions.add(Pair.of(position, textPane.getCaretPosition()));
       }
     }
-    textPane.highlightLines(highlightLocations);
+    textPane.highlightLines(highlightPositions);
     textPane.setCaretPosition(0);
   }
 }

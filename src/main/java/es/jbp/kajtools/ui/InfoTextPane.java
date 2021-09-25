@@ -43,8 +43,8 @@ public class InfoTextPane extends JTextPane {
     setCaretColor(new Color(-1));
   }
 
-  public void highlightLines(Collection<Pair<Integer, Integer>> lines) {
-    setUI(new LineHighlightTextPaneUI(this, lines));
+  public void highlightLines(Collection<Pair<Integer, Integer>> positions) {
+    setUI(new LineHighlightTextPaneUI(this, positions));
   }
 
   public void enableLinks() {

@@ -21,7 +21,7 @@ Permite realizar, fundamentalmente, las siguientes tareas:
 - Consultar esquemas del *Schema Regristry* y mostrar las diferencias con esquemas anteriores.
 - Borrar esquemas del *Schema Regristry*.
 
-- Generar *JSO*N de ejemplo a partir de clases *AVRO* o de cualquier clase *Java Bean* en general.
+- Generar *JSON* de ejemplo a partir de clases *AVRO* o de cualquier clase *Java Bean* en general.
 - Generar plantillas a partir de contenido JSON.
 
 
@@ -161,33 +161,31 @@ Las expresiones normalmente deben entre una secuencia de caracteres inicial  `${
 
 
 
-Dentro de la expresión se pueden usar una serie de constantes, variables y funciones que se exponen a continuación. El evaluador de expresiones es insensible a mayúsculas y minúsculas.
+Dentro de la expresión se pueden usar una serie de constantes, funciones y variables que se exponen a continuación. El evaluador de expresiones es insensible a mayúsculas y minúsculas.
 
+#### Constantes:
 
+| Constantes | descripción                                     |
+| ---------- | ----------------------------------------------- |
+| true       | El valor booleano true                          |
+| false      | El valor booleano false                         |
+| username   | El nombre del usuario que ejecuta la aplicación |
 
-##### Constantes:
+#### Funciones:
 
-| productor de valor | descripción                                     |
-| ------------------ | ----------------------------------------------- |
-| true               | El valor booleano true                          |
-| false              | El valor booleano false                         |
-| username           | El nombre del usuario que ejecuta la aplicación |
+| Función    | descripción                                                  |
+| ---------- | ------------------------------------------------------------ |
+| datetime() | Produce una cadena con la fecha y hora.<br />Puede recibir un parametro que expresa el formato. por defecto es `yyyy-dd-MM'T'HH:MM'Z'` |
+| uuid()     | Produce un UUID o [Identificador único universal](https://es.wikipedia.org/wiki/Identificador_único_universal#:~:text=UUID se utilizó originalmente en,Open Software Foundation (OSF) .). |
+| str()      | Convierte a cadena y concatena todos los parametros que recibe. Recibe número indeterminado de parámetros. |
+| any()      | Devuelve, de forma aleatoria, uno de los parámetros que se le pase. Recibe número indeterminado de parámetros. |
+| rand()     | Devuelve un valor aleatorio entre 0 hasta valor del partametro que se le pase (no incluido). Solo admite un parámetro. |
+| fileline() | Devuelve una línea aleatoria del archivo de texto que se le pase como parámetro. El archivo debe estar incluido en los recursos de la aplicación. Recibe como parámetro la ruta del archivo de recursos. |
+| fragment() | Incluye un fragmento del mensaje tomado del contenido completo de un archivo de recursos. Este archivo de recursos también puede contener expresiones. Recibe como parámetro la ruta del archivo de recursos. |
+| set()      | Sirve para establecer un valor en un mapa de valores memorizados que se pueden usar en otras expresiones. Se le deben suministrar dos parámetros, el primero es una cadena que representa la clave y el segundo e valor a establecer |
+| get()      | Sirve para recuperar un valor previamente establecido en el mapa de valores memorizados que se pueden usar en otras expresiones. Se le debe suministrar como parámetro una cadena que representa la clave. Hay que tener en cuenta que el valor se debe haber establecido antes y que primero se procesa el JSON de la Key y luego el JSON del Value de los mensajes. |
 
-##### 
-
-| productor de valor | descripción                                                  |
-| ------------------ | ------------------------------------------------------------ |
-| datetime()         | Produce una cadena con la fecha y hora.<br />Puede recibir un parametro que expresa el formato. por defecto es `yyyy-dd-MM'T'HH:MM'Z'` |
-| uuid()             | Produce un UUID o [Identificador único universal](https://es.wikipedia.org/wiki/Identificador_único_universal#:~:text=UUID se utilizó originalmente en,Open Software Foundation (OSF) .). |
-| str()              | Convierte a cadena y concatena todos los parametros que recibe. Recibe número indeterminado de parámetros. |
-| any()              | Devuelve, de forma aleatoria, uno de los parámetros que se le pase. Recibe número indeterminado de parámetros. |
-| rand()             | Devuelve un valor aleatorio entre 0 hasta valor del partametro que se le pase (no incluido). Solo admite un parámetro. |
-| fileline()         | Devuelve una línea aleatoria del archivo de texto que se le pase como parámetro. El archivo debe estar incluido en los recursos de la aplicación. Recibe como parámetro la ruta del archivo de recursos. |
-| fragment()         | Incluye un fragmento del mensaje tomado del contenido completo de un archivo de recursos. Este archivo de recursos también puede contener expresiones. Recibe como parámetro la ruta del archivo de recursos. |
-| set()              | Sirve para establecer un valor en un mapa de valores memorizados que se pueden usar en otras expresiones. Se le deben suministrar dos parámetros, el primero es una cadena que representa la clave y el segundo e valor a establecer |
-| get()              | Sirve para recuperar un valor previamente establecido en el mapa de valores memorizados que se pueden usar en otras expresiones. Se le debe suministrar como parámetro una cadena que representa la clave. Hay que tener en cuenta que el valor se debe haber establecido antes y que primero se procesa el JSON de la Key y luego el JSON del Value de los mensajes. |
-
-##### Variables predefinidas:
+#### Variables predefinidas:
 
 | variable | descripción                                                  |
 | -------- | ------------------------------------------------------------ |
