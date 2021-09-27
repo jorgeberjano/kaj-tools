@@ -5,6 +5,7 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 import es.jbp.kajtools.ui.interfaces.DialogueablePanel;
 import es.jbp.tabla.ModeloTablaGenerico;
 import es.jbp.tabla.TablaGenerica;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
@@ -35,6 +36,10 @@ public class TableSelectorPanel<T> implements DialogueablePanel {
   private JButton buttonUpdate;
 
   private boolean okButtonPressed;
+
+  public JTable getTable() {
+    return table;
+  }
 
   public interface ModelProvider<T> {
 
@@ -169,10 +174,15 @@ public class TableSelectorPanel<T> implements DialogueablePanel {
     return mainPanel;
   }
 
-  public T getSelectedItem() {
+
+  public T getAcceptedItem() {
     if (!okButtonPressed) {
       return null;
     }
+    return getSelectedItem();
+  }
+
+  public T getSelectedItem() {
     int index = table.getSelectedRow();
     return tableModel.getFila(index);
   }

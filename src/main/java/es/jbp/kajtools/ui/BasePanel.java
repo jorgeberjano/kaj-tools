@@ -238,32 +238,44 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
       case DIFF:
         DiffPanel diffPanel = new DiffPanel();
         diffPanel.setDocument(infoDocument);
-        showInModalDialog(diffPanel, title);
+        showInNonModalDialog(diffPanel, title);
         break;
       case JSON:
         RSyntaxPanel syntaxPanel = new RSyntaxPanel(componentFactory);
         syntaxPanel.setContent(JsonUtils.formatJson(infoDocument.plainText()), SyntaxConstants.SYNTAX_STYLE_JSON);
-        showInModalDialog(syntaxPanel, title);
+        showInNonModalDialog(syntaxPanel, title);
         break;
       default:
         InfoPanel infoPanel = new InfoPanel();
         infoPanel.setDocument(infoDocument);
-        showInModalDialog(infoPanel, title);
+        showInNonModalDialog(infoPanel, title);
     }
   }
 
   protected void showInModalDialog(DialogueablePanel dialogueable, String title) {
     JPanel panel = dialogueable.getMainPanel();
     panel.setBounds(0, 0, 400, 450);
-    JFrame dialog = new JFrame();
-    //JDialog dialog = new JDialog();
+    JDialog dialog = new JDialog();
     dialog.setTitle(title);
     dialog.setSize(800, 450);
     dialog.setResizable(true);
     dialog.setLocationRelativeTo(getContentPane());
     dialog.setContentPane(panel);
     dialogueable.bindDialog(dialog);
-    //dialog.setModal(true);
+    dialog.setModal(true);
+    dialog.setVisible(true);
+  }
+
+  protected void showInNonModalDialog(DialogueablePanel dialogueable, String title) {
+    JPanel panel = dialogueable.getMainPanel();
+    panel.setBounds(0, 0, 400, 450);
+    JFrame dialog = new JFrame();
+    dialog.setTitle(title);
+    dialog.setSize(800, 450);
+    dialog.setResizable(true);
+    dialog.setLocationRelativeTo(getContentPane());
+    dialog.setContentPane(panel);
+    dialogueable.bindDialog(dialog);
     dialog.setVisible(true);
   }
 
