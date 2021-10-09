@@ -25,6 +25,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import lombok.Getter;
+import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -247,6 +248,8 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
 
   public static Map<String, Object> createCommonProperties(Environment environment) {
     Map<String, Object> props = new HashMap<>();
+
+    putNotNull(props, AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, environment.getBootstrapServers());
 
     putNotNull(props, ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, environment.getBootstrapServers());
 

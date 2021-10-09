@@ -4,6 +4,8 @@ import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 import es.jbp.kajtools.IMessageClient;
 import es.jbp.kajtools.KajToolsApp;
+import es.jbp.kajtools.i18n.I18nService;
+import es.jbp.kajtools.kafka.KafkaAdminService;
 import es.jbp.kajtools.ui.ComponentFactory;
 import es.jbp.kajtools.ui.KafkaProducerPanel;
 import es.jbp.kajtools.ui.MainForm;
@@ -12,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
+import java.util.Locale;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
@@ -32,7 +35,13 @@ public class SpringConfig {
   private SchemaRegistryService schemaRegistryService;
 
   @Autowired
+  private KafkaAdminService kafkaAdminService;
+
+  @Autowired
   private List<IMessageClient> clientList;
+
+  @Autowired
+  private I18nService i18nService;
 
   @Bean
   public JFrame mainFrame() {
@@ -42,6 +51,7 @@ public class SpringConfig {
     } catch (Exception ex) {
       System.err.println("Failed to initialize FlatLaf");
     }
+    Locale.setDefault(Locale.ENGLISH);
     UIManager.put("OptionPane.yesButtonText", "Sí");
 
     ImageIcon icono = null;
@@ -68,7 +78,7 @@ public class SpringConfig {
   }
 
   @Bean MainForm mainForm() {
-    return new MainForm(componentFactory, schemaRegistryService, clientList);
+    return new MainForm(componentFactory, schemaRegistryService, kafkaAdminService, clientList, i18nService);
   }
 
   @Bean

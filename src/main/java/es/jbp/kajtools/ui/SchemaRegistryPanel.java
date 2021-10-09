@@ -8,7 +8,8 @@ import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.KajException;
 import es.jbp.kajtools.configuration.Configuration;
 import es.jbp.kajtools.IMessageClient;
-import es.jbp.kajtools.KajToolsApp;
+import es.jbp.kajtools.i18n.I18nService;
+import es.jbp.kajtools.kafka.KafkaAdminService;
 import es.jbp.kajtools.util.JsonUtils;
 import es.jbp.kajtools.util.SchemaRegistryService;
 import java.awt.BorderLayout;
@@ -18,6 +19,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.Point;
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -25,9 +27,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.ResourceBundle;
 import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.swing.AbstractButton;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
@@ -55,7 +59,6 @@ import org.fife.ui.rtextarea.RTextScrollPane;
 
 public class SchemaRegistryPanel extends KafkaBasePanel {
 
-  private final SchemaRegistryService schemaRegistryService;
   private JComboBox comboSchemaSubject;
   private JComboBox comboEnvironment;
   private JComboBox comboDomain;
@@ -98,10 +101,12 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   }
 
 
-  public SchemaRegistryPanel(ComponentFactory componentFactory, List<IMessageClient> clientList,
-      SchemaRegistryService schemaRegistryService) {
-    super(componentFactory, clientList);
-    this.schemaRegistryService = schemaRegistryService;
+  public SchemaRegistryPanel(List<IMessageClient> clientList,
+      SchemaRegistryService schemaRegistryService,
+      KafkaAdminService kafkaAdminService,
+      ComponentFactory componentFactory,
+      I18nService i18nService) {
+    super(clientList, schemaRegistryService, kafkaAdminService, componentFactory, i18nService);
 
     $$$setupUI$$$();
 
@@ -444,11 +449,11 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
         new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
             GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     final JLabel label1 = new JLabel();
-    label1.setText("Sujeto:");
+    this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages", "label.subject"));
     panel1.add(label1, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     final JLabel label2 = new JLabel();
-    label2.setText("Entorno:");
+    this.$$$loadLabelText$$$(label2, this.$$$getMessageFromBundle$$$("messages", "label.environment"));
     panel1.add(label2, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     comboEnvironment = new JComboBox();
@@ -458,7 +463,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
         new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
             GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     final JLabel label3 = new JLabel();
-    label3.setText("Dominio:");
+    this.$$$loadLabelText$$$(label3, this.$$$getMessageFromBundle$$$("messages", "label.domain"));
     panel1.add(label3, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     comboDomain = new JComboBox();
@@ -485,8 +490,8 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     panel3.add(spacer1, new GridConstraints(0, 4, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
         GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
     getSchemasButton = new JButton();
-    getSchemasButton.setText("Obtener esquemas");
-    getSchemasButton.setToolTipText("Obtiene todos los esquemas del Schema Registry ");
+    this.$$$loadButtonText$$$(getSchemasButton, this.$$$getMessageFromBundle$$$("messages", "button.get.schemas"));
+    getSchemasButton.setToolTipText(this.$$$getMessageFromBundle$$$("messages", "tooltip.get.schemas"));
     panel3.add(getSchemasButton,
         new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
@@ -501,7 +506,8 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     panel3.add(dangerLabel, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     writeSchemaButton = new JButton();
-    writeSchemaButton.setText("Escribir esquema");
+    this.$$$loadButtonText$$$(writeSchemaButton, this.$$$getMessageFromBundle$$$("messages", "button.write.schema"));
+    writeSchemaButton.setToolTipText(this.$$$getMessageFromBundle$$$("messages", "tooltip.write.schema"));
     panel3.add(writeSchemaButton,
         new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
@@ -515,7 +521,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     panel5.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
     panel4.add(panel5, BorderLayout.WEST);
     final JLabel label5 = new JLabel();
-    label5.setText("Versiones");
+    this.$$$loadLabelText$$$(label5, this.$$$getMessageFromBundle$$$("messages", "label.versions"));
     panel5.add(label5, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
         null, new Dimension(80, -1), new Dimension(80, -1), 0, false));
@@ -531,7 +537,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     panel4.add(tabbedPane, BorderLayout.CENTER);
     tabInfo = new JPanel();
     tabInfo.setLayout(new BorderLayout(0, 0));
-    tabbedPane.addTab("Información", tabInfo);
+    tabbedPane.addTab(this.$$$getMessageFromBundle$$$("messages", "tab.info"), tabInfo);
     final JScrollPane scrollPane2 = new JScrollPane();
     tabInfo.add(scrollPane2, BorderLayout.CENTER);
     infoTextPane.setBackground(new Color(-13948117));
@@ -546,7 +552,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     scrollPane2.setViewportView(infoTextPane);
     tabSchema = new JPanel();
     tabSchema.setLayout(new BorderLayout(0, 0));
-    tabbedPane.addTab("Esquema", tabSchema);
+    tabbedPane.addTab(this.$$$getMessageFromBundle$$$("messages", "tab.avro.schema"), tabSchema);
     tabSchema.add(schemaScrollPane, BorderLayout.CENTER);
     final JPanel panel6 = new JPanel();
     panel6.setLayout(new GridLayoutManager(4, 1, new Insets(0, 0, 0, 0), -1, -1));
@@ -555,7 +561,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     cleanButton.setHorizontalTextPosition(0);
     cleanButton.setIcon(new ImageIcon(getClass().getResource("/images/rubber.png")));
     cleanButton.setText("");
-    cleanButton.setToolTipText("Limpiar");
+    cleanButton.setToolTipText(this.$$$getMessageFromBundle$$$("messages", "tooltip.clean"));
     cleanButton.putClientProperty("html.disable", Boolean.TRUE);
     panel6.add(cleanButton, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
@@ -564,7 +570,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     copyButton.setHorizontalTextPosition(0);
     copyButton.setIcon(new ImageIcon(getClass().getResource("/images/copy.png")));
     copyButton.setText("");
-    copyButton.setToolTipText("Copiar al portapapeles");
+    copyButton.setToolTipText(this.$$$getMessageFromBundle$$$("messages", "tooltip.copy.clipboard"));
     panel6.add(copyButton, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
@@ -600,6 +606,81 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     Font fontWithFallback = isMac ? new Font(font.getFamily(), font.getStyle(), font.getSize())
         : new StyleContext().getFont(font.getFamily(), font.getStyle(), font.getSize());
     return fontWithFallback instanceof FontUIResource ? fontWithFallback : new FontUIResource(fontWithFallback);
+  }
+
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle) $$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    } catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
+  }
+
+  /**
+   * @noinspection ALL
+   */
+  private void $$$loadLabelText$$$(JLabel component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) {
+          break;
+        }
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setDisplayedMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /**
+   * @noinspection ALL
+   */
+  private void $$$loadButtonText$$$(AbstractButton component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) {
+          break;
+        }
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
   }
 
   /**

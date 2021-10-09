@@ -2,27 +2,34 @@ package es.jbp.kajtools.ui;
 
 import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.IMessageClient;
-import es.jbp.kajtools.kafka.KafkaInvestigator;
 import es.jbp.kajtools.KajException;
-import es.jbp.tabla.ModeloTablaGenerico;
+import es.jbp.kajtools.i18n.I18nService;
+import es.jbp.kajtools.kafka.KafkaAdminService;
 import es.jbp.kajtools.kafka.TopicItem;
+import es.jbp.kajtools.ui.InfoDocument.Type;
+import es.jbp.kajtools.util.SchemaRegistryService;
+import es.jbp.tabla.ModeloTablaGenerico;
 import java.awt.Component;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.swing.ImageIcon;
-import javax.swing.JDialog;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.text.JTextComponent;
 import lombok.Getter;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 public abstract class KafkaBasePanel extends BasePanel {
 
   protected final List<IMessageClient> clientList;
+  protected final SchemaRegistryService schemaRegistryService;
+  protected final KafkaAdminService kafkaAdminService;
 
   protected final ImageIcon iconCheckOk = new ImageIcon(getClass().getResource("/images/check_green.png"));
   protected final ImageIcon iconCheckFail = new ImageIcon(getClass().getResource("/images/check_red.png"));
@@ -31,9 +38,15 @@ public abstract class KafkaBasePanel extends BasePanel {
   @Getter
   protected List<TopicItem> topics;
 
-  public KafkaBasePanel(ComponentFactory componentFactory, List<IMessageClient> clientList) {
-    super(componentFactory);
+  protected KafkaBasePanel(List<IMessageClient> clientList,
+      SchemaRegistryService schemaRegistryService,
+      KafkaAdminService kafkaAdminService,
+      ComponentFactory componentFactory,
+      I18nService i18nService) {
+    super(componentFactory, i18nService);
     this.clientList = clientList;
+    this.schemaRegistryService = schemaRegistryService;
+    this.kafkaAdminService = kafkaAdminService;
   }
 
   protected void asyncRetrieveTopics() {
@@ -43,12 +56,11 @@ public abstract class KafkaBasePanel extends BasePanel {
   }
 
   protected Void retrieveTopics(Environment environment) {
-    KafkaInvestigator kafkaInvestigator = new KafkaInvestigator();
     try {
-      topics = kafkaInvestigator.getTopics(environment);
+      topics = kafkaAdminService.getTopics(environment);
       showConnectionStatus(Boolean.TRUE);
-      enqueueSuccessful("Se han obtenido " + topics.size() + " topics");
-    } catch(KajException ex) {
+      enqueueSuccessful("Se han obtenido " + CollectionUtils.size(topics) + " topics");
+    } catch (KajException ex) {
       topics = new ArrayList<>();
       printException(ex);
       showConnectionStatus(false);
@@ -65,15 +77,6 @@ public abstract class KafkaBasePanel extends BasePanel {
 
   protected abstract Environment getEnvironment();
 
-//  protected TopicItem selectTopic() {
-//
-//    TableSelectorPanel<TopicItem> tableSelectorPanel = new TableSelectorPanel<>(this::createTopicModel);
-//
-//    showInModalDialog(tableSelectorPanel, "Topics");
-//
-//    return tableSelectorPanel.getSelectedItem();
-//  }
-
   protected ModeloTablaGenerico<TopicItem> createTopicModel(boolean update) {
     ModeloTablaGenerico<TopicItem> tableModel = new ModeloTablaGenerico<>();
     tableModel.agregarColumna("name", "Topic", 200);
@@ -84,7 +87,6 @@ public abstract class KafkaBasePanel extends BasePanel {
     tableModel.setListaObjetos(topics);
     return tableModel;
   }
-
 
   protected Optional<JTextComponent> getUmpteenthEditor(int index, JTextComponent... editors) {
     if (editors.length > index) {
@@ -107,23 +109,46 @@ public abstract class KafkaBasePanel extends BasePanel {
         }
       }
     };
-    JMenuItem deleteActionListener = new JMenuItem("Borrar");
+
+    var configActionListener = new JMenuItem("Configuración");
+    configActionListener.addActionListener(e -> showTopicConfig(tableSelectorPanel));
+    popupMenu.add(configActionListener);
+
+    var deleteActionListener = new JMenuItem("Borrar");
     deleteActionListener.addActionListener(e -> asyncDeleteTopic(tableSelectorPanel));
     popupMenu.add(deleteActionListener);
     tableSelectorPanel.setTablePopupMenu(popupMenu);
 
-    showInModalDialog(tableSelectorPanel, "Topics");
+    showInModalDialog(tableSelectorPanel, "Topics", null);
 
     return tableSelectorPanel.getAcceptedItem();
   }
 
-  protected void asyncDeleteTopic(TableSelectorPanel<TopicItem> tableSelectorPanel) {
-    TopicItem item = tableSelectorPanel.getSelectedItem();
-    if (item == null) {
+  protected void showTopicConfig(TableSelectorPanel<TopicItem> tableSelectorPanel) {
+    String topicName = Optional.ofNullable(tableSelectorPanel.getSelectedItem())
+        .map(TopicItem::getName)
+        .orElse(null);
+    if (StringUtils.isBlank(topicName)) {
       return;
     }
-    String topicName = item.getName();
-    Environment environment = getEnvironment();
+    Map<String, String> config = kafkaAdminService.getTopicConfig(topicName, getEnvironment());
+    String propertiesText = config.entrySet().stream()
+        .sorted((e1, e2) -> StringUtils.compare(e1.getKey(), e2.getKey()))
+        .map(e -> e.getKey() + " = " + e.getValue())
+        .collect(Collectors.joining("\n"));
+    showInfoDocument(InfoDocument.simpleDocument(topicName, Type.PROPERTIES, propertiesText), true,
+        tableSelectorPanel.getMainPanel());
+  }
+
+
+  protected void asyncDeleteTopic(TableSelectorPanel<TopicItem> tableSelectorPanel) {
+    String topicName = Optional.ofNullable(tableSelectorPanel.getSelectedItem())
+        .map(TopicItem::getName)
+        .orElse(null);
+    if (StringUtils.isBlank(topicName)) {
+      return;
+    }
+    var environment = getEnvironment();
     int response = JOptionPane.showConfirmDialog(tableSelectorPanel.getTable(),
         "!CUIDADO! Se va a borrar el topic " + topicName + " del entono " + environment.getName() +
             "\n¿Esta seguro de lo que lo quiere borrar?",
@@ -132,10 +157,10 @@ public abstract class KafkaBasePanel extends BasePanel {
       return;
     }
     printAction("Borrando el topic " + topicName + " del entono " + environment.getName());
-    KafkaInvestigator kafka = new KafkaInvestigator();
+    var kafka = new KafkaAdminService();
     try {
       kafka.deleteTopic(topicName, environment);
-    } catch(KajException ex) {
+    } catch (KajException ex) {
       printException(ex);
     }
   }

@@ -4,6 +4,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import es.jbp.kajtools.Environment;
+import es.jbp.kajtools.i18n.I18nService;
 import es.jbp.kajtools.ui.InfoDocument.InfoDocumentBuilder;
 import es.jbp.kajtools.ui.InfoMessage.Type;
 import es.jbp.kajtools.ui.interfaces.InfoReportablePanel;
@@ -16,12 +17,15 @@ import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+import javax.swing.AbstractButton;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -68,9 +72,10 @@ public class JsonGeneratorPanel extends BasePanel implements InfoReportablePanel
   private RSyntaxTextArea jsonEditor;
   private RSyntaxTextArea schemaEditor;
 
-  public JsonGeneratorPanel(ComponentFactory componentFactory) {
+  public JsonGeneratorPanel(ComponentFactory componentFactory,
+      I18nService i18nService) {
 
-    super(componentFactory);
+    super(componentFactory, i18nService);
 
     $$$setupUI$$$();
 
@@ -270,7 +275,7 @@ public class JsonGeneratorPanel extends BasePanel implements InfoReportablePanel
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
         null, null, null, 0, false));
     final JLabel label1 = new JLabel();
-    label1.setText("Filtro:");
+    this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages", "label.filter"));
     topPanel.add(label1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     filterTextField = new JTextField();
@@ -279,7 +284,7 @@ public class JsonGeneratorPanel extends BasePanel implements InfoReportablePanel
             GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null,
             0, false));
     final JLabel label2 = new JLabel();
-    label2.setText("Clase:");
+    this.$$$loadLabelText$$$(label2, this.$$$getMessageFromBundle$$$("messages", "label.class"));
     topPanel.add(label2, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     classComboBox = new JComboBox();
@@ -293,8 +298,8 @@ public class JsonGeneratorPanel extends BasePanel implements InfoReportablePanel
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
         null, null, null, 0, false));
     generateJsonButton = new JButton();
-    generateJsonButton.setText("Generar JSON");
-    generateJsonButton.setToolTipText("Generar objeto, JSON y esquema");
+    this.$$$loadButtonText$$$(generateJsonButton, this.$$$getMessageFromBundle$$$("messages", "button.json.generate"));
+    generateJsonButton.setToolTipText(this.$$$getMessageFromBundle$$$("messages", "tooltip.generate.all"));
     panel1.add(generateJsonButton,
         new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
@@ -303,8 +308,8 @@ public class JsonGeneratorPanel extends BasePanel implements InfoReportablePanel
     panel1.add(spacer1, new GridConstraints(0, 2, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
         GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
     checkJsonButton = new JButton();
-    checkJsonButton.setText("Comprobar JSON");
-    checkJsonButton.setToolTipText("Comprobar si el JSON se puede deserializar en un objeto");
+    this.$$$loadButtonText$$$(checkJsonButton, this.$$$getMessageFromBundle$$$("messages", "button.json.check"));
+    checkJsonButton.setToolTipText(this.$$$getMessageFromBundle$$$("messages", "tooltip.check.json"));
     panel1.add(checkJsonButton,
         new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
@@ -330,7 +335,7 @@ public class JsonGeneratorPanel extends BasePanel implements InfoReportablePanel
     panel3.add(tabbedPane, BorderLayout.CENTER);
     tabInfo = new JPanel();
     tabInfo.setLayout(new BorderLayout(0, 0));
-    tabbedPane.addTab("Información", tabInfo);
+    tabbedPane.addTab(this.$$$getMessageFromBundle$$$("messages", "tab.info"), tabInfo);
     infoScrollPane = new JScrollPane();
     tabInfo.add(infoScrollPane, BorderLayout.CENTER);
     infoTextPane.setAutoscrolls(false);
@@ -345,7 +350,7 @@ public class JsonGeneratorPanel extends BasePanel implements InfoReportablePanel
     tabJson.add(jsonScrollPane, BorderLayout.CENTER);
     tabSchema = new JPanel();
     tabSchema.setLayout(new BorderLayout(0, 0));
-    tabbedPane.addTab("Esquema AVRO", tabSchema);
+    tabbedPane.addTab(this.$$$getMessageFromBundle$$$("messages", "tab.avro.schema"), tabSchema);
     tabSchema.add(schemaScrollPane, BorderLayout.CENTER);
     final JPanel panel4 = new JPanel();
     panel4.setLayout(new GridLayoutManager(4, 1, new Insets(0, 0, 0, 0), -1, -1));
@@ -354,7 +359,7 @@ public class JsonGeneratorPanel extends BasePanel implements InfoReportablePanel
     cleanButton.setHorizontalTextPosition(0);
     cleanButton.setIcon(new ImageIcon(getClass().getResource("/images/rubber.png")));
     cleanButton.setText("");
-    cleanButton.setToolTipText("Limpiar");
+    cleanButton.setToolTipText(this.$$$getMessageFromBundle$$$("messages", "tooltip.clean"));
     cleanButton.putClientProperty("html.disable", Boolean.TRUE);
     panel4.add(cleanButton, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
@@ -363,7 +368,7 @@ public class JsonGeneratorPanel extends BasePanel implements InfoReportablePanel
     copyButton.setHorizontalTextPosition(0);
     copyButton.setIcon(new ImageIcon(getClass().getResource("/images/copy.png")));
     copyButton.setText("");
-    copyButton.setToolTipText("Copiar al portapapeles");
+    copyButton.setToolTipText(this.$$$getMessageFromBundle$$$("messages", "tooltip.copy.clipboard"));
     panel4.add(copyButton, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
         null, null, null, 0, false));
@@ -373,6 +378,81 @@ public class JsonGeneratorPanel extends BasePanel implements InfoReportablePanel
     final Spacer spacer3 = new Spacer();
     panel4.add(spacer3, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_NONE, 1,
         GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(-1, 30), null, 0, false));
+  }
+
+  private static Method $$$cachedGetBundleMethod$$$ = null;
+
+  private String $$$getMessageFromBundle$$$(String path, String key) {
+    ResourceBundle bundle;
+    try {
+      Class<?> thisClass = this.getClass();
+      if ($$$cachedGetBundleMethod$$$ == null) {
+        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+      }
+      bundle = (ResourceBundle) $$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+    } catch (Exception e) {
+      bundle = ResourceBundle.getBundle(path);
+    }
+    return bundle.getString(key);
+  }
+
+  /**
+   * @noinspection ALL
+   */
+  private void $$$loadLabelText$$$(JLabel component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) {
+          break;
+        }
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setDisplayedMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
+  }
+
+  /**
+   * @noinspection ALL
+   */
+  private void $$$loadButtonText$$$(AbstractButton component, String text) {
+    StringBuffer result = new StringBuffer();
+    boolean haveMnemonic = false;
+    char mnemonic = '\0';
+    int mnemonicIndex = -1;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) == '&') {
+        i++;
+        if (i == text.length()) {
+          break;
+        }
+        if (!haveMnemonic && text.charAt(i) != '&') {
+          haveMnemonic = true;
+          mnemonic = text.charAt(i);
+          mnemonicIndex = result.length();
+        }
+      }
+      result.append(text.charAt(i));
+    }
+    component.setText(result.toString());
+    if (haveMnemonic) {
+      component.setMnemonic(mnemonic);
+      component.setDisplayedMnemonicIndex(mnemonicIndex);
+    }
   }
 
   /**

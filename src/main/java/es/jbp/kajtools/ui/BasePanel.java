@@ -1,6 +1,7 @@
 package es.jbp.kajtools.ui;
 
 import es.jbp.expressions.ExpressionException;
+import es.jbp.kajtools.i18n.I18nService;
 import es.jbp.kajtools.ui.InfoDocument.Type;
 import es.jbp.kajtools.ui.interfaces.DialogueablePanel;
 import es.jbp.kajtools.ui.interfaces.InfoReportablePanel;
@@ -8,6 +9,7 @@ import es.jbp.kajtools.ui.interfaces.SearchablePanel;
 import es.jbp.kajtools.util.JsonUtils;
 import es.jbp.kajtools.util.TemplateExecutor;
 import java.awt.Component;
+import java.awt.Panel;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -43,9 +45,11 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
   private final Map<String, InfoDocument> linksMap = new HashMap<>();
 
   protected ComponentFactory componentFactory;
+  protected final I18nService i18nService;
 
-  public BasePanel(ComponentFactory componentFactory) {
+  protected BasePanel(ComponentFactory componentFactory, I18nService i18nService) {
     this.componentFactory = componentFactory;
+    this.i18nService = i18nService;
   }
 
   protected abstract Component getContentPane();
@@ -229,51 +233,67 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
   }
 
   protected void showLinkContent(String key) {
-    InfoDocument infoDocument = linksMap.get(key);
+    showInfoDocument(linksMap.get(key), false, null);
+  }
+
+  protected void showInfoDocument(InfoDocument infoDocument, boolean modal, Component parent) {
     if (infoDocument == null) {
       return;
     }
     String title = infoDocument.getTitle();
     switch (Optional.ofNullable(infoDocument.getType()).orElse(Type.INFO)) {
       case DIFF:
-        DiffPanel diffPanel = new DiffPanel();
+        var diffPanel = new DiffPanel();
         diffPanel.setDocument(infoDocument);
-        showInNonModalDialog(diffPanel, title);
+        showDialog(diffPanel, title, modal, parent);
         break;
       case JSON:
-        RSyntaxPanel syntaxPanel = new RSyntaxPanel(componentFactory);
-        syntaxPanel.setContent(JsonUtils.formatJson(infoDocument.plainText()), SyntaxConstants.SYNTAX_STYLE_JSON);
-        showInNonModalDialog(syntaxPanel, title);
+        var jsonPanel = new RSyntaxPanel(componentFactory);
+        jsonPanel.setContent(JsonUtils.formatJson(infoDocument.plainText()), SyntaxConstants.SYNTAX_STYLE_JSON);
+        showDialog(jsonPanel, title, modal, parent);
+        break;
+      case PROPERTIES:
+        var propertiesPanel = new RSyntaxPanel(componentFactory);
+        propertiesPanel.setContent(infoDocument.plainText(), SyntaxConstants.SYNTAX_STYLE_PROPERTIES_FILE);
+        showDialog(propertiesPanel, title, modal, parent);
         break;
       default:
-        InfoPanel infoPanel = new InfoPanel();
+        var infoPanel = new InfoPanel();
         infoPanel.setDocument(infoDocument);
-        showInNonModalDialog(infoPanel, title);
+        showDialog(infoPanel, title, modal, parent);
     }
   }
 
-  protected void showInModalDialog(DialogueablePanel dialogueable, String title) {
+  private void showDialog(DialogueablePanel dialogueable, String title, boolean modal, Component parent) {
+    if (modal) {
+      showInModalDialog(dialogueable, title, parent);
+    } else {
+      showInNonModalDialog(dialogueable, title, parent);
+    }
+  }
+
+  protected void showInModalDialog(DialogueablePanel dialogueable, String title, Component parent) {
     JPanel panel = dialogueable.getMainPanel();
     panel.setBounds(0, 0, 400, 450);
     JDialog dialog = new JDialog();
     dialog.setTitle(title);
     dialog.setSize(800, 450);
     dialog.setResizable(true);
-    dialog.setLocationRelativeTo(getContentPane());
+    dialog.setLocationRelativeTo(Optional.ofNullable(parent).orElse(getContentPane()));
     dialog.setContentPane(panel);
     dialogueable.bindDialog(dialog);
     dialog.setModal(true);
     dialog.setVisible(true);
   }
 
-  protected void showInNonModalDialog(DialogueablePanel dialogueable, String title) {
+  protected void showInNonModalDialog(DialogueablePanel dialogueable, String title, Component parent) {
     JPanel panel = dialogueable.getMainPanel();
     panel.setBounds(0, 0, 400, 450);
     JFrame dialog = new JFrame();
     dialog.setTitle(title);
     dialog.setSize(800, 450);
     dialog.setResizable(true);
-    dialog.setLocationRelativeTo(getContentPane());
+    dialog.setLocationRelativeTo(Optional.ofNullable(parent).orElse(getContentPane()));
     dialog.setContentPane(panel);
     dialogueable.bindDialog(dialog);
     dialog.setVisible(true);

@@ -1,18 +1,13 @@
 package es.jbp.kajtools;
 
 import javax.swing.JFrame;
-import javax.swing.LookAndFeel;
-import javax.swing.UIManager;
 
 public class KajToolsApp {
 
   private final JFrame mainFrame;
-  private LookAndFeel lookAndField;
 
-  public KajToolsApp(JFrame mainFrame,
-      LookAndFeel lookAndField) {
+  public KajToolsApp(JFrame mainFrame) {
     this.mainFrame = mainFrame;
-    this.lookAndField = lookAndField;
   }
 
   public void showWindow(String title) {
