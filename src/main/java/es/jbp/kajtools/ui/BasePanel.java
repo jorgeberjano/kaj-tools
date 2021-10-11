@@ -72,7 +72,7 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
 
   protected abstract void enableButtons(boolean enable);
 
-  protected void enqueueException(Exception ex) {
+  protected void enqueueException(Throwable ex) {
     SwingUtilities.invokeLater(() -> {
       printException(ex);
     });
@@ -106,18 +106,22 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
     }
   }
 
-  protected void printException(Exception ex) {
+  protected void printException(Throwable ex) {
     printError(ex.getMessage());
 
     if (ex.getCause() != null) {
-      printLink(InfoDocument.simpleDocument("exception", Type.INFO, ex.getCause().toString()));
+      printLink(InfoDocument.simpleDocument("exception", Type.INFO, extractCause(ex)));
     }
-//      String text = ex.getCause().getMessage();
-//      if (ex.getCause().getCause() != null) {
-//        text = "\nCAUSA:\n" + ex.getCause().getCause().getMessage();
-//      }
-//      printLink(InfoDocument.simpleDocument("exception", Type.INFO, text));
-//    }
+  }
+
+  private String extractCause(Throwable ex) {
+    StringBuilder result = new StringBuilder();
+    Throwable cause = ex.getCause();
+    for (int i = 0; cause != null && i < 10; i ++) {
+      result.append(cause.getClass() + ": " + cause.getMessage() + "\n");
+      cause = cause.getCause();
+    }
+    return result.toString();
   }
 
   protected void copyToClipboard(String json) {

@@ -1,4 +1,4 @@
-package es.jbp.kajtools.util;
+package es.jbp.kajtools.schemaregistry;
 
 import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.KajException;
@@ -17,16 +17,11 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException.NotFound;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-@Service
-public class SchemaRegistryService {
-
-  public enum SubjectType {
-    key, value
-  }
+//@Service
+public class OldSchemaRegistryService implements ISchemaRegistryService {
 
   private static final Object SUBJECT_PATH = "/subjects/";
 
@@ -127,11 +122,6 @@ public class SchemaRegistryService {
 
   private RestTemplate createRestTemplate(Environment environment) {
     RestTemplate restTemplate = new RestTemplate();
-//        if (!Objects.isNull(environment.getUserSchemaRegistry())) {
-//            restTemplate.getInterceptors().add(
-//                new BasicAuthenticationInterceptor(environment.getUserSchemaRegistry(),
-//                    environment.getPasswordSchemaRegistry()));
-//        }
     return restTemplate;
   }
 

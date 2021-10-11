@@ -11,7 +11,7 @@ import es.jbp.kajtools.IMessageClient;
 import es.jbp.kajtools.i18n.I18nService;
 import es.jbp.kajtools.kafka.KafkaAdminService;
 import es.jbp.kajtools.util.JsonUtils;
-import es.jbp.kajtools.util.SchemaRegistryService;
+import es.jbp.kajtools.schemaregistry.SchemaRegistryService;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -227,15 +227,12 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   }
 
   private List<String> requestVersions(Environment environment, String schemaSubject) {
-//    SchemaRegistryService schemaRegistryService = KajToolsApp.getInstance().getSchemaRegistryService();
 
     List<String> versionList;
     try {
-      versionList = schemaRegistryService
-          .getSubjectSchemaVersions(schemaSubject, environment);
-    } catch (Throwable ex) {
-      enqueueError("No se han podido obtener las versiones de los esquemas de " + schemaSubject);
-      enqueueInfoMessage("[" + ex.getClass().getName() + "] " + ex.getMessage());
+      versionList = schemaRegistryService.getSubjectSchemaVersions(schemaSubject, environment);
+    } catch (KajException ex) {
+      enqueueException(ex);
       return Collections.emptyList();
     }
     int n = versionList.size();
@@ -254,7 +251,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
       updateVersionList();
     } catch (Throwable ex) {
       printError("Error al recibir las versiones");
-      printTrace("[" + ex.getClass().getName() + "] " + ex.getMessage());
+      enqueueException(ex);
     }
 
     if (versions != null && !versions.isEmpty()) {
@@ -419,9 +416,12 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   }
 
   private Void writeSchema(Environment environment, String schemaSubject, String jsonSchema) {
-    schemaRegistryService.writeSubjectSchema(schemaSubject, environment, jsonSchema);
-
-    enqueueSuccessful("Se ha escrito correctamente la nueva versión ");
+    try {
+      schemaRegistryService.writeSubjectSchema(schemaSubject, environment, jsonSchema);
+      enqueueSuccessful("Se ha escrito correctamente la nueva versión ");
+    } catch (KajException e) {
+      enqueueException(e);
+    }
     return null;
   }
 

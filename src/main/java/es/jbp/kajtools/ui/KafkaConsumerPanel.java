@@ -18,7 +18,7 @@ import es.jbp.kajtools.kafka.RewindPolicy;
 import es.jbp.kajtools.kafka.TopicItem;
 import es.jbp.kajtools.ui.InfoDocument.Type;
 import es.jbp.kajtools.util.JsonUtils;
-import es.jbp.kajtools.util.SchemaRegistryService;
+import es.jbp.kajtools.schemaregistry.SchemaRegistryService;
 import es.jbp.tabla.ColoreadorFila;
 import es.jbp.tabla.ModeloTablaGenerico;
 import es.jbp.tabla.TablaGenerica;

@@ -11,10 +11,11 @@ import es.jbp.kajtools.i18n.I18nService;
 import es.jbp.kajtools.kafka.GenericClient;
 import es.jbp.kajtools.kafka.KafkaAdminService;
 import es.jbp.kajtools.kafka.TopicItem;
+import es.jbp.kajtools.schemaregistry.ISchemaRegistryService;
+import es.jbp.kajtools.schemaregistry.SchemaRegistryService;
 import es.jbp.kajtools.ui.InfoDocument.Type;
 import es.jbp.kajtools.util.ResourceUtil;
-import es.jbp.kajtools.util.SchemaRegistryService;
-import es.jbp.kajtools.util.SchemaRegistryService.SubjectType;
+import es.jbp.kajtools.schemaregistry.ISchemaRegistryService.SubjectType;
 import es.jbp.kajtools.util.TemplateExecutor;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -56,7 +57,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
 
   private static final int MAXIMUM_QUANTITY = 10;
 
-  private final SchemaRegistryService schemaRegistryService;
+  private final ISchemaRegistryService schemaRegistryService;
 
   private String currentDirectory;
   private final Map<String, SchemaCheckStatus> checkedSchemaTopics = new HashMap<>();
@@ -102,7 +103,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   private String globalHeaders;
 
   public KafkaProducerPanel(List<IMessageClient> clientList,
-      SchemaRegistryService schemaRegistryService,
+      ISchemaRegistryService schemaRegistryService,
       KafkaAdminService kafkaAdmin,
       ComponentFactory componentFactory,
       I18nService i18nService) {

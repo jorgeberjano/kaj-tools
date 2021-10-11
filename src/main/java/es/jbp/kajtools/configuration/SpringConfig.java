@@ -9,7 +9,7 @@ import es.jbp.kajtools.kafka.KafkaAdminService;
 import es.jbp.kajtools.ui.ComponentFactory;
 import es.jbp.kajtools.ui.KafkaProducerPanel;
 import es.jbp.kajtools.ui.MainForm;
-import es.jbp.kajtools.util.SchemaRegistryService;
+import es.jbp.kajtools.schemaregistry.SchemaRegistryService;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;

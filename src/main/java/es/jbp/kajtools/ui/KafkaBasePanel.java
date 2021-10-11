@@ -6,8 +6,9 @@ import es.jbp.kajtools.KajException;
 import es.jbp.kajtools.i18n.I18nService;
 import es.jbp.kajtools.kafka.KafkaAdminService;
 import es.jbp.kajtools.kafka.TopicItem;
+import es.jbp.kajtools.schemaregistry.ISchemaRegistryService;
 import es.jbp.kajtools.ui.InfoDocument.Type;
-import es.jbp.kajtools.util.SchemaRegistryService;
+import es.jbp.kajtools.schemaregistry.SchemaRegistryService;
 import es.jbp.tabla.ModeloTablaGenerico;
 import java.awt.Component;
 import java.awt.Point;
@@ -28,7 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 public abstract class KafkaBasePanel extends BasePanel {
 
   protected final List<IMessageClient> clientList;
-  protected final SchemaRegistryService schemaRegistryService;
+  protected final ISchemaRegistryService schemaRegistryService;
   protected final KafkaAdminService kafkaAdminService;
 
   protected final ImageIcon iconCheckOk = new ImageIcon(getClass().getResource("/images/check_green.png"));
@@ -39,7 +40,7 @@ public abstract class KafkaBasePanel extends BasePanel {
   protected List<TopicItem> topics;
 
   protected KafkaBasePanel(List<IMessageClient> clientList,
-      SchemaRegistryService schemaRegistryService,
+      ISchemaRegistryService schemaRegistryService,
       KafkaAdminService kafkaAdminService,
       ComponentFactory componentFactory,
       I18nService i18nService) {

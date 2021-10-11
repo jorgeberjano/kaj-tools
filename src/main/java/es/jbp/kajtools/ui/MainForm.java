@@ -5,7 +5,7 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 import es.jbp.kajtools.IMessageClient;
 import es.jbp.kajtools.i18n.I18nService;
 import es.jbp.kajtools.kafka.KafkaAdminService;
-import es.jbp.kajtools.util.SchemaRegistryService;
+import es.jbp.kajtools.schemaregistry.SchemaRegistryService;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.lang.reflect.Method;

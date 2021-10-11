@@ -4,7 +4,7 @@ import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.IMessageClient;
 import es.jbp.kajtools.KajException;
 import es.jbp.kajtools.util.JsonGenericRecordReader;
-import es.jbp.kajtools.util.SchemaRegistryService;
+import es.jbp.kajtools.schemaregistry.SchemaRegistryService;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
