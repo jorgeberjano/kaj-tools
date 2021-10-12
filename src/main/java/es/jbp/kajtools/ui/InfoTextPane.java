@@ -1,40 +1,33 @@
 package es.jbp.kajtools.ui;
 
-import es.jbp.kajtools.ui.InfoMessage.Type;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.io.InputStream;
 import java.util.Collection;
-import java.util.List;
-import javax.swing.JEditorPane;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
-import javax.swing.plaf.ComponentUI;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
-import javax.swing.text.html.HTMLDocument;
-import javax.swing.text.html.HTMLEditorKit;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class InfoTextPane extends JTextPane {
 
-  private static Font font;
+  private static Font monospaceFont;
+  private static final int FONT_SIZE = 14;
 
   static {
     try {
       InputStream is = BasePanel.class.getResourceAsStream("/fonts/JetBrainsMono-SemiBold.ttf");
       if (is != null) {
-        font = Font.createFont(Font.TRUETYPE_FONT, is);
+        monospaceFont = Font.createFont(Font.TRUETYPE_FONT, is);
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        ge.registerFont(font);
+        ge.registerFont(monospaceFont);
       }
     } catch (Exception ex) {
-      System.err.println(ex);
+      ex.printStackTrace();
     }
   }
 
@@ -60,26 +53,27 @@ public class InfoTextPane extends JTextPane {
 
   public void printInfoMessage(InfoMessage infoMessage) {
 
-    SimpleAttributeSet attr = new SimpleAttributeSet();
-    final Type type = infoMessage.getType();
+    var attr = new SimpleAttributeSet();
+    var type = infoMessage.getType();
 
     StyleConstants.setAlignment(attr, StyleConstants.ALIGN_LEFT);
     StyleConstants.setForeground(attr, type == null ? Color.white : type.color);
     StyleConstants.setBackground(attr, type == null ? Color.black : type.backgroundColor);
 
-    StyleConstants.setFontFamily(attr, font.getFamily());
-    StyleConstants.setFontSize(attr, 14);
+    StyleConstants.setFontFamily(attr, monospaceFont.getFamily());
+    StyleConstants.setFontSize(attr, FONT_SIZE);
     StyleConstants.setBold(attr, false);
 
     printString(infoMessage.getMensaje(), attr);
   }
 
   public void printString(String text, AttributeSet attr) {
-    StyledDocument doc = getStyledDocument();
+    var doc = getStyledDocument();
     try {
       doc.insertString(doc.getLength(), text, attr);
+      setCaretPosition(doc.getLength());
     } catch (BadLocationException ex) {
-      System.err.println("No se pudo insertar el texto en la consola de información");
+      ex.printStackTrace();
     }
   }
 }
