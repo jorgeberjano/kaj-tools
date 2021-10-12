@@ -16,22 +16,22 @@ import org.springframework.stereotype.Component;
 @Component
 public class ComponentFactory {
 
-  private Theme theme;
+  private final Theme theme;
 
   public ComponentFactory(Theme theme) {
     this.theme = theme;
   }
 
   public RSyntaxTextArea createSyntaxEditor() {
-    final RSyntaxTextArea jsonEditor = new RSyntaxTextArea();
+    final var jsonEditor = new RSyntaxTextArea();
     jsonEditor.setCodeFoldingEnabled(true);
     jsonEditor.setAlignmentX(0.0F);
-    Font font = new Font("Courier New", Font.PLAIN, 12);
+    var font = new Font("Courier New", Font.PLAIN, 12);
     jsonEditor.setFont(font);
     if (theme != null) {
       theme.apply(jsonEditor);
     } else {
-      SyntaxScheme scheme = jsonEditor.getSyntaxScheme();
+      var scheme = jsonEditor.getSyntaxScheme();
       scheme.getStyle(SEPARATOR).foreground = Color.black;
       scheme.getStyle(VARIABLE).foreground = Color.blue;
       scheme.getStyle(LITERAL_STRING_DOUBLE_QUOTE).foreground = Color.green.darker();
@@ -41,7 +41,7 @@ public class ComponentFactory {
   }
 
   public RTextScrollPane createEditorScroll(RSyntaxTextArea syntaxTextArea) {
-    RTextScrollPane scrollPane = new RTextScrollPane(syntaxTextArea);
+    var scrollPane = new RTextScrollPane(syntaxTextArea);
     scrollPane.setFoldIndicatorEnabled(true);
     scrollPane.setIconRowHeaderEnabled(true);
     scrollPane.setLineNumbersEnabled(true);

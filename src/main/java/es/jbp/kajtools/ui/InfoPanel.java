@@ -50,7 +50,7 @@ public class InfoPanel implements DialogueablePanel, InfoReportablePanel {
     mainPanel.setLayout(new BorderLayout(0, 0));
     final JScrollPane scrollPane1 = new JScrollPane();
     mainPanel.add(scrollPane1, BorderLayout.CENTER);
-    infoTextPane.setBackground(new Color(-16777216));
+    infoTextPane.setBackground(new Color(-13948117));
     infoTextPane.setCaretColor(new Color(-1));
     infoTextPane.setEditable(false);
     Font infoTextPaneFont = this.$$$getFont$$$("Consolas", -1, 12, infoTextPane.getFont());

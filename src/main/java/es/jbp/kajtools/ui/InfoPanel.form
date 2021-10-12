@@ -15,7 +15,7 @@
           <component id="8107c" class="javax.swing.JTextPane" binding="infoTextPane" custom-create="true">
             <constraints/>
             <properties>
-              <background color="-16777216"/>
+              <background color="-13948117"/>
               <caretColor color="-1"/>
               <editable value="false"/>
               <font name="Consolas" size="12"/>

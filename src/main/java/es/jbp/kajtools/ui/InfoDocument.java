@@ -1,5 +1,6 @@
 package es.jbp.kajtools.ui;
 
+import es.jbp.kajtools.ui.InfoMessage.Type;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.Builder;
@@ -37,7 +38,7 @@ public class InfoDocument {
     return InfoDocument.builder()
         .type(type)
         .title(title)
-        .left(InfoMessage.builder().mensaje(text).build()
+        .left(InfoMessage.builder().mensaje(text).type(InfoMessage.Type.TRACE).build()
     ).build();
   }
 
