@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.annotation.PostConstruct;
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
@@ -53,6 +54,8 @@ public class SchemaRegistryService implements ISchemaRegistryService {
     try {
       sslContext = SSLContext.getInstance("SSL");
       sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+
+      HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
     } catch (Exception e) {
     }
   }
