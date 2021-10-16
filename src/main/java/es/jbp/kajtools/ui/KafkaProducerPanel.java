@@ -23,6 +23,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
 import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +32,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.stream.IntStream;
 import javax.swing.AbstractButton;
@@ -301,7 +304,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     String key = keyEditor.getText();
     String event = valueEditor.getText();
     String headers = headersEditor.getText();
-    templateExecutor.setVariables(variablesEditor.getText());
+    templateExecutor.setVariables(createVariableMap(variablesEditor.getText()));
 
     int quantity = Optional.ofNullable(quantityComboBox.getSelectedItem())
         .map(Object::toString)
@@ -404,7 +407,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
 
     String jsonKey = keyEditor.getText();
     String jsonValue = valueEditor.getText();
-    templateExecutor.setVariables(variablesEditor.getText());
+    templateExecutor.setVariables(createVariableMap(variablesEditor.getText()));
 
     executeAsyncTask(() -> checkSchema(producer, topic, jsonKey, jsonValue, getEnvironment()));
   }

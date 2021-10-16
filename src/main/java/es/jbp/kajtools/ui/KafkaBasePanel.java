@@ -12,10 +12,15 @@ import es.jbp.kajtools.schemaregistry.SchemaRegistryService;
 import es.jbp.tabla.ModeloTablaGenerico;
 import java.awt.Component;
 import java.awt.Point;
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.stream.Collectors;
 import javax.swing.ImageIcon;
 import javax.swing.JMenuItem;
@@ -164,6 +169,19 @@ public abstract class KafkaBasePanel extends BasePanel {
     } catch (KajException ex) {
       printException(ex);
     }
+  }
+
+  public Map<String, String> createVariableMap(String text) {
+    Properties properties = new Properties();
+    try {
+      properties.load(new StringReader(text));
+    } catch (IOException e) {
+      printError("No se han podido cargar las variables");
+      printException(e);
+    }
+    Map<String, String> variables = new HashMap<>();
+    properties.forEach((k, v) -> variables.put(Objects.toString(k), Objects.toString(v)));
+    return variables;
   }
 
 }

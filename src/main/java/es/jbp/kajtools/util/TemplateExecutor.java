@@ -37,15 +37,7 @@ public class TemplateExecutor {
         .contains("$F{") || json.contains("$B{");
   }
 
-  public void setVariables(String variablesProperties) {
-    Properties properties = new Properties();
-    try {
-      properties.load(new StringReader(variablesProperties));
-    } catch (IOException e) {
-      System.err.println("No se han cargado las variables: " + e.getMessage());
-    }
-    Map<String, String> variables = new HashMap<>();
-    properties.forEach((k, v) -> variables.put(Objects.toString(k), Objects.toString(v)));
+  public void setVariables(Map<String, String> variables) {
     textTemplate.setVariableValues(variables);
   }
 
