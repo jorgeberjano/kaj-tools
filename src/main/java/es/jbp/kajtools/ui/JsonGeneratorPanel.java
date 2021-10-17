@@ -478,9 +478,6 @@ public class JsonGeneratorPanel extends BasePanel implements InfoReportablePanel
     return (InfoTextPane) infoTextPane;
   }
 
-  @Override
-  protected void enableButtons(boolean enable) {
-  }
 
   protected Environment getEnvironment() {
     return null;

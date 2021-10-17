@@ -34,6 +34,7 @@ public class MainForm {
   private JPanel panelJson;
   private JPanel panelSchema;
   private JPanel panelConsumer;
+  private JPanel panelScript;
 
   public MainForm(ComponentFactory componentFactory,
       SchemaRegistryService schemaRegistryService,
@@ -94,6 +95,10 @@ public class MainForm {
     panelJson.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0),
         this.$$$getMessageFromBundle$$$("messages", "json.title"), TitledBorder.DEFAULT_JUSTIFICATION,
         TitledBorder.DEFAULT_POSITION, null, null));
+    tabbedPane.addTab("Script", new ImageIcon(getClass().getResource("/images/script.png")), panelScript);
+    panelScript.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(),
+        this.$$$getMessageFromBundle$$$("messages", "producer.title"), TitledBorder.DEFAULT_JUSTIFICATION,
+        TitledBorder.DEFAULT_POSITION, null, null));
   }
 
   private static Method $$$cachedGetBundleMethod$$$ = null;
@@ -131,5 +136,8 @@ public class MainForm {
         new SchemaRegistryPanel(clientList, schemaRegistryService, kafkaAdmin, componentFactory, i18nService)
             .getContentPane();
     panelJson = new JsonGeneratorPanel(componentFactory, i18nService).getContentPane();
+
+    panelScript = new ScriptPanel(clientList, schemaRegistryService, kafkaAdmin, componentFactory, i18nService)
+        .getContentPane();
   }
 }

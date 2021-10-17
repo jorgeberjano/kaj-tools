@@ -32,16 +32,16 @@ public class ExpressionCompiler {
 
   private SymbolFactory symbolFactory;
 
-  public ExpressionCompiler() {
-  }
+//  public ExpressionCompiler() {
+//  }
 
   public ExpressionCompiler(SymbolFactory symbolFactory) {
     this.symbolFactory = symbolFactory;
   }
 
-  public void setSymbolFactory(SymbolFactory symbolFactory) {
-    this.symbolFactory = symbolFactory;
-  }
+//  public void setSymbolFactory(SymbolFactory symbolFactory) {
+//    this.symbolFactory = symbolFactory;
+//  }
 
   /**
    * Realiza el análisis lexico y sintáctico de una expresión
@@ -55,7 +55,7 @@ public class ExpressionCompiler {
   }
 
   private void error(String message, String tokens, int position) throws ExpressionException {
-    throw new es.jbp.expressions.ExpressionException(message + " (" + position + "): " + tokens);
+    throw new es.jbp.expressions.ExpressionException(message + " (" + position + "): " + tokens, null);
   }
 
   /*
@@ -298,7 +298,7 @@ public class ExpressionCompiler {
 
     Variable variable = null;
     if (symbolFactory != null) {
-      variable = symbolFactory.createVariable(token.text);
+      variable = symbolFactory.getVariable(token.text);
     }
     if (variable == null) {
       error(VARIABLE_NOT_FOUND, token.text, token.position);
@@ -381,7 +381,7 @@ public class ExpressionCompiler {
   private Function createOperator(String functionName) {
 
     if (symbolFactory != null) {
-      Function operator = symbolFactory.createOperator(functionName);
+      Function operator = symbolFactory.getOperator(functionName);
       if (operator != null) {
         return operator;
       }
@@ -397,7 +397,7 @@ public class ExpressionCompiler {
 
     Function function = null;
     if (symbolFactory != null) {
-      function = symbolFactory.createFunction(functionName);
+      function = symbolFactory.getFunction(functionName);
     }
     return function;
   }

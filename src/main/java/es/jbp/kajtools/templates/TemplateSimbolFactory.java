@@ -1,13 +1,14 @@
 package es.jbp.kajtools.templates;
 
-import es.jbp.expressions.FinalVariable;
+import es.jbp.expressions.VariableWithValue;
 import es.jbp.expressions.Function;
 import es.jbp.expressions.SymbolFactory;
+import es.jbp.expressions.Value;
 import es.jbp.expressions.Variable;
 import es.jbp.kajtools.templates.symbols.AnyFunction;
 import es.jbp.kajtools.templates.symbols.DateTimeFunction;
+import es.jbp.kajtools.templates.symbols.FileFunction;
 import es.jbp.kajtools.templates.symbols.FileLineFunction;
-import es.jbp.kajtools.templates.symbols.FragmentFunction;
 import es.jbp.kajtools.templates.symbols.GetFunction;
 import es.jbp.kajtools.templates.symbols.RandFunction;
 import es.jbp.kajtools.templates.symbols.SetFunction;
@@ -15,8 +16,8 @@ import es.jbp.kajtools.templates.symbols.StrFunction;
 import es.jbp.kajtools.templates.symbols.UuidFunction;
 import java.math.BigInteger;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import lombok.Setter;
 
 public class TemplateSimbolFactory implements SymbolFactory {
@@ -25,53 +26,80 @@ public class TemplateSimbolFactory implements SymbolFactory {
   private final Map<String, Variable> variables = new HashMap<>();
   private final Map<String, Function> functions = new HashMap<>();
 
-  public TemplateSimbolFactory(TextTemplate textTemplate) {
-    addVariable("true", new FinalVariable(true));
-    addVariable("false", new FinalVariable(false));
-    addVariable("username", new FinalVariable(System.getProperty("user.name")));
-    addFunction("uuid", new UuidFunction());
-    addFunction("str", new StrFunction());
-    addFunction("any", new AnyFunction());
-    addFunction("rand", new RandFunction());
-    addFunction("fileline", new FileLineFunction());
-    addFunction("fragment", new FragmentFunction(textTemplate));
-    addFunction("datetime", new DateTimeFunction());
-    addFunction("set", new SetFunction());
-    addFunction("get", new GetFunction());
+  public TemplateSimbolFactory() {
   }
 
-  private void addVariable(String name, Variable variable) {
+  public void declareSymbols(TextTemplate textTemplate) {
+    // TODO: aclarar cuales se usan
+    declareVariableValue("i", BigInteger.ZERO);
+    declareVariableValue("count", BigInteger.ZERO);
+    declareVariableValue("index", BigInteger.ZERO);
+    declareVariableValue("counter", BigInteger.ZERO);
+    declareVariable("true", new VariableWithValue(true));
+    declareVariable("false", new VariableWithValue(false));
+    declareVariable("username", new VariableWithValue(System.getProperty("user.name")));
+    declareFunction("uuid", new UuidFunction());
+    declareFunction("str", new StrFunction());
+    declareFunction("any", new AnyFunction());
+    declareFunction("rand", new RandFunction());
+    declareFunction("fileline", new FileLineFunction()); // TODO: hacer que use tambien el textTemplate
+    declareFunction("file", new FileFunction(textTemplate));
+    declareFunction("fragment", new FileFunction(textTemplate));
+    declareFunction("datetime", new DateTimeFunction());
+    declareFunction("set", new SetFunction());
+    declareFunction("get", new GetFunction());
+  }
+
+  public void declareVariable(String variableName) {
+    variables.put(variableName.toLowerCase(), new VariableWithValue("")); // TODO: revisar esto
+  }
+
+  private void declareVariable(String name, Variable variable) {
     variables.put(name, variable);
   }
 
-  private void addFunction(String name, Function function) {
+  private void declareFunction(String name, Function function) {
     functions.put(name, function);
   }
 
   @Override
-  public Variable createVariable(String nombre) {
-    return variables.getOrDefault(nombre.toLowerCase(), null);
+  public Variable getVariable(String name) {
+    return variables.getOrDefault(name.toLowerCase(), null);
   }
 
   @Override
-  public Function createFunction(String nombre) {
-    return functions.getOrDefault(nombre.toLowerCase(), null);
+  public Function getFunction(String name) {
+    return functions.getOrDefault(name.toLowerCase(), null);
   }
 
   @Override
-  public Function createOperator(String nombre) {
+  public Function getOperator(String name) {
     return null;
   }
 
-  public void setVariableValues(Map<String, String> variableValues) {
-    variableValues.forEach(this::setVariableValue);
+  public void declareVariables(Map<String, String> variableValueMap) {
+    variableValueMap.forEach(this::declareVariableValue);
   }
 
-  public void setVariableValue(String variableName, String value) {
-    variables.put(variableName.toLowerCase(), new FinalVariable(value));
+  public void declareVariableValue(String variableName, String value) {
+    variables.put(variableName.toLowerCase(), new VariableWithValue(value));
   }
 
-  public void setVariableValue(String variableName, BigInteger value) {
-    variables.put(variableName.toLowerCase(), new FinalVariable(value));
+  public void declareVariableValue(String variableName, BigInteger value) {
+    variables.put(variableName.toLowerCase(), new VariableWithValue(value));
+  }
+
+  public String getVariableValue(String variableName) {
+    return Optional.ofNullable(variables.get(variableName))
+        .map(Variable::getValue)
+        .map(Value::toString)
+        .orElse(null);
+  }
+
+  public void assignVariableValue(String variableName, String value) {
+    if (variables.containsKey(variableName)) {
+      variables.get(variableName).setValue(new Value(value));
+    }
+
   }
 }

@@ -1,4 +1,4 @@
-package es.jbp.kajtools.script;
+package es.jbp.kajtools.script.exception;
 
 public class ScriptExecutionException extends Exception {
 

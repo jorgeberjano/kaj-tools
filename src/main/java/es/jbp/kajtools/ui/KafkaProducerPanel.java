@@ -12,7 +12,6 @@ import es.jbp.kajtools.kafka.GenericClient;
 import es.jbp.kajtools.kafka.KafkaAdminService;
 import es.jbp.kajtools.kafka.TopicItem;
 import es.jbp.kajtools.schemaregistry.ISchemaRegistryService;
-import es.jbp.kajtools.schemaregistry.SchemaRegistryService;
 import es.jbp.kajtools.ui.InfoDocument.Type;
 import es.jbp.kajtools.util.ResourceUtil;
 import es.jbp.kajtools.schemaregistry.ISchemaRegistryService.SubjectType;
@@ -23,8 +22,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
 import java.io.File;
-import java.io.IOException;
-import java.io.StringReader;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +29,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.stream.IntStream;
 import javax.swing.AbstractButton;
@@ -41,7 +37,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -231,18 +226,6 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     }
   }
 
-  private File chooseAndReadFile() {
-    JFileChooser fileChooser = new JFileChooser();
-    fileChooser.setCurrentDirectory(new File(currentDirectory));
-    int result = fileChooser.showOpenDialog(contentPane);
-    if (result == JFileChooser.APPROVE_OPTION) {
-      File selectedFile = fileChooser.getSelectedFile();
-      currentDirectory = selectedFile.getPath();
-      return selectedFile;
-    }
-    return null;
-  }
-
   private void loadResourceForKey() {
     String path = Optional.ofNullable(comboKey.getSelectedItem()).map(Object::toString)
         .orElse("");
@@ -265,27 +248,6 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     loadTextFromResource(path, headersEditor);
   }
 
-  private void loadTextFromResource(String path, RSyntaxTextArea jsonEditor) {
-
-    if (StringUtils.isBlank(path)) {
-      return;
-    }
-    String json = ResourceUtil.readResourceString(path);
-    jsonEditor.setText(json);
-    jsonEditor.setCaretPosition(0);
-  }
-
-  private void loadTextFromFile(File file, RSyntaxTextArea jsonEditor) {
-    try {
-      String text = ResourceUtil.readFileString(file);
-      jsonEditor.setText(text);
-      jsonEditor.setCaretPosition(0);
-    } catch (Exception ex) {
-      printError("No se ha podido cargar el archivo.");
-      printException(ex);
-    }
-  }
-
   private void asyncSendEvent() {
     Environment environment = getEnvironment();
     IMessageClient producer = (IMessageClient) comboProducer.getSelectedItem();
@@ -304,12 +266,16 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     String key = keyEditor.getText();
     String event = valueEditor.getText();
     String headers = headersEditor.getText();
-    templateExecutor.setVariables(createVariableMap(variablesEditor.getText()));
+    templateExecutor.addVariables(createVariableMap(variablesEditor.getText()));
 
     int quantity = Optional.ofNullable(quantityComboBox.getSelectedItem())
         .map(Object::toString)
         .map(Integer::parseInt)
         .orElse(1);
+
+    buttonSend.setEnabled(false);
+    buttonCompareSchemas.setEnabled(false);
+
     executeAsyncTask(() -> sendMessage(environment, producer, topic, key, event, headers, quantity));
   }
 
@@ -407,7 +373,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
 
     String jsonKey = keyEditor.getText();
     String jsonValue = valueEditor.getText();
-    templateExecutor.setVariables(createVariableMap(variablesEditor.getText()));
+    templateExecutor.addVariables(createVariableMap(variablesEditor.getText()));
 
     executeAsyncTask(() -> checkSchema(producer, topic, jsonKey, jsonValue, getEnvironment()));
   }
@@ -504,9 +470,10 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   }
 
   @Override
-  protected void enableButtons(boolean enable) {
-    buttonSend.setEnabled(enable);
-    buttonCompareSchemas.setEnabled(enable);
+  protected void asyncTaskFinished() {
+    super.asyncTaskFinished();
+    buttonSend.setEnabled(true);
+    buttonCompareSchemas.setEnabled(true);
   }
 
   @Override

@@ -66,6 +66,14 @@
             </border>
             <children/>
           </grid>
+          <grid id="b6e35" binding="panelScript" custom-create="true" layout-manager="BorderLayout" hgap="0" vgap="40">
+            <constraints>
+              <tabbedpane title="Script" icon="images/script.png"/>
+            </constraints>
+            <properties/>
+            <border type="empty" title-resource-bundle="messages" title-key="producer.title"/>
+            <children/>
+          </grid>
         </children>
       </tabbedpane>
     </children>

@@ -6,11 +6,11 @@ import es.jbp.kajtools.templates.TextTemplate;
 import es.jbp.kajtools.util.ResourceUtil;
 import java.util.List;
 
-public class FragmentFunction extends AbstractFunction {
+public class FileFunction extends AbstractFunction {
 
   private final TextTemplate textTemplate;
 
-  public FragmentFunction(TextTemplate textTemplate) {
+  public FileFunction(TextTemplate textTemplate) {
     this.textTemplate = textTemplate;
   }
 

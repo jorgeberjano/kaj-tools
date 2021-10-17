@@ -22,22 +22,41 @@ public class TextTemplate {
     INSIDE_EXPRESSION
   }
 
-  private final TemplateSimbolFactory templateSimbolFactory = new TemplateSimbolFactory(this);
+  private final TemplateSimbolFactory templateSimbolFactory;
 
-  public void setVariableValues(Map<String, String> variableValues) {
-    templateSimbolFactory.setVariableValues(variableValues);
+  private final ExpressionCompiler compilador;
+
+  public TextTemplate() {
+    this(new TemplateSimbolFactory());
   }
 
-  public void setVariableValue(String variableName, String value) {
-    templateSimbolFactory.setVariableValue(variableName, value);
+  public TextTemplate(TemplateSimbolFactory templateSimbolFactory) {
+    this.templateSimbolFactory = templateSimbolFactory;
+    compilador = new ExpressionCompiler(templateSimbolFactory);
   }
 
-  public void setVariableValue(String variableName, BigInteger value) {
-    templateSimbolFactory.setVariableValue(variableName, value);
+  public String getVariableValue(String variableName) {
+    return templateSimbolFactory.getVariableValue(variableName);
+  }
+
+  public void declareVariableValues(Map<String, String> variableValues) {
+    templateSimbolFactory.declareVariables(variableValues);
+  }
+
+  public void declareVariableValue(String variableName, String value) {
+    templateSimbolFactory.declareVariableValue(variableName, value);
+  }
+
+  public void declareVariableValue(String variableName, BigInteger value) {
+    templateSimbolFactory.declareVariableValue(variableName, value);
+  }
+
+  public void assignVariableValue(String variableName, String value) {
+    templateSimbolFactory.assignVariableValue(variableName, value);
   }
 
   public String process(String text) throws ExpressionException {
-    return processWithExpressionSubstitution(text, this::evaluateExpression);
+    return processWithExpressionSubstitution(text, this::processExpression);
   }
 
   public String encodeBeforeFormatting(String text) throws ExpressionException {
@@ -54,7 +73,7 @@ public class TextTemplate {
         builder.append(text);
         break;
       }
-      builder.append(text.substring(0, beginIndex));
+      builder.append(text, 0, beginIndex);
       text = text.substring(beginIndex);
 
       int endIndex = text.indexOf(END_ENCODED_EXPRESSION);
@@ -120,8 +139,7 @@ public class TextTemplate {
     return stringBuilder.toString();
   }
 
-  private String evaluateExpression(String text) throws ExpressionException {
-    final ExpressionCompiler compilador = new ExpressionCompiler(templateSimbolFactory);
+  private String processExpression(String text) throws ExpressionException {
 
     char ch = text.charAt(1);
 
@@ -139,6 +157,15 @@ public class TextTemplate {
     int beginIndex = text.indexOf('{');
     int endIndex = text.lastIndexOf('}');
     String expression = text.substring(beginIndex + 1, endIndex);
+    return evaluateExpression(expression, valueType, raw);
+  }
+
+  public String evaluateExpression(String expression) throws ExpressionException {
+    return evaluateExpression(expression, null, true);
+  }
+
+  private String evaluateExpression(String expression, ValueType valueType, boolean raw) throws ExpressionException {
+
     ExpressionNode expressionNode = compilador.compile(expression);
     Value value = null;
     if (expressionNode != null) {

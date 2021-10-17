@@ -22,20 +22,23 @@ public class ExpressionsTest {
 
     @BeforeClass
     public static void setUpClass() {
-        compiler = new ExpressionCompiler();
-        compiler.setSymbolFactory(new SymbolFactory() {
+        SymbolFactory symbolFactory = new SymbolFactory() {
             @Override
-            public Variable createVariable(String nombre) {
+            public Variable getVariable(String nombre) {
                 return new Variable() {
                     @Override
-                    public Value getValor() {
+                    public Value getValue() {
                         return new Value(BigInteger.valueOf(nombre.length()));
+                    }
+
+                    @Override
+                    public void setValue(Value value) {
                     }
                 };
             }
 
             @Override
-            public Function createFunction(String nombre) {
+            public Function getFunction(String nombre) {
                 return new Function() {
                     @Override
                     public Value evaluate(List<Value> parameterList) {
@@ -55,10 +58,11 @@ public class ExpressionsTest {
             }
 
             @Override
-            public Function createOperator(String nombre) {
+            public Function getOperator(String nombre) {
                 return null;
             }
-        });
+        };
+        compiler = new ExpressionCompiler(symbolFactory);
     }
 
     @AfterClass
@@ -94,9 +98,9 @@ public class ExpressionsTest {
         evaluar(" func(func(1), func(\"2\"), func(0.0)) ", BigInteger.valueOf(3));
     }
 
-    private void evaluar(Object expresion, Object resultadoEsperado) throws ExpressionException {
+    private void evaluar(Object expression, Object resultadoEsperado) throws ExpressionException {
 
-        ExpressionNode nodo = compiler.compile(expresion.toString());
+        ExpressionNode nodo = compiler.compile(expression.toString());
 
         Value resultado = nodo.evaluate();
         Assert.assertEquals(resultadoEsperado, resultado.getObject());

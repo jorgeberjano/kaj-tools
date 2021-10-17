@@ -5,5 +5,6 @@ package es.jbp.expressions;
  * @author Jorge Berjano
  */
 public interface Variable {    
-    Value getValor();
+    Value getValue();
+    void setValue(Value value);
 }

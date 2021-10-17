@@ -2,21 +2,23 @@ package es.jbp.kajtools.script;
 
 import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.kafka.GenericClient;
-import es.jbp.kajtools.templates.TextTemplate;
-import java.util.Map;
-import lombok.AllArgsConstructor;
+import es.jbp.kajtools.util.TemplateExecutor;
+import lombok.Builder;
 import lombok.Data;
 
 @Data
-@AllArgsConstructor
+@Builder
 public class ExecutionContext {
-  private Map<String, String> variables;
+
   private GenericClient kafkaGenericClient;
   private Environment environment;
-  private TextTemplate textTemplate;
+  private TemplateExecutor templateExecutor;
 
   public void assignVariableValue(String variableName, String value) {
-    variables.put(variableName, value);
-    textTemplate.setVariableValues(variables);
+    templateExecutor.assignVariableValue(variableName, value);
+  }
+
+  public String getVariableValue(String variableName) {
+    return templateExecutor.getVariableValue(variableName);
   }
 }

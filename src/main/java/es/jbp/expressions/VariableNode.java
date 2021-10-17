@@ -16,7 +16,7 @@ public class VariableNode implements ExpressionNode {
      * Devuelve el valor de la variable
      */
     public Value evaluate() {
-        return variable.getValor();
+        return variable.getValue();
     }
 
     /*!

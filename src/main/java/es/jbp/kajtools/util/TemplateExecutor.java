@@ -1,16 +1,16 @@
 package es.jbp.kajtools.util;
 
 import es.jbp.expressions.ExpressionException;
+import es.jbp.kajtools.templates.TemplateSimbolFactory;
 import es.jbp.kajtools.templates.TextTemplate;
-import java.io.IOException;
-import java.io.StringReader;
 import java.math.BigInteger;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
 import lombok.Getter;
 
+/**
+ * Se encarga de sustituir simbolos ${...} de un template por el resultado de evaluar la expresión que contiene.
+ * Tambien pewrmite el formateo de JSON templates.
+ */
 public class TemplateExecutor {
 
   public static final String I_VARIABLE_NAME = "i";
@@ -21,10 +21,13 @@ public class TemplateExecutor {
   @Getter
   private TextTemplate textTemplate;
 
+  public TemplateExecutor(TemplateSimbolFactory templateSimbolFactory) {
+    textTemplate = new TextTemplate(templateSimbolFactory);
+    templateSimbolFactory.declareSymbols(textTemplate);
+  }
+
   public TemplateExecutor() {
     textTemplate = new TextTemplate();
-    textTemplate.setVariableValue(I_VARIABLE_NAME, BigInteger.ZERO);
-    textTemplate.setVariableValue(COUNTER_VARIABLE_NAME, BigInteger.ZERO);
   }
 
   public String processTemplate(String template) throws ExpressionException {
@@ -37,8 +40,16 @@ public class TemplateExecutor {
         .contains("$F{") || json.contains("$B{");
   }
 
-  public void setVariables(Map<String, String> variables) {
-    textTemplate.setVariableValues(variables);
+  public void addVariables(Map<String, String> variables) {
+    textTemplate.declareVariableValues(variables);
+  }
+
+  public void declareVariableValue(String variable, String value) {
+    textTemplate.declareVariableValue(variable, value);
+  }
+
+  public void declareVariableValue(String variable, BigInteger value) {
+    textTemplate.declareVariableValue(variable, value);
   }
 
   public String formatJson(String text) throws ExpressionException {
@@ -51,11 +62,23 @@ public class TemplateExecutor {
 
   public void resetIndexCounter() {
     i = 0;
-    textTemplate.setVariableValue(I_VARIABLE_NAME, "0");
+    textTemplate.declareVariableValue(I_VARIABLE_NAME, "0");
   }
 
   public void avanceCounters() {
-    textTemplate.setVariableValue(COUNTER_VARIABLE_NAME, BigInteger.valueOf(++counter));
-    textTemplate.setVariableValue(I_VARIABLE_NAME, BigInteger.valueOf(++i));
+    textTemplate.declareVariableValue(COUNTER_VARIABLE_NAME, BigInteger.valueOf(++counter));
+    textTemplate.declareVariableValue(I_VARIABLE_NAME, BigInteger.valueOf(++i));
+  }
+
+  public String getVariableValue(String variableName) {
+    return textTemplate.getVariableValue(variableName);
+  }
+
+  public String evaluateExpression(String expression) throws ExpressionException {
+    return textTemplate.evaluateExpression(expression);
+  }
+
+  public void assignVariableValue(String variableName, String value) {
+    textTemplate.assignVariableValue(variableName, value);
   }
 }

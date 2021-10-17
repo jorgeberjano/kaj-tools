@@ -5,7 +5,7 @@ package es.jbp.expressions;
  * @author Jorge Berjano
  */
 public interface SymbolFactory {
-    Variable createVariable(String name);
-    Function createFunction(String name);
-    Function createOperator(String name);
+    Variable getVariable(String name);
+    Function getFunction(String name);
+    Function getOperator(String name);
 }

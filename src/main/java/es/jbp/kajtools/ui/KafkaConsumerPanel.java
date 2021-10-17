@@ -253,10 +253,12 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
 
     final LocalDateTime dateTimeToRewind = calculateDateTimeToRewind();
 
+    consumeButtom.setEnabled(false);
     buttonStop.setEnabled(true);
     recordConsumedCount = 0;
 
     printAction("Consumiendo mensajes del topic " + topic);
+
     this.<Void>executeAsyncTask(() -> requestRecords(getEnvironment(), topic, dateTimeToRewind, client));
   }
 
@@ -759,14 +761,11 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     this.headersTable = headersTable;
   }
 
-//  @Override
-//  public InfoTextPane getInfoTextPane() {
-//    return (InfoTextPane) infoTextPane;
-//  }
-
   @Override
-  protected void enableButtons(boolean enable) {
-    consumeButtom.setEnabled(enable);
+  protected void asyncTaskFinished() {
+    super.asyncTaskFinished();
+    consumeButtom.setEnabled(true);
+    buttonStop.setEnabled(false);
   }
 
   @Override

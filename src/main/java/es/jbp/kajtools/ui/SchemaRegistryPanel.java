@@ -215,8 +215,12 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   private void asyncRequestVersions() {
     clearVersionList();
 
+    getSchemasButton.setEnabled(false);
+    versionsPopupMenu.setEnabled(false);
+
     String schemaSubject = Objects.toString(comboSchemaSubject.getSelectedItem());
     printAction("Obteniendo las versiones de los esquemas de " + schemaSubject);
+
     futureVersions = this.<List<String>>executeAsyncTask(
         () -> requestVersions(getEnvironment(), schemaSubject), this::versionsReceived);
   }
@@ -276,8 +280,10 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
       printError("No hay versiones");
       return;
     }
-    String schemaSubject = comboSchemaSubject.getSelectedItem().toString();
+    getSchemasButton.setEnabled(false);
+    versionsPopupMenu.setEnabled(false);
 
+    String schemaSubject = comboSchemaSubject.getSelectedItem().toString();
     printAction("Obteniendo todos los esquemas de " + schemaSubject);
     futureSchemas = this.<Map<String, String>>executeAsyncTask(
         () -> requestSchemas(getEnvironment(), schemaSubject, versions), this::schemasReceived);
@@ -696,9 +702,9 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   }
 
   @Override
-  protected void enableButtons(boolean enable) {
-    getSchemasButton.setEnabled(enable);
-    versionsPopupMenu.setEnabled(enable);
+  protected void asyncTaskFinished() {
+    getSchemasButton.setEnabled(true);
+    versionsPopupMenu.setEnabled(true);
   }
 
   @Override

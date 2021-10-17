@@ -7,14 +7,15 @@ import es.jbp.kajtools.ui.interfaces.DialogueablePanel;
 import es.jbp.kajtools.ui.interfaces.InfoReportablePanel;
 import es.jbp.kajtools.ui.interfaces.SearchablePanel;
 import es.jbp.kajtools.util.JsonUtils;
+import es.jbp.kajtools.util.ResourceUtil;
 import es.jbp.kajtools.util.TemplateExecutor;
 import java.awt.Component;
-import java.awt.Panel;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,15 +24,15 @@ import java.util.UUID;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JDialog;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.JTextPane;
-import javax.swing.JWindow;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.html.HTMLDocument;
+import org.apache.commons.lang3.StringUtils;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 
@@ -47,9 +48,12 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
   protected ComponentFactory componentFactory;
   protected final I18nService i18nService;
 
+  private String currentDirectory;
+
   protected BasePanel(ComponentFactory componentFactory, I18nService i18nService) {
     this.componentFactory = componentFactory;
     this.i18nService = i18nService;
+    currentDirectory = new File(System.getProperty("user.home")).getPath();
   }
 
   protected abstract Component getContentPane();
@@ -67,10 +71,7 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
 
   protected synchronized void asyncTaskFinished() {
     printTrace("");
-    enableButtons(true);
   }
-
-  protected abstract void enableButtons(boolean enable);
 
   protected void enqueueException(Throwable ex) {
     SwingUtilities.invokeLater(() -> {
@@ -130,16 +131,6 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
     clipboard.setContents(stringSelection, null);
   }
 
-//  protected RTextScrollPane createEditorScroll(RSyntaxTextArea editor) {
-//    RTextScrollPane jsonScrollPane = new RTextScrollPane(editor);
-//    jsonScrollPane.setFoldIndicatorEnabled(true);
-//    jsonScrollPane.setIconRowHeaderEnabled(true);
-//    jsonScrollPane.setLineNumbersEnabled(true);
-//    jsonScrollPane.setAlignmentX(0.0F);
-//    jsonScrollPane.setAlignmentY(0.0F);
-//    return jsonScrollPane;
-//  }
-
   protected RSyntaxTextArea createJsonEditor() {
     final RSyntaxTextArea jsonEditor = componentFactory.createSyntaxEditor();
     jsonEditor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JSON);
@@ -189,7 +180,6 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
   }
 
   interface AsyncListener {
-
     void done();
   }
 
@@ -203,7 +193,6 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
 
   protected <T> Future<T> executeAsyncTask(AsyncTask<T> task, AsyncListener listener) {
     abortTasks.set(false);
-    enableButtons(false);
     SwingWorker<T, Void> worker = new SwingWorker<T, Void>() {
       @Override
       protected T doInBackground() {
@@ -301,6 +290,39 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
     dialog.setContentPane(panel);
     dialogueable.bindDialog(dialog);
     dialog.setVisible(true);
+  }
+
+  public File chooseAndReadFile() {
+    JFileChooser fileChooser = new JFileChooser();
+    fileChooser.setCurrentDirectory(new File(currentDirectory));
+    int result = fileChooser.showOpenDialog(getContentPane());
+    if (result == JFileChooser.APPROVE_OPTION) {
+      File selectedFile = fileChooser.getSelectedFile();
+      currentDirectory = selectedFile.getPath();
+      return selectedFile;
+    }
+    return null;
+  }
+
+  public void loadTextFromResource(String path, RSyntaxTextArea jsonEditor) {
+
+    if (StringUtils.isBlank(path)) {
+      return;
+    }
+    String json = ResourceUtil.readResourceString(path);
+    jsonEditor.setText(json);
+    jsonEditor.setCaretPosition(0);
+  }
+
+  public void loadTextFromFile(File file, RSyntaxTextArea jsonEditor) {
+    try {
+      String text = ResourceUtil.readFileString(file);
+      jsonEditor.setText(text);
+      jsonEditor.setCaretPosition(0);
+    } catch (Exception ex) {
+      printError("No se ha podido cargar el archivo.");
+      printException(ex);
+    }
   }
 
 }

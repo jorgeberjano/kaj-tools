@@ -24,7 +24,7 @@ public class TemplateTest {
         String template = ResourceUtil.readResourceString("template.json");
         String expected = ResourceUtil.readResourceString("expected.json");
 
-        textTemplate.setVariableValues(Collections.singletonMap("variable", "valor"));
+        textTemplate.declareVariableValues(Collections.singletonMap("variable", "valor"));
 
         String actual = textTemplate.process(template);
         assertEquals(expected, actual);
@@ -33,7 +33,7 @@ public class TemplateTest {
     @Test
     public void testUUID() throws ExpressionException {
         String template = ResourceUtil.readResourceString("template2.json");
-        textTemplate.setVariableValues(Collections.singletonMap("variable", "valor"));
+        textTemplate.declareVariableValues(Collections.singletonMap("variable", "valor"));
 
         String actual = textTemplate.process(template);
         assertNotNull(actual);
