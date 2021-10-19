@@ -12,9 +12,10 @@ import es.jbp.kajtools.kafka.GenericClient;
 import es.jbp.kajtools.kafka.KafkaAdminService;
 import es.jbp.kajtools.kafka.TopicItem;
 import es.jbp.kajtools.schemaregistry.ISchemaRegistryService;
-import es.jbp.kajtools.ui.InfoDocument.Type;
-import es.jbp.kajtools.util.ResourceUtil;
 import es.jbp.kajtools.schemaregistry.ISchemaRegistryService.SubjectType;
+import es.jbp.kajtools.ui.InfoDocument.Type;
+import es.jbp.kajtools.ui.interfaces.InfoReportable;
+import es.jbp.kajtools.util.ResourceUtil;
 import es.jbp.kajtools.util.TemplateExecutor;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -191,11 +192,9 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     producer.getAvailableTopics().forEach(comboTopic::addItem);
     comboTopic.setSelectedItem(producer.getDefaultTopic());
 
-    producer.getAvailableValues()
-        .forEach(comboValue::addItem);
+    producer.getAvailableValues().forEach(comboValue::addItem);
 
-    producer.getAvailableKeys()
-        .forEach(comboKey::addItem);
+    producer.getAvailableKeys().forEach(comboKey::addItem);
 
     comboHeaders.addItem("");
     producer.getAvailableHeaders()
@@ -227,14 +226,12 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   }
 
   private void loadResourceForKey() {
-    String path = Optional.ofNullable(comboKey.getSelectedItem()).map(Object::toString)
-        .orElse("");
+    String path = Optional.ofNullable(comboKey.getSelectedItem()).map(Object::toString).orElse("");
     loadTextFromResource(path, keyEditor);
   }
 
   private void loadResourceForValue() {
-    String path = Optional.ofNullable(comboValue.getSelectedItem()).map(Object::toString)
-        .orElse("");
+    String path = Optional.ofNullable(comboValue.getSelectedItem()).map(Object::toString).orElse("");
     loadTextFromResource(path, valueEditor);
   }
 
@@ -262,7 +259,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
       }
     }
 
-    printAction("Enviando evento a " + topic);
+    printMessage(InfoReportable.buildActionMessage("Enviando evento a " + topic));
     String key = keyEditor.getText();
     String event = valueEditor.getText();
     String headers = headersEditor.getText();
@@ -318,7 +315,8 @@ public class KafkaProducerPanel extends KafkaBasePanel {
       String key, String value, String headers) {
 
     if (StringUtils.isBlank(topic)) {
-      enqueueError("No se va a mandar el mensaje porque no se ha indicado ningún topic");
+      enqueueMessage(InfoReportable.buildErrorMessage(
+          "No se va a mandar el mensaje porque no se ha indicado ningún topic"));
       return;
     }
 
@@ -327,11 +325,13 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     headers = processTemplate(headers, Type.PROPERTIES, "headers");
 
     if (StringUtils.isBlank(key)) {
-      enqueueError("No se va a mandar el mensaje porque no se ha indicado ninguna key");
+      enqueueMessage(InfoReportable.buildErrorMessage(
+          "No se va a mandar el mensaje porque no se ha indicado ninguna key"));
       return;
     }
     if (StringUtils.isBlank(value)) {
-      enqueueError("No se va a mandar el mensaje porque no se ha indicado ningún value");
+      enqueueMessage(InfoReportable.buildErrorMessage(
+          "No se va a mandar el mensaje porque no se ha indicado ningún value"));
       return;
     }
 
@@ -341,7 +341,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
       enqueueException(ex);
       return;
     }
-    enqueueSuccessful("Enviado el evento correctamente");
+    enqueueMessage(InfoReportable.buildSuccessfulMessage("Enviado el evento correctamente"));
   }
 
   private String processTemplate(String text, Type type, String name) {
@@ -354,7 +354,8 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     try {
       generatedText = templateExecutor.processTemplate(text);
     } catch (Exception ex) {
-      enqueueError("No se ha podido generar el JSON del EVENT a partir de la plantilla");
+      enqueueMessage(InfoReportable.buildErrorMessage(
+          "No se ha podido generar el JSON del EVENT a partir de la plantilla"));
       enqueueException(ex);
       return null;
     }
@@ -365,11 +366,12 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   private void asyncCheckSchema() {
     IMessageClient producer = (IMessageClient) comboProducer.getSelectedItem();
     if (producer instanceof GenericClient) {
-      printError("No es posible comparar los esquemas con el GenericClient");
+      printMessage(InfoReportable.buildErrorMessage(
+          "No es posible comparar los esquemas con el GenericClient"));
       return;
     }
     String topic = comboTopic.getEditor().getItem().toString();
-    printAction("Comprobando esquemas del topic " + topic);
+    printMessage(InfoReportable.buildActionMessage("Comprobando esquemas del topic " + topic));
 
     String jsonKey = keyEditor.getText();
     String jsonValue = valueEditor.getText();
@@ -429,30 +431,30 @@ public class KafkaProducerPanel extends KafkaBasePanel {
       return SchemaCheckStatus.NOT_CHECKED;
     }
 
-    enqueueInfoMessage("Comparando con el esquema AVRO de " +
-        (isKey ? producer.getKeyClassName() : producer.getValueClassName()));
+    enqueueMessage(InfoReportable.buildTraceMessage("Comparando con el esquema AVRO de " +
+        (isKey ? producer.getKeyClassName() : producer.getValueClassName())));
     return compareSchemas(registeredSchema, avroSchema, type.name());
   }
 
   private SchemaCheckStatus compareSchemas(String registeredSchema, String avroSchema,
       String objectName) {
     if (avroSchema == null) {
-      enqueueError("El esquema del AVRO del " + objectName + " es null");
+      enqueueMessage(InfoReportable.buildErrorMessage("El esquema del AVRO del " + objectName + " es null"));
       return SchemaCheckStatus.NOT_CHECKED;
     }
 
     if (registeredSchema == null) {
-      enqueueError("El esquema del " + objectName + " registrado es null");
+      enqueueMessage(InfoReportable.buildErrorMessage("El esquema del " + objectName + " registrado es null"));
       return SchemaCheckStatus.NOT_CHECKED;
     }
 
     if (!registeredSchema.equals(avroSchema)) {
-      enqueueError("Los esquemas del " + objectName + " no coinciden");
+      enqueueMessage(InfoReportable.buildErrorMessage("Los esquemas del " + objectName + " no coinciden"));
       enqueueTextDifferences("AVRO", avroSchema, "Schema Registry", registeredSchema);
 
       return SchemaCheckStatus.NOT_EQUALS;
     } else {
-      enqueueSuccessful("El esquema del " + objectName + " es correcto");
+      enqueueMessage(InfoReportable.buildSuccessfulMessage("El esquema del " + objectName + " es correcto"));
       enqueueLink(InfoDocument.simpleDocument(objectName + " schema", Type.JSON, avroSchema));
       return SchemaCheckStatus.EQUALS;
     }
@@ -564,6 +566,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     panel2.add(label2, new GridConstraints(5, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     comboValue = new JComboBox();
+    comboValue.setEditable(true);
     final DefaultComboBoxModel defaultComboBoxModel2 = new DefaultComboBoxModel();
     comboValue.setModel(defaultComboBoxModel2);
     panel2.add(comboValue, new GridConstraints(5, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
@@ -606,6 +609,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     panel2.add(label5, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     comboKey = new JComboBox();
+    comboKey.setEditable(true);
     panel2.add(comboKey, new GridConstraints(4, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
         GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     buttonOpenFileKey = new JButton();

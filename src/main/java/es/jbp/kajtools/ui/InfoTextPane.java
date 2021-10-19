@@ -3,6 +3,7 @@ package es.jbp.kajtools.ui;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import javax.swing.JTextPane;
@@ -11,6 +12,7 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
+import javax.swing.text.html.HTMLDocument;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class InfoTextPane extends JTextPane {
@@ -45,12 +47,6 @@ public class InfoTextPane extends JTextPane {
     setHighlighter(null);
   }
 
-  public void enqueueInfoMessage(InfoMessage infoMessage) {
-    SwingUtilities.invokeLater(() -> {
-      printInfoMessage(infoMessage);
-    });
-  }
-
   public void printInfoMessage(InfoMessage infoMessage) {
 
     var attr = new SimpleAttributeSet();
@@ -74,6 +70,17 @@ public class InfoTextPane extends JTextPane {
       setCaretPosition(doc.getLength());
     } catch (BadLocationException ex) {
       ex.printStackTrace();
+    }
+  }
+
+  public void printLink(String key, InfoDocument infoDocument) {
+    // TODO: comprobar el tipo de documento
+    HTMLDocument doc = (HTMLDocument) getStyledDocument();
+    try {
+      doc.insertAfterEnd(doc.getCharacterElement(doc.getLength()), "<a href=\"" + key + "\">" + infoDocument.getTitle() +
+          "</a><br>");
+    } catch (BadLocationException | IOException ex) {
+      System.err.println("No se pudo insertar el link en la consola de información");
     }
   }
 }

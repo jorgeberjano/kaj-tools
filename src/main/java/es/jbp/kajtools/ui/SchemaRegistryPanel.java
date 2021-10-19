@@ -10,6 +10,7 @@ import es.jbp.kajtools.configuration.Configuration;
 import es.jbp.kajtools.IMessageClient;
 import es.jbp.kajtools.i18n.I18nService;
 import es.jbp.kajtools.kafka.KafkaAdminService;
+import es.jbp.kajtools.ui.interfaces.InfoReportable;
 import es.jbp.kajtools.util.JsonUtils;
 import es.jbp.kajtools.schemaregistry.SchemaRegistryService;
 import java.awt.BorderLayout;
@@ -219,7 +220,8 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     versionsPopupMenu.setEnabled(false);
 
     String schemaSubject = Objects.toString(comboSchemaSubject.getSelectedItem());
-    printAction("Obteniendo las versiones de los esquemas de " + schemaSubject);
+    printMessage(InfoReportable.buildActionMessage(
+        "Obteniendo las versiones de los esquemas de " + schemaSubject));
 
     futureVersions = this.<List<String>>executeAsyncTask(
         () -> requestVersions(getEnvironment(), schemaSubject), this::versionsReceived);
@@ -240,7 +242,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
       return Collections.emptyList();
     }
     int n = versionList.size();
-    enqueueSuccessful(n == 0 ? "No hay versiones" : "Hay " + n + " versiones");
+    enqueueMessage(InfoReportable.buildSuccessfulMessage(n == 0 ? "No hay versiones" : "Hay " + n + " versiones"));
 
     return versionList;
   }
@@ -254,7 +256,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
       versions = futureVersions.get();
       updateVersionList();
     } catch (Throwable ex) {
-      printError("Error al recibir las versiones");
+      printMessage(InfoReportable.buildErrorMessage("Error al recibir las versiones"));
       enqueueException(ex);
     }
 
@@ -277,14 +279,14 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
 
   private void asyncRequestAllSchemas() {
     if (versions == null) {
-      printError("No hay versiones");
+      printMessage(InfoReportable.buildErrorMessage("No hay versiones"));
       return;
     }
     getSchemasButton.setEnabled(false);
     versionsPopupMenu.setEnabled(false);
 
     String schemaSubject = comboSchemaSubject.getSelectedItem().toString();
-    printAction("Obteniendo todos los esquemas de " + schemaSubject);
+    printMessage(InfoReportable.buildActionMessage("Obteniendo todos los esquemas de " + schemaSubject));
     futureSchemas = this.<Map<String, String>>executeAsyncTask(
         () -> requestSchemas(getEnvironment(), schemaSubject, versions), this::schemasReceived);
   }
@@ -298,8 +300,8 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
       schemas = futureSchemas.get().entrySet().stream()
           .collect(Collectors.toMap(Entry::getKey, entry -> new SchemaInfo(entry.getValue())));
     } catch (Throwable ex) {
-      printError("Error al recibir las versiones");
-      printTrace("[" + ex.getClass().getName() + "] " + ex.getMessage());
+      printMessage(InfoReportable.buildErrorMessage("Error al recibir las versiones"));
+      printMessage(InfoReportable.buildTraceMessage("[" + ex.getClass().getName() + "] " + ex.getMessage()));
     }
 
     // Se formatean todos los esquemas
@@ -322,7 +324,8 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     String previousVersion = versions.get(selectedIndex - 1);
     String previousSchema = schemas.get(previousVersion).content;
 
-    printAction("Comparando la versión " + selectedVersion + " con la " + previousVersion);
+    printMessage(
+        InfoReportable.buildActionMessage("Comparando la versión " + selectedVersion + " con la " + previousVersion));
 
     enqueueTextDifferences(" Versión " + selectedVersion, selectedSchema,
         " Versión " + previousVersion, previousSchema);
@@ -331,7 +334,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   private Map<String, String> requestSchemas(Environment environment, String schemaSubject,
       List<String> versions) {
     if (versions == null || versions.isEmpty()) {
-      enqueueInfoMessage("No hay ninguna versión");
+      enqueueMessage(InfoReportable.buildTraceMessage("No hay ninguna versión"));
       return Collections.<String, String>emptyMap();
     }
 
@@ -339,7 +342,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
         .collect(Collectors.toMap(Function.identity(),
             version -> getSubjectSchemaVersion(schemaSubject, version, environment)));
 
-    enqueueSuccessful("Esquemas obtenidos: " + versions.size());
+    enqueueMessage(InfoReportable.buildSuccessfulMessage("Esquemas obtenidos: " + versions.size()));
 
     return schemas;
   }
@@ -372,7 +375,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
       return;
     }
 
-    printAction("Borrando la versión " + version + " de " + schemaSubject);
+    printMessage(InfoReportable.buildActionMessage("Borrando la versión " + version + " de " + schemaSubject));
     executeAsyncTask(() -> deleteSelectedSchemaVersion(environment, schemaSubject, version),
         this::updateVersionList);
   }
@@ -382,7 +385,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     try {
       schemaRegistryService
           .deleteSubjectSchemaVersion(schemaSubject, version, environment);
-      enqueueSuccessful("Se ha borrado correctamente la versión " + version);
+      enqueueMessage(InfoReportable.buildSuccessfulMessage("Se ha borrado correctamente la versión " + version));
       versions.remove(version);
     } catch (KajException ex) {
       enqueueException(ex);
@@ -416,7 +419,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
       return;
     }
 
-    printAction("Escritura de nueva versión esquema de " + schemaSubject);
+    printMessage(InfoReportable.buildActionMessage("Escritura de nueva versión esquema de " + schemaSubject));
     executeAsyncTask(() -> writeSchema(environment, schemaSubject, jsonSchema),
         this::updateVersionList);
   }
@@ -424,7 +427,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   private Void writeSchema(Environment environment, String schemaSubject, String jsonSchema) {
     try {
       schemaRegistryService.writeSubjectSchema(schemaSubject, environment, jsonSchema);
-      enqueueSuccessful("Se ha escrito correctamente la nueva versión ");
+      enqueueMessage(InfoReportable.buildSuccessfulMessage("Se ha escrito correctamente la nueva versión "));
     } catch (KajException e) {
       enqueueException(e);
     }

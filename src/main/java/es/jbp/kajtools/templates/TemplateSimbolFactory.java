@@ -96,9 +96,9 @@ public class TemplateSimbolFactory implements SymbolFactory {
         .orElse(null);
   }
 
-  public void assignVariableValue(String variableName, String value) {
+  public void assignVariableValue(String variableName, Value value) {
     if (variables.containsKey(variableName)) {
-      variables.get(variableName).setValue(new Value(value));
+      variables.get(variableName).setValue(value);
     }
 
   }

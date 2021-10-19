@@ -16,6 +16,8 @@ import es.jbp.kajtools.script.ScriptSimbolFactory;
 import es.jbp.kajtools.script.exception.ScriptCompilerException;
 import es.jbp.kajtools.script.exception.ScriptExecutionException;
 import es.jbp.kajtools.script.nodes.ScriptNode;
+import es.jbp.kajtools.ui.interfaces.InfoReportable;
+import es.jbp.kajtools.util.ResourceUtil;
 import es.jbp.kajtools.util.TemplateExecutor;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -28,6 +30,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 import javax.swing.AbstractButton;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
@@ -68,6 +71,8 @@ public class ScriptPanel extends KafkaBasePanel {
   private JButton buttonCheckEnvironment;
   private RTextScrollPane scriptScrollPane;
   private JButton buttonStop;
+  private JComboBox comboScript;
+  private JButton buttonOpenFileScript;
   private RSyntaxTextArea scriptEditor;
 
   private ScriptCompiler scriptCompiler = new ScriptCompiler(scriptSymbolFactory);
@@ -101,6 +106,16 @@ public class ScriptPanel extends KafkaBasePanel {
     copyButton.addActionListener(e -> copyToClipboard());
 
     enableTextSearch(searchTextField, scriptEditor);
+
+    List<String> availableScripts = ResourceUtil.getResourceFileNames("")
+        .stream()
+        .filter(s -> s.toLowerCase().endsWith(".kajscript"))
+        .collect(Collectors.toList());
+    comboScript.addItem("");
+    availableScripts.forEach(comboScript::addItem);
+
+    comboScript.addActionListener(e -> loadResourceForScript());
+    buttonOpenFileScript.addActionListener(e -> openFileForScript());
   }
 
   private void openFileForScript() {
@@ -118,13 +133,14 @@ public class ScriptPanel extends KafkaBasePanel {
         .orElse(null);
 
     if (genericClient == null) {
-      printError("No se ha definido ningún GenericClient");
+      printMessage(InfoReportable.buildErrorMessage("No se ha definido ningún GenericClient"));
       return;
     }
     ExecutionContext context = ExecutionContext.builder()
         .environment(getEnvironment())
         .kafkaGenericClient(genericClient)
         .templateExecutor(scriptTemplateExecutor)
+        .infoReportable(this)
         .build();
 
     scriptSymbolFactory.setContext(context);
@@ -133,23 +149,28 @@ public class ScriptPanel extends KafkaBasePanel {
     try {
       scriptNode = scriptCompiler.compile(scriptCode);
     } catch (ScriptCompilerException e) {
-      printError("El script tiene errores");
+      printMessage(InfoReportable.buildErrorMessage("El script tiene errores"));
       printException(e);
       return;
     }
     buttonExecute.setEnabled(false);
     buttonStop.setEnabled(true);
-    enqueueAction("Ejecución de script iniciada");
+    printMessage(InfoReportable.buildActionMessage("Ejecución de script iniciada"));
     executeAsyncTask(() -> executeScript(scriptNode, context));
+  }
+
+  private void loadResourceForScript() {
+    String path = Optional.ofNullable(comboScript.getSelectedItem()).map(Object::toString).orElse("");
+    loadTextFromResource(path, scriptEditor);
   }
 
   private Void executeScript(ScriptNode scriptNode, ExecutionContext context) {
 
     try {
       scriptNode.execute(context);
-      enqueueSuccessful("El script se ha ejecutado correctamente");
+      enqueueMessage(InfoReportable.buildSuccessfulMessage("El script se ha ejecutado correctamente"));
     } catch (ScriptExecutionException e) {
-      enqueueError("No de ha podido ejecutar el script");
+      enqueueMessage(InfoReportable.buildErrorMessage("No de ha podido ejecutar el script"));
       enqueueException(e);
     }
     // TODO: Esto no debería hacerse en este thread
@@ -195,7 +216,7 @@ public class ScriptPanel extends KafkaBasePanel {
     panel1.add(buttonStop, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     final JPanel panel2 = new JPanel();
-    panel2.setLayout(new GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), -1, -1));
+    panel2.setLayout(new GridLayoutManager(2, 3, new Insets(0, 0, 0, 0), -1, -1));
     contentPane.add(panel2,
         new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
@@ -222,15 +243,35 @@ public class ScriptPanel extends KafkaBasePanel {
         new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
             GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, new Dimension(24, 24),
             new Dimension(24, 24), new Dimension(24, 24), 0, false));
+    final JLabel label2 = new JLabel();
+    this.$$$loadLabelText$$$(label2, this.$$$getMessageFromBundle$$$("messages", "label.script"));
+    panel2.add(label2, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
+        GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+    comboScript = new JComboBox();
+    panel2.add(comboScript,
+        new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+            GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+    buttonOpenFileScript = new JButton();
+    Font buttonOpenFileScriptFont = this.$$$getFont$$$(null, -1, -1, buttonOpenFileScript.getFont());
+    if (buttonOpenFileScriptFont != null) {
+      buttonOpenFileScript.setFont(buttonOpenFileScriptFont);
+    }
+    buttonOpenFileScript.setIcon(new ImageIcon(getClass().getResource("/images/folder.png")));
+    buttonOpenFileScript.setText("");
+    buttonOpenFileScript.setToolTipText(this.$$$getMessageFromBundle$$$("messages", "tooltip.open.script.file"));
+    panel2.add(buttonOpenFileScript,
+        new GridConstraints(1, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+            GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, new Dimension(24, 24),
+            new Dimension(24, 24), new Dimension(24, 24), 0, false));
     final JPanel panel3 = new JPanel();
     panel3.setLayout(new BorderLayout(0, 0));
     contentPane.add(panel3, new GridConstraints(4, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
         null, null, null, 0, false));
-    final JLabel label2 = new JLabel();
-    label2.setIcon(new ImageIcon(getClass().getResource("/images/search.png")));
-    label2.setText("");
-    panel3.add(label2, BorderLayout.WEST);
+    final JLabel label3 = new JLabel();
+    label3.setIcon(new ImageIcon(getClass().getResource("/images/search.png")));
+    label3.setText("");
+    panel3.add(label3, BorderLayout.WEST);
     searchTextField = new JTextField();
     searchTextField.setText("");
     panel3.add(searchTextField, BorderLayout.CENTER);

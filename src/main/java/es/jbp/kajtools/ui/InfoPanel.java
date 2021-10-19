@@ -1,7 +1,7 @@
 package es.jbp.kajtools.ui;
 
 import es.jbp.kajtools.ui.interfaces.DialogueablePanel;
-import es.jbp.kajtools.ui.interfaces.InfoReportablePanel;
+import es.jbp.kajtools.ui.interfaces.InfoReportable;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
@@ -9,7 +9,6 @@ import java.awt.Window;
 import java.util.Locale;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
-import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -19,7 +18,7 @@ import javax.swing.plaf.FontUIResource;
 import javax.swing.text.StyleContext;
 import lombok.Getter;
 
-public class InfoPanel implements DialogueablePanel, InfoReportablePanel {
+public class InfoPanel implements DialogueablePanel, InfoReportable {
 
   private JTextPane infoTextPane;
   private JTextField searchTextField;
@@ -114,6 +113,15 @@ public class InfoPanel implements DialogueablePanel, InfoReportablePanel {
   @Override
   public InfoTextPane getInfoTextPane() {
     return (InfoTextPane) infoTextPane;
+  }
+
+  @Override
+  public void printMessage(InfoMessage infoMessage) {
+    getInfoTextPane().printInfoMessage(infoMessage);
+  }
+
+  @Override
+  public void printLink(InfoDocument infoDocument) {
   }
 
   private void createUIComponents() {

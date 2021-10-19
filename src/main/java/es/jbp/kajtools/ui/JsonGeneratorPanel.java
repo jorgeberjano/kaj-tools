@@ -7,7 +7,7 @@ import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.i18n.I18nService;
 import es.jbp.kajtools.ui.InfoDocument.InfoDocumentBuilder;
 import es.jbp.kajtools.ui.InfoMessage.Type;
-import es.jbp.kajtools.ui.interfaces.InfoReportablePanel;
+import es.jbp.kajtools.ui.interfaces.InfoReportable;
 import es.jbp.kajtools.util.ClassScanner;
 import es.jbp.kajtools.util.DeepTestObjectCreator;
 import es.jbp.kajtools.util.ResourceUtil;
@@ -45,7 +45,7 @@ import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
 import org.springframework.util.CollectionUtils;
 
-public class JsonGeneratorPanel extends BasePanel implements InfoReportablePanel {
+public class JsonGeneratorPanel extends BasePanel implements InfoReportable {
 
   private final Set<String> classSet;
 
@@ -154,7 +154,7 @@ public class JsonGeneratorPanel extends BasePanel implements InfoReportablePanel
   }
 
   private void asyncGenerateAll() {
-    printAction("Generando JSON...");
+    printMessage(InfoReportable.buildActionMessage("Generando JSON..."));
     String nombreClase = classComboBox.getEditor().getItem().toString();
     futureResult = executeAsyncTask(() -> this.generateAll(nombreClase), this::generateDone);
   }
@@ -196,30 +196,30 @@ public class JsonGeneratorPanel extends BasePanel implements InfoReportablePanel
 
     Object generatedObject = creator.createObject(nombreClase, "");
     if (generatedObject == null) {
-      enqueueError("No se ha podido crear la instancia el objeto");
+      enqueueMessage(InfoReportable.buildActionMessage("No se ha podido crear la instancia el objeto"));
     } else {
-      enqueueSuccessful("Se ha creado la instancia del objeto correctamente");
+      enqueueMessage(InfoReportable.buildSuccessfulMessage("Se ha creado la instancia del objeto correctamente"));
       enqueueLink(InfoDocument.simpleDocument("Object::toString", InfoDocument.Type.INFO, generatedObject.toString()));
     }
-    enqueueErrors(creator.getErrors());
+    enqueueMessages(creator.getErrors());
     return generatedObject;
   }
 
   private String generateJson(Object generatedObject) {
-    enqueueAction("Generando el JSON...");
+    enqueueMessage(InfoReportable.buildActionMessage("Generando el JSON..."));
 
     DeepTestObjectCreator creator = new DeepTestObjectCreator();
     String json = creator.getJsonFromObject(generatedObject);
     if (StringUtils.isBlank(json)) {
-      enqueueError("No se ha podido generar el JSON");
+      enqueueMessage(InfoReportable.buildActionMessage("No se ha podido generar el JSON"));
     } else {
-      enqueueSuccessful("Se ha generado el JSON correctamente");
+      enqueueMessage(InfoReportable.buildSuccessfulMessage("Se ha generado el JSON correctamente"));
     }
-    enqueueErrors(creator.getErrors());
+    enqueueMessages(creator.getErrors());
     return json;
   }
 
-  private void enqueueErrors(List<String> errors) {
+  private void enqueueMessages(List<String> errors) {
     if (CollectionUtils.isEmpty(errors)) {
       return;
     }
@@ -232,29 +232,30 @@ public class JsonGeneratorPanel extends BasePanel implements InfoReportablePanel
     DeepTestObjectCreator creator = new DeepTestObjectCreator();
     String schema = creator.extractAvroSchema(generatedObject);
     if (StringUtils.isBlank(schema)) {
-      enqueueError("No se ha podido generar el esquema AVRO");
+      enqueueMessage(InfoReportable.buildActionMessage("No se ha podido generar el esquema AVRO"));
     } else {
-      enqueueSuccessful("Se ha generado el esquema AVRO correctamente");
+      enqueueMessage(InfoReportable.buildSuccessfulMessage("Se ha generado el esquema AVRO correctamente"));
     }
-    enqueueErrors(creator.getErrors());
+    enqueueMessages(creator.getErrors());
     return schema;
   }
 
   private Object instantiateObjetFromJson(String nombreClase, String json) {
 
-    enqueueAction("Generando la instancia del objeto desde el JSON...");
+    enqueueMessage(InfoReportable.buildActionMessage("Generando la instancia del objeto desde el JSON..."));
 
     DeepTestObjectCreator creator = new DeepTestObjectCreator();
 
     Object generatedObject = creator.createObjectFromJson(nombreClase, json);
     if (generatedObject != null) {
-      enqueueSuccessful("Se ha creado la instancia del Objeto desde el JSON correctamente");
+      enqueueMessage(InfoReportable.buildSuccessfulMessage(
+          "Se ha creado la instancia del Objeto desde el JSON correctamente"));
       enqueueLink(InfoDocument.simpleDocument("Object::toString()",
           InfoDocument.Type.INFO, generatedObject.toString()));
     } else {
-      enqueueError("No se ha podido crear la instancia el Objeto desde el JSON");
+      enqueueMessage(InfoReportable.buildActionMessage("No se ha podido crear la instancia el Objeto desde el JSON"));
     }
-    enqueueErrors(creator.getErrors());
+    enqueueMessages(creator.getErrors());
     return generatedObject;
   }
 

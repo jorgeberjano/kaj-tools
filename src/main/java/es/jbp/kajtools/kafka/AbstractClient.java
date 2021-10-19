@@ -196,14 +196,14 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
   @Getter(lazy = true)
   private final List<String> availableHeaders = getAvailableResources("headers.properties");
 
-  private List<String> getAvailableResources(String containing) {
+  private List<String> getAvailableResources(String endingWith) {
     return ResourceUtil.getResourceFileNames(getFolder())
-        .stream().filter(s -> s.toLowerCase().contains(containing))
+        .stream().filter(s -> s.toLowerCase().endsWith(endingWith))
         .collect(Collectors.toList());
   }
 
   public String getFolder() {
-    return ".";
+    return "";
   }
 
   @Override
@@ -211,10 +211,6 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
     String[] nameSplit = getClass().getName().split("\\.");
     return nameSplit.length > 2 ? nameSplit[nameSplit.length - 2] : "";
   }
-
-//  protected Consumer<K, V> createConsumer(Environment environment) {
-//    return new KafkaConsumer<>(createConsumerProperties(environment));
-//  }
 
   public static Map<String, Object> createProducerProperties(Environment environment) {
     Map<String, Object> props = createCommonProperties(environment);

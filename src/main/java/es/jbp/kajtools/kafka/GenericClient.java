@@ -141,7 +141,7 @@ public class GenericClient extends AbstractClient<GenericRecord, GenericRecord> 
 
   @Override
   public String getFolder() {
-    return ".";
+    return "";
   }
 
   @Override

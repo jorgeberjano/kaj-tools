@@ -1,6 +1,5 @@
 package es.jbp.kajtools.ui;
 
-import es.jbp.kajtools.ui.InfoMessage.Type;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.Builder;
@@ -11,7 +10,7 @@ import lombok.Singular;
 @Builder
 public class InfoDocument {
 
-  public static enum Type {
+  public enum Type {
     INFO,
     JSON,
     PROPERTIES,
@@ -39,7 +38,7 @@ public class InfoDocument {
         .type(type)
         .title(title)
         .left(InfoMessage.builder().mensaje(text).type(InfoMessage.Type.TRACE).build()
-    ).build();
+        ).build();
   }
 
 }

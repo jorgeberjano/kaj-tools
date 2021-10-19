@@ -28,6 +28,7 @@ public class TextTemplate {
 
   public TextTemplate() {
     this(new TemplateSimbolFactory());
+    templateSimbolFactory.declareSymbols(this);
   }
 
   public TextTemplate(TemplateSimbolFactory templateSimbolFactory) {
@@ -51,7 +52,7 @@ public class TextTemplate {
     templateSimbolFactory.declareVariableValue(variableName, value);
   }
 
-  public void assignVariableValue(String variableName, String value) {
+  public void assignVariableValue(String variableName, Value value) {
     templateSimbolFactory.assignVariableValue(variableName, value);
   }
 
@@ -157,20 +158,8 @@ public class TextTemplate {
     int beginIndex = text.indexOf('{');
     int endIndex = text.lastIndexOf('}');
     String expression = text.substring(beginIndex + 1, endIndex);
-    return evaluateExpression(expression, valueType, raw);
-  }
+    Value value = evaluateExpression(expression);
 
-  public String evaluateExpression(String expression) throws ExpressionException {
-    return evaluateExpression(expression, null, true);
-  }
-
-  private String evaluateExpression(String expression, ValueType valueType, boolean raw) throws ExpressionException {
-
-    ExpressionNode expressionNode = compilador.compile(expression);
-    Value value = null;
-    if (expressionNode != null) {
-      value = expressionNode.evaluate();
-    }
     if (value == null || value.getObject() == null) {
       return "null";
     }
@@ -182,5 +171,14 @@ public class TextTemplate {
     } else {
       return Objects.toString(value.getObject(valueType));
     }
+  }
+
+  public Value evaluateExpression(String expression) throws ExpressionException {
+
+    var expressionNode = compilador.compile(expression);
+    if (expressionNode == null) {
+      return null;
+    }
+    return expressionNode.evaluate();
   }
 }

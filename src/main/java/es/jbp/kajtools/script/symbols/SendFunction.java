@@ -6,6 +6,9 @@ import es.jbp.kajtools.KajException;
 import es.jbp.kajtools.kafka.GenericClient;
 import es.jbp.kajtools.script.ExecutionContext;
 import es.jbp.kajtools.templates.symbols.AbstractFunction;
+import es.jbp.kajtools.ui.InfoDocument;
+import es.jbp.kajtools.ui.InfoDocument.Type;
+import es.jbp.kajtools.ui.interfaces.InfoReportable;
 import java.util.List;
 
 public class SendFunction extends AbstractFunction {
@@ -26,14 +29,25 @@ public class SendFunction extends AbstractFunction {
     try {
       kafkaGenericClient.sendFromJson(context.getEnvironment(), topic, key, value, headers);
     } catch (KajException e) {
-      throw new ExpressionException("No se pudo enviar el mensaje", e);
+      throw new ExpressionException("No se pudo enviar el mensaje al topid " + topic, e);
     }
+    context.getInfoReportable().enqueueMessage(InfoReportable.buildSuccessfulMessage("Mensaje enviado al topic " + topic));
+
+    context.getInfoReportable().enqueueLink(InfoDocument.builder().title("key").type(Type.JSON)
+        .left(InfoReportable.buildTraceMessage(key)).build());
+
+    context.getInfoReportable().enqueueLink(InfoDocument.builder().title("value").type(Type.JSON)
+        .left(InfoReportable.buildTraceMessage(value)).build());
+
+    context.getInfoReportable().enqueueLink(InfoDocument.builder().title("headers").type(Type.PROPERTIES)
+        .left(InfoReportable.buildTraceMessage(headers)).build());
+
     return new Value();
   }
 
   @Override
   public int getParameterCount() {
-    return -1;
+    return 4;
   }
 }
 

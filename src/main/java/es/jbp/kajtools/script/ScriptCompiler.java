@@ -1,11 +1,13 @@
 package es.jbp.kajtools.script;
 
 import es.jbp.kajtools.script.exception.ScriptCompilerException;
+import es.jbp.kajtools.script.nodes.IfNode;
 import es.jbp.kajtools.script.nodes.LoopNode;
 import es.jbp.kajtools.script.nodes.ScriptNode;
 import es.jbp.kajtools.script.nodes.SequenceNode;
 import es.jbp.kajtools.script.nodes.SetVariableNode;
 import es.jbp.kajtools.script.nodes.DoNode;
+import es.jbp.kajtools.script.nodes.WhileNode;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -83,8 +85,12 @@ public class ScriptCompiler {
     switch (command) {
       case "set":
         return createSetVariableNode(rest, lineNumber);
+      case "if":
+        return createIfNode(rest, lineNumber);
       case "loop":
         return createLoopNode(rest, lineNumber);
+      case "while":
+        return createWhileNode(rest, lineNumber);
       case "do":
         return createDoNode(rest, lineNumber);
       default:
@@ -122,5 +128,19 @@ public class ScriptCompiler {
       throw new ScriptCompilerException("Se esperaba una expresión. Linea " + lineNumber);
     }
     return new LoopNode(rest, lineNumber);
+  }
+
+  private ScriptNode createIfNode(String rest, int lineNumber) throws ScriptCompilerException {
+    if (StringUtils.isBlank(rest)) {
+      throw new ScriptCompilerException("Se esperaba una expresión. Linea " + lineNumber);
+    }
+    return new IfNode(rest, lineNumber);
+  }
+
+  private ScriptNode createWhileNode(String rest, int lineNumber) throws ScriptCompilerException {
+    if (StringUtils.isBlank(rest)) {
+      throw new ScriptCompilerException("Se esperaba una expresión. Linea " + lineNumber);
+    }
+    return new WhileNode(rest, lineNumber);
   }
 }

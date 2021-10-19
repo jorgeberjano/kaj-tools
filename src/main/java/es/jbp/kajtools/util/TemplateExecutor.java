@@ -1,6 +1,7 @@
 package es.jbp.kajtools.util;
 
 import es.jbp.expressions.ExpressionException;
+import es.jbp.expressions.Value;
 import es.jbp.kajtools.templates.TemplateSimbolFactory;
 import es.jbp.kajtools.templates.TextTemplate;
 import java.math.BigInteger;
@@ -74,11 +75,11 @@ public class TemplateExecutor {
     return textTemplate.getVariableValue(variableName);
   }
 
-  public String evaluateExpression(String expression) throws ExpressionException {
+  public Value evaluateExpression(String expression) throws ExpressionException {
     return textTemplate.evaluateExpression(expression);
   }
 
-  public void assignVariableValue(String variableName, String value) {
+  public void assignVariableValue(String variableName, Value value) {
     textTemplate.assignVariableValue(variableName, value);
   }
 }

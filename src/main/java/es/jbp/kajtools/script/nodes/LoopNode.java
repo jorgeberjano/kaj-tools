@@ -1,6 +1,7 @@
 package es.jbp.kajtools.script.nodes;
 
 import es.jbp.expressions.ExpressionException;
+import es.jbp.expressions.Value;
 import es.jbp.kajtools.script.ExecutionContext;
 import es.jbp.kajtools.script.exception.ScriptExecutionException;
 import es.jbp.kajtools.util.TemplateExecutor;
@@ -19,14 +20,14 @@ public class LoopNode extends SequenceNode {
   @Override
   public void execute(ExecutionContext context) throws ScriptExecutionException {
     TemplateExecutor templateExecutor = context.getTemplateExecutor();
-    String value = null;
+    Value value = null;
     try {
-       value = templateExecutor.processTemplate(times);
+       value = templateExecutor.evaluateExpression(times);
     } catch (ExpressionException e) {
       throw new ScriptExecutionException("No se ha podido evaluar la expresión", e);
     }
 
-    long actualTimes = NumberUtils.toLong(value, 1);
+    long actualTimes = value.toBigInteger().longValue();
     for (long i = 0; i < actualTimes; i++) {
       templateExecutor.declareVariableValue("i", BigInteger.valueOf(i));
       super.execute(context);

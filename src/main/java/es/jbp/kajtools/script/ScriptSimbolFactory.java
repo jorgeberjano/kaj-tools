@@ -1,6 +1,7 @@
 package es.jbp.kajtools.script;
 
 import es.jbp.expressions.Function;
+import es.jbp.kajtools.script.symbols.PrintFunction;
 import es.jbp.kajtools.templates.TemplateSimbolFactory;
 import es.jbp.kajtools.script.symbols.SendFunction;
 import es.jbp.kajtools.script.symbols.SleepFunction;
@@ -17,7 +18,9 @@ public class ScriptSimbolFactory extends TemplateSimbolFactory {
       case "send":
         return new SendFunction(context);
       case "sleep":
-        return new SleepFunction();
+        return new SleepFunction(context);
+      case "print":
+        return new PrintFunction(context);
     }
     return super.getFunction(name);
   }

@@ -8,7 +8,7 @@ import es.jbp.kajtools.kafka.KafkaAdminService;
 import es.jbp.kajtools.kafka.TopicItem;
 import es.jbp.kajtools.schemaregistry.ISchemaRegistryService;
 import es.jbp.kajtools.ui.InfoDocument.Type;
-import es.jbp.kajtools.schemaregistry.SchemaRegistryService;
+import es.jbp.kajtools.ui.interfaces.InfoReportable;
 import es.jbp.tabla.ModeloTablaGenerico;
 import java.awt.Component;
 import java.awt.Point;
@@ -57,7 +57,7 @@ public abstract class KafkaBasePanel extends BasePanel {
 
   protected void asyncRetrieveTopics() {
 
-    printAction("Obteniendo la lista de topics");
+    printMessage(InfoReportable.buildActionMessage("Obteniendo la lista de topics"));
     executeAsyncTask(() -> retrieveTopics(getEnvironment()));
   }
 
@@ -65,7 +65,8 @@ public abstract class KafkaBasePanel extends BasePanel {
     try {
       topics = kafkaAdminService.getTopics(environment);
       showConnectionStatus(Boolean.TRUE);
-      enqueueSuccessful("Se han obtenido " + CollectionUtils.size(topics) + " topics");
+      printMessage(InfoReportable.buildSuccessfulMessage(
+          "Se han obtenido " + CollectionUtils.size(topics) + " " + "topics"));
     } catch (KajException ex) {
       topics = new ArrayList<>();
       printException(ex);
@@ -162,7 +163,8 @@ public abstract class KafkaBasePanel extends BasePanel {
     if (response != JOptionPane.YES_OPTION) {
       return;
     }
-    printAction("Borrando el topic " + topicName + " del entono " + environment.getName());
+    printMessage(InfoReportable.buildActionMessage(
+        "Borrando el topic " + topicName + " del entono " + environment.getName()));
     var kafka = new KafkaAdminService();
     try {
       kafka.deleteTopic(topicName, environment);
@@ -176,7 +178,7 @@ public abstract class KafkaBasePanel extends BasePanel {
     try {
       properties.load(new StringReader(text));
     } catch (IOException e) {
-      printError("No se han podido cargar las variables");
+      printMessage(InfoReportable.buildErrorMessage("No se han podido cargar las variables"));
       printException(e);
     }
     Map<String, String> variables = new HashMap<>();

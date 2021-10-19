@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.collections4.ListUtils;
 
 public class ResourceUtil {
   public static String readFileString(File file) throws FileNotFoundException {
@@ -63,28 +64,35 @@ public class ResourceUtil {
   }
 
   public static List<String> getResourceFileNames(String folder)  {
-    List<String> list = Collections.emptyList();
     URL url;
     try {
       url = ResourceUtil.class.getClassLoader().getResource(folder);
     } catch (Throwable e) {
       e.printStackTrace();
-      return list;
+      return Collections.emptyList();
     }
 
     if (url == null) {
       System.err.println("La carpeta de recursos " + folder + " no existe");
-      return list;
+      return Collections.emptyList();
     }
 
-    try (Stream<Path> paths = Files.walk(Paths.get(url.toURI()))) {
-      list = paths
+    Path folderPath;
+    try {
+      folderPath = Paths.get(url.toURI());
+    } catch (URISyntaxException e) {
+      e.printStackTrace();
+      return Collections.emptyList();
+    }
+    int basePathLength = folderPath.toString().length() - folder.length();
+    try (Stream<Path> paths = Files.walk(folderPath)) {
+      return paths
           .filter(Files::isRegularFile)
-          .map(path -> folder + "/" + path.getFileName().toString())
+          .map(path -> path.toString().substring(basePathLength))
           .collect(Collectors.toList());
     } catch (Throwable e) {
       e.printStackTrace();
+      return Collections.emptyList();
     }
-    return  list;
   }
 }

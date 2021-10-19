@@ -48,7 +48,7 @@ Para cada entorno se definen las siguientes propiedades:
 
 
 
-## Producción de mensaje Kafka
+## Producción de mensajes Kafka
 
 ![Kafka](./src/main/resources/images/kafka.png?at=refs%2Fheads%2Fdevelop)
 
@@ -173,17 +173,17 @@ Dentro de la expresión se pueden usar una serie de constantes, funciones y vari
 
 #### Funciones:
 
-| Función    | descripción                                                  |
-| ---------- | ------------------------------------------------------------ |
-| datetime() | Produce una cadena con la fecha y hora.<br />Puede recibir un parametro que expresa el formato. por defecto es `yyyy-dd-MM'T'HH:MM'Z'` |
-| uuid()     | Produce un UUID o [Identificador único universal](https://es.wikipedia.org/wiki/Identificador_único_universal#:~:text=UUID se utilizó originalmente en,Open Software Foundation (OSF) .). |
-| str()      | Convierte a cadena y concatena todos los parametros que recibe. Recibe número indeterminado de parámetros. |
-| any()      | Devuelve, de forma aleatoria, uno de los parámetros que se le pase. Recibe número indeterminado de parámetros. |
-| rand()     | Devuelve un valor aleatorio entre 0 hasta valor del partametro que se le pase (no incluido). Solo admite un parámetro. |
-| fileline() | Devuelve una línea aleatoria del archivo de texto que se le pase como parámetro. El archivo debe estar incluido en los recursos de la aplicación. Recibe como parámetro la ruta del archivo de recursos. |
-| fragment() | Incluye un fragmento del mensaje tomado del contenido completo de un archivo de recursos. Este archivo de recursos también puede contener expresiones. Recibe como parámetro la ruta del archivo de recursos. |
-| set()      | Sirve para establecer un valor en un mapa de valores memorizados que se pueden usar en otras expresiones. Se le deben suministrar dos parámetros, el primero es una cadena que representa la clave y el segundo e valor a establecer |
-| get()      | Sirve para recuperar un valor previamente establecido en el mapa de valores memorizados que se pueden usar en otras expresiones. Se le debe suministrar como parámetro una cadena que representa la clave. Hay que tener en cuenta que el valor se debe haber establecido antes y que primero se procesa el JSON de la Key y luego el JSON del Value de los mensajes. |
+| Función               | descripción                                                  |
+| --------------------- | ------------------------------------------------------------ |
+| datetime()            | Produce una cadena con la fecha y hora.<br />Puede recibir un parametro que expresa el formato. por defecto es `yyyy-dd-MM'T'HH:MM'Z'` |
+| uuid()                | Produce un UUID o [Identificador único universal](https://es.wikipedia.org/wiki/Identificador_único_universal#:~:text=UUID se utilizó originalmente en,Open Software Foundation (OSF) .). |
+| str()                 | Convierte a cadena y concatena todos los parametros que recibe. Recibe número indeterminado de parámetros. |
+| any()                 | Devuelve, de forma aleatoria, uno de los parámetros que se le pase. Recibe número indeterminado de parámetros. |
+| rand()                | Devuelve un valor aleatorio entre 0 hasta valor del partametro que se le pase (no incluido). Solo admite un parámetro. |
+| fileline()            | Devuelve una línea aleatoria del archivo de texto que se le pase como parámetro. El archivo debe estar incluido en los recursos de la aplicación. Recibe como parámetro la ruta del archivo de recursos. |
+| file() ~~fragment()~~ | Devuelve el contenido completo de un archivo de recursos. Este archivo de recursos también puede contener expresiones. Recibe como parámetro la ruta del archivo de recursos. |
+| set()                 | Sirve para establecer un valor en un mapa de valores memorizados que se pueden usar en otras expresiones. Se le deben suministrar dos parámetros, el primero es una cadena que representa la clave y el segundo e valor a establecer |
+| get()                 | Sirve para recuperar un valor previamente establecido en el mapa de valores memorizados que se pueden usar en otras expresiones. Se le debe suministrar como parámetro una cadena que representa la clave. Hay que tener en cuenta que el valor se debe haber establecido antes y que primero se procesa el JSON de la Key y luego el JSON del Value de los mensajes. |
 
 #### Variables predefinidas:
 
@@ -441,7 +441,7 @@ Para borrar o comparar una  versión determinada de un esquema con su versión a
 
 
 
-## Generación de JSON, esquemas y plantillas
+## Generación y comprobación de JSONs 
 
 ![json](./src/main/resources/images/json.png?at=refs%2Fheads%2Fdevelop)
 
@@ -461,9 +461,56 @@ A partir de la instancia generada se genera un contenido JSON que se mostrará e
 
 Además se mostrará el esquema AVRO (si es una clase AVRO generada) en otra de las pestañas.
 
-Por ultimo se mostrará en la última pestana una plantilla generada a partir del JSON de ejemplo. El JSON y la plantilla pueden servir para, una vez editadas adecuadamente, usarse como ejemplos de prueba que pueden ser añadidos a los recursos.
+También es posible comprobar si el JSON que haya en el editor la pestaña correspondiente es deserializable en la clase seleccionada.
 
+## Ejecución de scripts
 
+La ejecución de scripts se realiza desde el panel que muestra la pestaña lateral titulada *Script*. Los scripts se ejecutan en un determinado entorno que debe ser seleccionado previamente.
+
+Los script son tienen una sintaxis muy básica. Cada linea corresponde a una instrucción. La primera palabla debe ser una de los comandos que admite el script. El nivel de indentación es importante pues define el anidamiento de instrucciones
+
+Comandos disponibles:
+
+- set
+- do
+- loop
+
+### set
+
+Sirve para asignar el nombre de una variable.
+
+````
+set nombre_variable = expresion
+````
+
+La expresión puede ser cualquiera de las expresiones que se han comentado anteriormente.
+
+### loop
+
+Realiza un bucle con tantas iteraciones como indique la expresión que tenga a continuación.
+
+Las instrucciones que se repiten serán las que vengan a continuación y tengan un mayor nivel de identación
+
+````
+loop expresion
+````
+
+### do
+
+````
+do expresion
+````
+
+Ejecuta simplemente la expresión que tenga a continuación.
+
+La expresión puede ser cualquiera de las expresiones que se han comentado anteriormente mas las siguientes:
+
+| Función | descripción                                                  |
+| ------- | ------------------------------------------------------------ |
+| send()  | Envía un mensaje por el entorno seleccionado<br />Recibe cuatro parámetro: topic, key, value y headers |
+| sleep() | Produce una pausa. El único parámetro de entrada indica el tiempo en milisegundos. |
+
+Para iniciar la ejecución se debe pulsar el botón *Ejecutar* ![](C:\at\desarrollo\jbp\kaj-tools\src\main\resources\images\execute.png). También es posible abortar la ejecución con el botón ![](C:\at\desarrollo\jbp\kaj-tools\src\main\resources\images\stop.png).
 
 ## Funciones comunes en los editores
 

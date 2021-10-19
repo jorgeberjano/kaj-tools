@@ -4,7 +4,7 @@ import es.jbp.expressions.ExpressionException;
 import es.jbp.kajtools.i18n.I18nService;
 import es.jbp.kajtools.ui.InfoDocument.Type;
 import es.jbp.kajtools.ui.interfaces.DialogueablePanel;
-import es.jbp.kajtools.ui.interfaces.InfoReportablePanel;
+import es.jbp.kajtools.ui.interfaces.InfoReportable;
 import es.jbp.kajtools.ui.interfaces.SearchablePanel;
 import es.jbp.kajtools.util.JsonUtils;
 import es.jbp.kajtools.util.ResourceUtil;
@@ -16,7 +16,6 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -30,13 +29,11 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.html.HTMLDocument;
 import org.apache.commons.lang3.StringUtils;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 
-public abstract class BasePanel implements InfoReportablePanel, SearchablePanel {
+public abstract class BasePanel implements InfoReportable, SearchablePanel {
 
   protected TemplateExecutor templateExecutor = new TemplateExecutor();
   protected TextComparator comparator = new TextComparator();
@@ -58,7 +55,6 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
 
   protected abstract Component getContentPane();
 
-
   public void initialize() {
     InfoTextPane textPane = getInfoTextPane();
     textPane.enableLinks();
@@ -69,8 +65,12 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
     });
   }
 
+  public void addLink(String key, InfoDocument value) {
+    linksMap.put(key, value);
+  }
+
   protected synchronized void asyncTaskFinished() {
-    printTrace("");
+    printMessage(InfoReportable.buildTraceMessage(""));
   }
 
   protected void enqueueException(Throwable ex) {
@@ -79,7 +79,7 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
     });
   }
 
-  protected void enqueueLink(InfoDocument infoDocument) {
+  public void enqueueLink(InfoDocument infoDocument) {
     SwingUtilities.invokeLater(() -> {
       printLink(infoDocument);
     });
@@ -93,23 +93,8 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
     enqueueLink(differencesDocument);
   }
 
-  protected void printLink(InfoDocument infoDocument) {
-    String key = UUID.randomUUID().toString();
-
-    linksMap.put(key, infoDocument);
-
-    HTMLDocument doc = (HTMLDocument) getInfoTextPane().getStyledDocument();
-    try {
-      doc.insertAfterEnd(doc.getCharacterElement(doc.getLength()), "<a href=\"" + key + "\">" + infoDocument.getTitle() +
-          "</a><br>");
-    } catch (BadLocationException | IOException ex) {
-      System.err.println("No se pudo insertar el link en la consola de información");
-    }
-  }
-
   protected void printException(Throwable ex) {
-    printError(ex.getMessage());
-
+    printMessage(InfoReportable.buildErrorMessage(ex.getMessage()));
     if (ex.getCause() != null) {
       printLink(InfoDocument.simpleDocument("exception", Type.INFO, extractCause(ex)));
     }
@@ -153,7 +138,7 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
     try {
       text = templateExecutor.formatJson(text);
     } catch (ExpressionException e) {
-      printError("No de pudo formatear el JSON");
+      printMessage(InfoReportable.buildErrorMessage("No de pudo formatear el JSON"));
       printException(e);
       return;
     }
@@ -320,9 +305,19 @@ public abstract class BasePanel implements InfoReportablePanel, SearchablePanel 
       jsonEditor.setText(text);
       jsonEditor.setCaretPosition(0);
     } catch (Exception ex) {
-      printError("No se ha podido cargar el archivo.");
+      printMessage(InfoReportable.buildErrorMessage("No se ha podido cargar el archivo."));
       printException(ex);
     }
+  }
+
+  public void printMessage(InfoMessage infoMessage) {
+    getInfoTextPane().printInfoMessage(infoMessage);
+  }
+
+  public void printLink(InfoDocument infoDocument) {
+    String key = UUID.randomUUID().toString();
+    addLink(key, infoDocument);
+    getInfoTextPane().printLink(key, infoDocument);
   }
 
 }
