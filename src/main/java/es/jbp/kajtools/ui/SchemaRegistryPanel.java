@@ -150,12 +150,13 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
       }
     };
 
-    JMenuItem deleteActionListener = new JMenuItem("Borrar");
-    deleteActionListener.addActionListener(e -> asyncDeleteSelectedSchemaVersion());
     JMenuItem compareActionListener = new JMenuItem("Comparar con anterior");
     compareActionListener.addActionListener(e -> compareSelectedSchemaVersionWithPrevious());
-    versionsPopupMenu.add(deleteActionListener);
     versionsPopupMenu.add(compareActionListener);
+
+    JMenuItem deleteActionListener = new JMenuItem("Borrar");
+    deleteActionListener.addActionListener(e -> asyncDeleteSelectedSchemaVersion());
+    versionsPopupMenu.add(deleteActionListener);
     versionsList.setComponentPopupMenu(versionsPopupMenu);
     versionsList.addListSelectionListener(e -> showSelectedSchemaVersion());
 
