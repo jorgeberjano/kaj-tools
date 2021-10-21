@@ -95,7 +95,7 @@ public class RecordConsumer<K, V> implements ConsumerRebalanceListener {
         baseInstant = Instant.now();
       }
       if (!mustWait(baseInstant, starting)) {
-        feedback.message("Timeout");
+        feedback.message("Se finaliza la recepción porque no llegan nuevos mensajes");
         break;
       }
     } while (!abort.get());
