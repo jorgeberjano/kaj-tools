@@ -230,7 +230,7 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
   public static Map<String, Object> createConsumerProperties(Environment environment) {
     Map<String, Object> props = createCommonProperties(environment);
 
-    props.put(ConsumerConfig.GROUP_ID_CONFIG, "kaj-tools");
+    props.put(ConsumerConfig.GROUP_ID_CONFIG, "kaj-tools-" + System.getProperty("user.name"));
 
     putNotNull(props, ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class.getName());
     putNotNull(props, ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class.getName());
