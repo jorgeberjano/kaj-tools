@@ -28,7 +28,7 @@ public class ScriptMessageFilter implements MessageFilter {
         
     ScriptEngine graalEngine = new ScriptEngineManager().getEngineByName("JavaScript");
 
-    script = "function satisfy(jsonKey, jsonValue, jsonHeaders, partition, offset, date) {\n"
+    script = "function satisfy(jsonKey, jsonValue, jsonHeaders, partition, offset, datetime) {\n"
         + "var key = JSON.parse(jsonKey);\n"
         + "var value = JSON.parse(jsonValue);\n"
         + "var headers = JSON.parse(jsonHeaders);\n"

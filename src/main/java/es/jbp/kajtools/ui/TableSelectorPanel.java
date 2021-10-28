@@ -5,16 +5,16 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 import es.jbp.kajtools.ui.interfaces.DialogueablePanel;
 import es.jbp.tabla.ModeloTablaGenerico;
 import es.jbp.tabla.TablaGenerica;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.Window;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
@@ -83,7 +83,14 @@ public class TableSelectorPanel<T> implements DialogueablePanel {
 
   private void applyFilter() {
     String filterText = textFieldFilter.getText().toLowerCase();
-    tableModel.filtrarPorPredicado(t -> t.toString().toLowerCase().contains(filterText));
+
+    List<String> filterList = Arrays.asList(filterText.split("\\s"));
+
+    tableModel.filtrarPorPredicado(e -> containsAll(e.toString().toLowerCase(), filterList));
+  }
+
+  private boolean containsAll(String s, List<String> filterList) {
+    return filterList.stream().allMatch(s::contains);
   }
 
   public void bindDialog(Window dialog) {

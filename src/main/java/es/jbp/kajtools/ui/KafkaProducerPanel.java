@@ -175,7 +175,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     comboProducer.removeAllItems();
     String domain = Objects.toString(comboDomain.getSelectedItem());
     clientList.stream()
-        .filter(p -> StringUtils.isBlank(domain) || domain.equals(p.getDomain()))
+        .filter(p -> StringUtils.isBlank(domain) || domain.equals(p.getDomain()) || p instanceof GenericClient)
         .forEach(comboProducer::addItem);
   }
 
@@ -252,8 +252,8 @@ public class KafkaProducerPanel extends KafkaBasePanel {
 
     SchemaCheckStatus status = checkedSchemaTopics.get(environment.getName() + "$" + topic);
     boolean local = environment.getName().toLowerCase().contains("local");
-    if (!local && status != SchemaCheckStatus.EQUALS) {
-      boolean userAccepts = warnUserAboutCheckSchema(status, topic);
+    if (!local && !(producer instanceof GenericClient) && status != SchemaCheckStatus.EQUALS) {
+      boolean userAccepts = warnUserAboutCheckSchema(environment, status, topic);
       if (!userAccepts) {
         return;
       }
@@ -276,7 +276,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     executeAsyncTask(() -> sendMessage(environment, producer, topic, key, event, headers, quantity));
   }
 
-  private boolean warnUserAboutCheckSchema(SchemaCheckStatus status, String topic) {
+  private boolean warnUserAboutCheckSchema(Environment environment, SchemaCheckStatus status, String topic) {
     String message;
     if (status == SchemaCheckStatus.NOT_FOUND) {
       message = "No hay ningún esquema en el Schema Registry.";
@@ -292,12 +292,15 @@ public class KafkaProducerPanel extends KafkaBasePanel {
       return false;
     }
 
-    int response = JOptionPane.showConfirmDialog(contentPane,
-        "Topic: " + topic + "\n" + message + "\n" +
-            "Si envía el mensaje se actualizará el esquema en el Schema Registry.\n" +
-            "¿Desea enviar el mensaje de todas formas?",
-        "Atención", JOptionPane.YES_NO_OPTION);
-    return response == JOptionPane.YES_OPTION;
+    if (environment.isAutoRegisterSchemas()) {
+      int response = JOptionPane.showConfirmDialog(contentPane,
+          "Topic: " + topic + "\n" + message + "\n" +
+              "Si envía el mensaje se actualizará el esquema en el Schema Registry.\n" +
+              "¿Desea enviar el mensaje de todas formas?",
+          "Atención", JOptionPane.YES_NO_OPTION);
+      return response == JOptionPane.YES_OPTION;
+    }
+    return true;
   }
 
   private Void sendMessage(Environment environment, IMessageClient producer,

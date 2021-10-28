@@ -18,8 +18,13 @@ public class JsonUtils {
   }
 
   private static ObjectMapper getObjectMapper() {
-    return new ObjectMapper().setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
-        .configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
+    return new ObjectMapper()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        .configure(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES, false)
+        .configure(DeserializationFeature.FAIL_ON_NUMBERS_FOR_ENUMS, false)
+        .configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false)
+        .setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+
   }
 
   public static <T> T createFromJson(String json, Class<T> valueType) throws IOException {
