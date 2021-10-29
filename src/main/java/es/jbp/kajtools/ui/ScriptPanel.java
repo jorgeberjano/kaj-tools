@@ -42,6 +42,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.StyleContext;
@@ -141,6 +142,7 @@ public class ScriptPanel extends KafkaBasePanel {
         .kafkaGenericClient(genericClient)
         .templateExecutor(scriptTemplateExecutor)
         .infoReportable(this)
+        .abort(abortTasks)
         .build();
 
     scriptSymbolFactory.setContext(context);
@@ -173,8 +175,9 @@ public class ScriptPanel extends KafkaBasePanel {
       enqueueMessage(InfoReportable.buildErrorMessage("No de ha podido ejecutar el script"));
       enqueueException(e);
     }
-    // TODO: Esto no debería hacerse en este thread
-    buttonStop.setEnabled(false);
+    SwingUtilities.invokeLater(() -> {
+      buttonStop.setEnabled(false);
+    });
     return null;
   }
 
@@ -212,7 +215,7 @@ public class ScriptPanel extends KafkaBasePanel {
     buttonStop.setEnabled(false);
     buttonStop.setIcon(new ImageIcon(getClass().getResource("/images/stop.png")));
     buttonStop.setText("");
-    buttonStop.setToolTipText(this.$$$getMessageFromBundle$$$("messages", "tooltip.stop.consume"));
+    buttonStop.setToolTipText(this.$$$getMessageFromBundle$$$("messages", "tooltip.stop.script"));
     panel1.add(buttonStop, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     final JPanel panel2 = new JPanel();

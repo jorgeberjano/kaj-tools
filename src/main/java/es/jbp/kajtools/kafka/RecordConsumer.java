@@ -116,24 +116,23 @@ public class RecordConsumer<K, V> implements ConsumerRebalanceListener {
 
   private RecordItem createRecordItem(ConsumerRecord<K, V> rec) {
 
-    String jsonKey = String.valueOf(rec.key());
-    String jsonValue = String.valueOf(rec.value());
+    var jsonKey = String.valueOf(rec.key());
+    var jsonValue = String.valueOf(rec.value());
 
-    String keyError = null;
-    String valueError = null;
+    var errors = new ArrayList<String>();
     if (!keyType.equals(GenericRecord.class)) {
       try {
-        K key = JsonUtils.createFromJson(jsonKey, keyType);
+        JsonUtils.createFromJson(jsonKey, keyType);
       } catch (IOException e) {
-        keyError = e.getMessage();
+        errors.add("El key no es compatible con el AVRO\n" + e.getMessage());
       }
     }
 
     if (!valueType.equals(GenericRecord.class)) {
       try {
-        V value = JsonUtils.createFromJson(jsonValue, valueType);
+        JsonUtils.createFromJson(jsonValue, valueType);
       } catch (IOException e) {
-        valueError = e.getMessage();
+        errors.add("El value no es compatible con el AVRO\n" + e.getMessage());
       }
     }
 
@@ -146,10 +145,9 @@ public class RecordConsumer<K, V> implements ConsumerRebalanceListener {
         .offset(rec.offset())
         .dateTime(dateTime)
         .key(jsonKey)
-        .keyError(keyError)
         .value(jsonValue)
         .headers(toHeaderItems(rec.headers()))
-        .valueError(valueError)
+        .errors(errors)
         .build();
   }
 

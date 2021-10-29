@@ -16,6 +16,7 @@ public class IfNode extends SequenceNode {
 
   @Override
   public void execute(ExecutionContext context) throws ScriptExecutionException {
+
     TemplateExecutor templateExecutor = context.getTemplateExecutor();
 
     if (meetsCondition(templateExecutor)) {

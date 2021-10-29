@@ -18,6 +18,9 @@ public class WhileNode extends IfNode {
     TemplateExecutor templateExecutor = context.getTemplateExecutor();
 
     while (meetsCondition(templateExecutor)) {
+      if (context.getAbort().get()) {
+        return;
+      }
       super.execute(context);
     }
   }

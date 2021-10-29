@@ -173,6 +173,7 @@ public abstract class BasePanel implements InfoReportable, SearchablePanel {
   }
 
   protected void stopAsyncTasks() {
+    printMessage(InfoReportable.buildErrorMessage("Se aborta la ejecución"));
     abortTasks.set(true);
   }
 

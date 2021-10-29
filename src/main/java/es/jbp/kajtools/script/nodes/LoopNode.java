@@ -29,6 +29,9 @@ public class LoopNode extends SequenceNode {
 
     long actualTimes = value.toBigInteger().longValue();
     for (long i = 0; i < actualTimes; i++) {
+      if (context.getAbort().get()) {
+        return;
+      }
       templateExecutor.declareVariableValue("i", BigInteger.valueOf(i));
       super.execute(context);
     }

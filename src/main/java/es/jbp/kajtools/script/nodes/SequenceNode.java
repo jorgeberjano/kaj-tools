@@ -20,6 +20,9 @@ public class SequenceNode extends ScriptNode {
   @Override
   public void execute(ExecutionContext context) throws ScriptExecutionException {
     for (ScriptNode node : childNodes) {
+      if (context.getAbort().get()) {
+        return;
+      }
       node.execute(context);
     }
   }

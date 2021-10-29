@@ -157,7 +157,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="dfcd1" class="javax.swing.JTable" binding="recordTable" custom-create="true">
+              <component id="1bd7" class="es.jbp.tabla.TablaGenerica" binding="recordTable" custom-create="true">
                 <constraints/>
                 <properties>
                   <autoCreateRowSorter value="false"/>

@@ -16,7 +16,7 @@ public class RecordItem {
   private LocalDateTime dateTime;
   private String key;
   private String value;
-  private String keyError;
   private List<HeaderItem> headers;
-  private String valueError;
+  private List<String> errors;
+  private boolean matchFilter;
 }

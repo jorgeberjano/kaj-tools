@@ -48,7 +48,7 @@
               <enabled value="false"/>
               <icon value="images/stop.png"/>
               <text value=""/>
-              <toolTipText resource-bundle="messages" key="tooltip.stop.consume"/>
+              <toolTipText resource-bundle="messages" key="tooltip.stop.script"/>
             </properties>
           </component>
         </children>

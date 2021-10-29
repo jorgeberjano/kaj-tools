@@ -37,6 +37,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
@@ -46,7 +47,9 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
@@ -64,9 +67,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
+import org.springframework.util.CollectionUtils;
 
 public class KafkaConsumerPanel extends KafkaBasePanel {
-
 
   public static final int CONTIENE_TEXTO = 1;
   public static final int FILTRO_JAVASCRIPT = 2;
@@ -77,7 +80,7 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
   private JComboBox comboEnvironment;
   private JComboBox comboConsumer;
   private JComboBox comboDomain;
-  private JTable recordTable;
+  private TablaGenerica recordTable;
   private JTabbedPane tabbedPane;
   private JPanel tabInfo;
   private JPanel tabKey;
@@ -110,11 +113,14 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
 
   private final ModeloTablaGenerico<RecordItem> recordTableModel = new ModeloTablaGenerico<>();
   private List<RecordItem> recordItemsList = new ArrayList<>();
-  private MessageFilter filter;
+  private MessageFilter consumeFilter;
+  private MessageFilter showFilter;
   private int maxRecords = 50;
   private int recordConsumedCount = 0;
   @Getter
   private InfoTextPane infoTextPane;
+
+  private JPopupMenu recordTablePopupMenu;
 
   public KafkaConsumerPanel(List<IMessageClient> clientList,
       SchemaRegistryService schemaRegistryService,
@@ -157,6 +163,15 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     // Tabla de registros
     ListSelectionModel selectionModel = recordTable.getSelectionModel();
     selectionModel.addListSelectionListener(this::recordSelected);
+    recordTablePopupMenu = new JPopupMenu();
+    JMenuItem compareActionListener = new JMenuItem("Aplicar filtro sobre los mensajes consumidos");
+    compareActionListener.addActionListener(e -> applyFilterToConsumedMessages());
+    recordTablePopupMenu.add(compareActionListener);
+
+    JMenuItem deleteActionListener = new JMenuItem("Copiar tabla al portapapeles");
+    deleteActionListener.addActionListener(e -> copyRecordTableToClipboard());
+    recordTablePopupMenu.add(deleteActionListener);
+    recordTable.setComponentPopupMenu(recordTablePopupMenu);
 
     buttonFindTopic.addActionListener(e -> findTopic());
 
@@ -172,6 +187,39 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
 
     enableTextSearch(searchTextField, jsonEditorValue, jsonEditorKey);
   }
+
+  private void applyFilterToConsumedMessages() {
+    try {
+      showFilter = retrieveActualFilter();
+    } catch (KajException ex) {
+      printMessage(InfoReportable.buildErrorMessage("El filtro tiene errores"));
+      printException(ex);
+      return;
+    }
+
+    printMessage(InfoReportable.buildActionMessage("Aplicando el filtro a los mensajes consumidos..."));
+    this.<Void>executeAsyncTask(this::checkFilterTableMessages);
+  }
+
+  private Void checkFilterTableMessages() {
+    recordTableModel.getListaObjetos().forEach(r -> checkFilter(r, showFilter));
+    SwingUtilities.invokeLater(() -> {
+      recordTableModel.filtrar(lista -> lista.stream().filter(RecordItem::isMatchFilter).collect(Collectors.toList()));
+    });
+    return null;
+  }
+
+  private void checkFilter(RecordItem recordItem, MessageFilter filter) {
+    try {
+      recordItem.setMatchFilter(filter.satisfyCondition(recordItem));
+    } catch (KajException e) {
+      recordItem.getErrors().add("No se pudo aplicar el filtro: " + e.getMessage());
+    }
+  }
+
+  private void copyRecordTableToClipboard() {
+  }
+
 
   @Override
   protected void showConnectionStatus(Boolean ok) {
@@ -231,21 +279,13 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     IMessageClient client = (IMessageClient) consumerSelectedItem;
 
     maxRecords = NumberUtils.toInt(fieldMaxRecords.getText(), 0);
-    int filterType = comboFilterType.getSelectedIndex();
-    String textFilter = textFieldFilter.getText().trim();
-    String script = scriptEditorFilter.getText().trim();
 
-    if (filterType == CONTIENE_TEXTO && StringUtils.isNotBlank(textFilter)) {
-      filter = (rec) -> rec.getKey().contains(textFilter) || rec.getValue().contains(textFilter);
-    } else if (filterType == FILTRO_JAVASCRIPT && StringUtils.isNotBlank(script)) {
-      try {
-        filter = new ScriptMessageFilter(script);
-      } catch (KajException ex) {
-        printException(ex);
-        return;
-      }
-    } else {
-      filter = (rec) -> true;
+    try {
+      consumeFilter = retrieveActualFilter();
+    } catch (KajException ex) {
+      printMessage(InfoReportable.buildErrorMessage("El filtro tiene errores"));
+      printException(ex);
+      return;
     }
 
     labelCounter.setText("0");
@@ -263,6 +303,22 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     printMessage(InfoReportable.buildActionMessage("Consumiendo mensajes del topic " + topic));
 
     this.<Void>executeAsyncTask(() -> requestRecords(getEnvironment(), topic, dateTimeToRewind, client));
+  }
+
+  private MessageFilter retrieveActualFilter() throws KajException {
+    MessageFilter filter;
+    int filterType = comboFilterType.getSelectedIndex();
+    String textFilter = textFieldFilter.getText().trim();
+    String script = scriptEditorFilter.getText().trim();
+
+    if (filterType == CONTIENE_TEXTO && StringUtils.isNotBlank(textFilter)) {
+      filter = rec -> rec.getKey().contains(textFilter) || rec.getValue().contains(textFilter);
+    } else if (filterType == FILTRO_JAVASCRIPT && StringUtils.isNotBlank(script)) {
+      filter = new ScriptMessageFilter(script);
+    } else {
+      filter = rec -> true;
+    }
+    return filter;
   }
 
   private LocalDateTime calculateDateTimeToRewind() {
@@ -301,39 +357,30 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
   }
 
   private void showMoreRecords(List<RecordItem> recordItems) {
+    int previousRecordCount = recordItemsList.size();
 
     for (RecordItem rec : recordItems) {
-      try {
-        if (maxRecords > 0 && recordItemsList.size() >= maxRecords) {
-          abortTasks.set(true);
-          break;
-        }
-        recordConsumedCount++;
-        if (filter.satisfyCondition(rec)) {
-          recordItemsList.add(rec);
-        }
-        if (StringUtils.isNotBlank(rec.getValueError())) {
-          printMessage(InfoReportable.buildErrorMessage("El value del mensaje con partición "
-              + rec.getPartition() + " y offset " + rec.getOffset() + " no es compatible con el AVRO"));
-          printLink(InfoDocument.simpleDocument("excepción", Type.INFO, rec.getValueError()));
-        }
-        if (StringUtils.isNotBlank(rec.getKeyError())) {
-          printMessage(InfoReportable.buildErrorMessage("El key del mensaje con partición "
-              + rec.getPartition() + " y offset " + rec.getOffset() + " no es compatible con el AVRO"));
-          printLink(InfoDocument.simpleDocument("excepción", Type.INFO, rec.getKeyError()));
-        }
-      } catch (KajException ex) {
-        printException(ex);
+      if (maxRecords > 0 && recordItemsList.size() >= maxRecords) {
+        abortTasks.set(true);
+        break;
       }
-
+      recordConsumedCount++;
+      if (rec.isMatchFilter()) {
+        recordItemsList.add(rec);
+      }
+      if (!CollectionUtils.isEmpty(rec.getErrors())) {
+        printMessage(InfoReportable.buildErrorMessage("El mensaje con partición "
+            + rec.getPartition() + " y offset " + rec.getOffset() + " produjo errores"));
+        printLink(InfoDocument.simpleDocument("errores", Type.INFO,
+            StringUtils.join(rec.getErrors(), "\n")));
+      }
     }
-    recordTableModel.actualizar();
+    if (recordItemsList.size() > previousRecordCount) {
+      recordTableModel.actualizar();
+    }
     int matches = recordItemsList.size();
-
     labelCounter.setText(matches == recordConsumedCount ? "" + recordConsumedCount
         : matches + "/" + recordConsumedCount);
-
-
   }
 
   private Void requestRecords(Environment environment, String topic, LocalDateTime dateTimeToRewind,
@@ -342,6 +389,9 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
       client.consumeLastRecords(environment, topic, dateTimeToRewind, abortTasks, new ConsumerFeedback() {
         @Override
         public void consumedRecords(List<RecordItem> records) {
+
+          records.forEach(r -> checkFilter(r, consumeFilter));
+
           SwingUtilities.invokeLater(() -> {
             showMoreRecords(records);
           });
@@ -363,7 +413,6 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     }
     return null;
   }
-
 
   /**
    * Method generated by IntelliJ IDEA GUI Designer >>> IMPORTANT!! <<< DO NOT edit this method OR call it in your
@@ -712,7 +761,7 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     scriptEditorFilter = createScriptEditor();
     filterScrollPane = componentFactory.createEditorScroll(scriptEditorFilter);
 
-    TablaGenerica recordTable = new TablaGenerica();
+    recordTable = new TablaGenerica();
     recordTableModel.agregarColumna("partition", "partition", 20);
     recordTableModel.agregarColumna("offset", "offset", 20);
     recordTableModel.agregarColumna("dateTime", "datetime", 50);
@@ -722,7 +771,7 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     recordTable.setColoreador(new ColoreadorFila<RecordItem>() {
       @Override
       public Color determinarColorTexto(RecordItem entidad) {
-        if (entidad.getKeyError() != null || entidad.getValueError() != null) {
+        if (!CollectionUtils.isEmpty(entidad.getErrors())) {
           return new Color(0xF96966);
         } else {
           return null;
@@ -731,10 +780,9 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
 
       @Override
       public Color determinarColorFondo(RecordItem entidad) {
-          return null;
+        return null;
       }
     });
-    this.recordTable = recordTable;
 
     TablaGenerica headersTable = new TablaGenerica();
     headersTableModel.agregarColumna("key", "Header key", 20);
