@@ -30,9 +30,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.swing.AbstractButton;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -55,7 +55,6 @@ public class ScriptPanel extends KafkaBasePanel {
   private final ScriptSimbolFactory scriptSymbolFactory = new ScriptSimbolFactory();
   private final TemplateExecutor scriptTemplateExecutor = new TemplateExecutor(scriptSymbolFactory);
 
-  private JComboBox comboEnvironment;
   @Getter
   private JPanel contentPane;
   private JButton buttonExecute;
@@ -68,8 +67,6 @@ public class ScriptPanel extends KafkaBasePanel {
   private JButton copyButton;
   @Getter
   private JTextField searchTextField;
-  private JLabel dangerLabel;
-  private JButton buttonCheckEnvironment;
   private RTextScrollPane scriptScrollPane;
   private JButton buttonStop;
   private JComboBox comboScript;
@@ -89,19 +86,9 @@ public class ScriptPanel extends KafkaBasePanel {
 
     super.initialize();
 
-    Configuration.getEnvironmentList().forEach(comboEnvironment::addItem);
-    comboEnvironment.addActionListener(e -> {
-      boolean local = ((Environment) comboEnvironment.getSelectedItem()).getName().toLowerCase()
-          .contains("local");
-      dangerLabel.setVisible(!local);
-    });
-    dangerLabel.setVisible(false);
-
     buttonExecute.addActionListener(e -> asyncExecute());
 
     buttonStop.addActionListener(e -> stopAsyncTasks());
-
-    buttonCheckEnvironment.addActionListener(e -> asyncRetrieveTopics());
 
     cleanButton.addActionListener(e -> cleanEditor());
     copyButton.addActionListener(e -> copyToClipboard());
@@ -117,6 +104,16 @@ public class ScriptPanel extends KafkaBasePanel {
 
     comboScript.addActionListener(e -> loadResourceForScript());
     buttonOpenFileScript.addActionListener(e -> openFileForScript());
+  }
+
+  @Override
+  protected void showConnectionStatus(Boolean b) {
+
+  }
+
+  @Override
+  protected Environment getEnvironment() {
+    return null;
   }
 
   private void openFileForScript() {
@@ -138,7 +135,9 @@ public class ScriptPanel extends KafkaBasePanel {
       return;
     }
     ExecutionContext context = ExecutionContext.builder()
-        .environment(getEnvironment())
+        .environments(Configuration.getEnvironmentList()
+            .stream()
+            .collect(Collectors.toMap(Environment::getName, Function.identity())))
         .kafkaGenericClient(genericClient)
         .templateExecutor(scriptTemplateExecutor)
         .infoReportable(this)
@@ -192,7 +191,7 @@ public class ScriptPanel extends KafkaBasePanel {
     contentPane = new JPanel();
     contentPane.setLayout(new GridLayoutManager(5, 2, new Insets(10, 10, 10, 10), -1, -1));
     final JPanel panel1 = new JPanel();
-    panel1.setLayout(new GridLayoutManager(1, 5, new Insets(0, 0, 0, 0), -1, -1));
+    panel1.setLayout(new GridLayoutManager(1, 4, new Insets(0, 0, 0, 0), -1, -1));
     contentPane.add(panel1, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, 1, null, null, null, 0, false));
     buttonExecute = new JButton();
@@ -203,14 +202,8 @@ public class ScriptPanel extends KafkaBasePanel {
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
             GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     final Spacer spacer1 = new Spacer();
-    panel1.add(spacer1, new GridConstraints(0, 3, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+    panel1.add(spacer1, new GridConstraints(0, 2, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
         GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
-    dangerLabel = new JLabel();
-    dangerLabel.setIcon(new ImageIcon(getClass().getResource("/images/danger.png")));
-    dangerLabel.setText("");
-    dangerLabel.setToolTipText(this.$$$getMessageFromBundle$$$("messages", "tooltip.danger.not.local"));
-    panel1.add(dangerLabel, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
-        GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     buttonStop = new JButton();
     buttonStop.setEnabled(false);
     buttonStop.setIcon(new ImageIcon(getClass().getResource("/images/stop.png")));
@@ -219,40 +212,18 @@ public class ScriptPanel extends KafkaBasePanel {
     panel1.add(buttonStop, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     final JPanel panel2 = new JPanel();
-    panel2.setLayout(new GridLayoutManager(2, 3, new Insets(0, 0, 0, 0), -1, -1));
+    panel2.setLayout(new GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), -1, -1));
     contentPane.add(panel2,
         new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL,
             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
             GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(615, 40), null, 0, false));
     final JLabel label1 = new JLabel();
-    this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages", "label.environment"));
+    this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages", "label.script"));
     panel2.add(label1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
-        GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-    comboEnvironment = new JComboBox();
-    final DefaultComboBoxModel defaultComboBoxModel1 = new DefaultComboBoxModel();
-    comboEnvironment.setModel(defaultComboBoxModel1);
-    panel2.add(comboEnvironment,
-        new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
-            GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-    buttonCheckEnvironment = new JButton();
-    Font buttonCheckEnvironmentFont = this.$$$getFont$$$(null, -1, -1, buttonCheckEnvironment.getFont());
-    if (buttonCheckEnvironmentFont != null) {
-      buttonCheckEnvironment.setFont(buttonCheckEnvironmentFont);
-    }
-    buttonCheckEnvironment.setIcon(new ImageIcon(getClass().getResource("/images/check_grey.png")));
-    buttonCheckEnvironment.setText("");
-    buttonCheckEnvironment.setToolTipText(this.$$$getMessageFromBundle$$$("messages", "tooltip.check.connection"));
-    panel2.add(buttonCheckEnvironment,
-        new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
-            GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, new Dimension(24, 24),
-            new Dimension(24, 24), new Dimension(24, 24), 0, false));
-    final JLabel label2 = new JLabel();
-    this.$$$loadLabelText$$$(label2, this.$$$getMessageFromBundle$$$("messages", "label.script"));
-    panel2.add(label2, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
         GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     comboScript = new JComboBox();
     panel2.add(comboScript,
-        new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
+        new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
             GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     buttonOpenFileScript = new JButton();
     Font buttonOpenFileScriptFont = this.$$$getFont$$$(null, -1, -1, buttonOpenFileScript.getFont());
@@ -263,7 +234,7 @@ public class ScriptPanel extends KafkaBasePanel {
     buttonOpenFileScript.setText("");
     buttonOpenFileScript.setToolTipText(this.$$$getMessageFromBundle$$$("messages", "tooltip.open.script.file"));
     panel2.add(buttonOpenFileScript,
-        new GridConstraints(1, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
+        new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
             GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, new Dimension(24, 24),
             new Dimension(24, 24), new Dimension(24, 24), 0, false));
     final JPanel panel3 = new JPanel();
@@ -271,10 +242,10 @@ public class ScriptPanel extends KafkaBasePanel {
     contentPane.add(panel3, new GridConstraints(4, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
         GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
         null, null, null, 0, false));
-    final JLabel label3 = new JLabel();
-    label3.setIcon(new ImageIcon(getClass().getResource("/images/search.png")));
-    label3.setText("");
-    panel3.add(label3, BorderLayout.WEST);
+    final JLabel label2 = new JLabel();
+    label2.setIcon(new ImageIcon(getClass().getResource("/images/search.png")));
+    label2.setText("");
+    panel3.add(label2, BorderLayout.WEST);
     searchTextField = new JTextField();
     searchTextField.setText("");
     panel3.add(searchTextField, BorderLayout.CENTER);
@@ -446,18 +417,6 @@ public class ScriptPanel extends KafkaBasePanel {
   public Optional<JTextComponent> getCurrentEditor() {
     int index = tabbedPane.getSelectedIndex();
     return getUmpteenthEditor(index, infoTextPane, scriptEditor);
-  }
-
-  @Override
-  protected void showConnectionStatus(Boolean ok) {
-    buttonCheckEnvironment.setIcon(Optional.ofNullable(ok)
-        .map(b -> b ? iconCheckOk : iconCheckFail)
-        .orElse(iconCheckUndefined));
-  }
-
-  @Override
-  protected Environment getEnvironment() {
-    return (Environment) comboEnvironment.getSelectedItem();
   }
 
   public InfoTextPane getInfoTextPane() {

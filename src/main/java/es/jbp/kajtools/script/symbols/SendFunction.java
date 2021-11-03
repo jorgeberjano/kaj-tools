@@ -21,13 +21,14 @@ public class SendFunction extends AbstractFunction {
 
   @Override
   public Value evaluate(List<Value> parameterList) throws ExpressionException {
-    String topic = getParameterAsString(parameterList, 0, "");
-    String key = getParameterAsString(parameterList, 1, "");
-    String value = getParameterAsString(parameterList, 2, "");
-    String headers = getParameterAsString(parameterList, 3, "");
+    String environment = getParameterAsString(parameterList, 0, "");
+    String topic = getParameterAsString(parameterList, 1, "");
+    String key = getParameterAsString(parameterList, 2, "");
+    String value = getParameterAsString(parameterList, 3, "");
+    String headers = getParameterAsString(parameterList, 4, "");
     GenericClient kafkaGenericClient = context.getKafkaGenericClient();
     try {
-      kafkaGenericClient.sendFromJson(context.getEnvironment(), topic, key, value, headers);
+      kafkaGenericClient.sendFromJson(context.getEnvironment(environment), topic, key, value, headers);
     } catch (KajException e) {
       throw new ExpressionException("No se pudo enviar el mensaje al topid " + topic, e);
     }

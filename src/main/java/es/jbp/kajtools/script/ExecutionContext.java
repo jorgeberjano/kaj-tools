@@ -5,6 +5,7 @@ import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.kafka.GenericClient;
 import es.jbp.kajtools.ui.interfaces.InfoReportable;
 import es.jbp.kajtools.util.TemplateExecutor;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.Builder;
 import lombok.Data;
@@ -14,7 +15,7 @@ import lombok.Data;
 public class ExecutionContext {
 
   private GenericClient kafkaGenericClient;
-  private Environment environment;
+  private Map<String, Environment> environments;
   private TemplateExecutor templateExecutor;
   private InfoReportable infoReportable;
   private AtomicBoolean abort;
@@ -23,7 +24,7 @@ public class ExecutionContext {
     templateExecutor.assignVariableValue(variableName, value);
   }
 
-//  public String getVariableValue(String variableName) {
-//    return templateExecutor.getVariableValue(variableName);
-//  }
+  public Environment getEnvironment(String environmentName) {
+    return environments.get(environmentName);
+  }
 }

@@ -15,7 +15,9 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
+import org.springframework.util.concurrent.ListenableFuture;
 
 @Component
 public class GenericClient extends AbstractClient<GenericRecord, GenericRecord> {
@@ -82,12 +84,13 @@ public class GenericClient extends AbstractClient<GenericRecord, GenericRecord> 
       throw new KajException("Error al obtener el esquema del Value. Causa: " + ex.getMessage());
     }
 
-    GenericRecord key, value;
+    GenericRecord key;
     try {
       key = composeRecord(keySchema, keyJson);
     } catch (Exception ex) {
       throw new KajException("Error al crear el GenericRecord de la Key. Causa: " + ex.getMessage());
     }
+    GenericRecord value;
     try {
       value = composeRecord(valueSchema, valueJson);
     } catch (Exception ex) {
@@ -101,9 +104,11 @@ public class GenericClient extends AbstractClient<GenericRecord, GenericRecord> 
       throw new KajException("Error al crear el Template de Kafka. Causa: " + ex.getMessage());
     }
     try {
-      senderTemplate.send(topic, key, value);
+      var futureResult = senderTemplate.send(topic, key, value);
+      var result = futureResult.get();
+      //System.out.println(result);
     } catch (Exception ex) {
-      throw new KajException("Error al enviar el mensaje al topic. Causa: " + ex.getMessage());
+      throw new KajException("Error al enviar el mensaje al topic.", ex);
     }
   }
 

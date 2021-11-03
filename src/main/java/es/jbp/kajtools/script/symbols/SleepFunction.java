@@ -3,7 +3,6 @@ package es.jbp.kajtools.script.symbols;
 import es.jbp.expressions.ExpressionException;
 import es.jbp.expressions.Value;
 import es.jbp.kajtools.script.ExecutionContext;
-import es.jbp.kajtools.script.exception.ScriptExecutionException;
 import es.jbp.kajtools.templates.symbols.AbstractFunction;
 import es.jbp.kajtools.ui.interfaces.InfoReportable;
 import java.util.List;

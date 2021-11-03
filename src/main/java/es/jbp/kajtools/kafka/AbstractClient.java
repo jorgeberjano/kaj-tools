@@ -119,7 +119,7 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
       throw new KajException(e.getMessage());
     }
     // TODO: hacer algo con los metadatos
-    System.out.println(recordMetadata);
+    System.out.println("Response metadata" + recordMetadata);
   }
 
 

@@ -121,6 +121,11 @@ public abstract class KafkaBasePanel extends BasePanel {
     configActionListener.addActionListener(e -> showTopicConfig(tableSelectorPanel));
     popupMenu.add(configActionListener);
 
+    var createActionListener = new JMenuItem("Crear");
+    createActionListener.addActionListener(e -> asyncCreateTopic());
+    popupMenu.add(createActionListener);
+    tableSelectorPanel.setTablePopupMenu(popupMenu);
+
     var deleteActionListener = new JMenuItem("Borrar");
     deleteActionListener.addActionListener(e -> asyncDeleteTopic(tableSelectorPanel));
     popupMenu.add(deleteActionListener);
@@ -165,9 +170,37 @@ public abstract class KafkaBasePanel extends BasePanel {
     }
     printMessage(InfoReportable.buildActionMessage(
         "Borrando el topic " + topicName + " del entono " + environment.getName()));
+
+    // TODO: hacer esto asincrono
     var kafka = new KafkaAdminService();
     try {
       kafka.deleteTopic(topicName, environment);
+      printMessage(InfoReportable.buildSuccessfulMessage("Se ha borrado el topic correctamente"));
+    } catch (KajException ex) {
+      printException(ex);
+    }
+  }
+
+  protected void asyncCreateTopic() {
+
+    var createTopicPanel = new CreateTopicPanel();
+    showInModalDialog(createTopicPanel, "Topics", null);
+    String topicName = createTopicPanel.getTopic();
+    if (StringUtils.isBlank(topicName)) {
+        return;
+    }
+    Optional<Integer> partitions = createTopicPanel.getPartitions();
+    Optional<Short> replicas = createTopicPanel.getReplicas();
+
+    var environment = getEnvironment();
+    printMessage(InfoReportable.buildActionMessage(
+        "Creando el topic " + topicName + " del entono " + environment.getName()));
+
+    // TODO: hacer esto asincrono
+    var kafka = new KafkaAdminService();
+    try {
+      kafka.createTopic(topicName, partitions, replicas, environment);
+      printMessage(InfoReportable.buildSuccessfulMessage("Se ha creado el topic correctamente"));
     } catch (KajException ex) {
       printException(ex);
     }
