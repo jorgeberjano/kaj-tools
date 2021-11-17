@@ -1,5 +1,6 @@
 package es.jbp.kajtools.configuration;
 
+import akka.actor.ActorSystem;
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 import es.jbp.kajtools.IMessageClient;
@@ -78,7 +79,7 @@ public class SpringConfig {
   }
 
   @Bean MainForm mainForm() {
-    return new MainForm(componentFactory, schemaRegistryService, kafkaAdminService, clientList, i18nService);
+    return new MainForm(componentFactory, schemaRegistryService, kafkaAdminService, clientList, i18nService, actorSystem());
   }
 
   @Bean
@@ -103,5 +104,10 @@ public class SpringConfig {
       }
     }
     return null;
+  }
+
+  @Bean
+  public ActorSystem actorSystem() {
+    return ActorSystem.create("kaj-actor-system");
   }
 }

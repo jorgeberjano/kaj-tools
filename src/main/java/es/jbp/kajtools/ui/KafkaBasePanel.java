@@ -1,5 +1,6 @@
 package es.jbp.kajtools.ui;
 
+import akka.actor.ActorSystem;
 import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.IMessageClient;
 import es.jbp.kajtools.KajException;
@@ -36,6 +37,7 @@ public abstract class KafkaBasePanel extends BasePanel {
   protected final List<IMessageClient> clientList;
   protected final ISchemaRegistryService schemaRegistryService;
   protected final KafkaAdminService kafkaAdminService;
+  protected final ActorSystem actorSystem;
 
   protected final ImageIcon iconCheckOk = new ImageIcon(getClass().getResource("/images/check_green.png"));
   protected final ImageIcon iconCheckFail = new ImageIcon(getClass().getResource("/images/check_red.png"));
@@ -48,11 +50,13 @@ public abstract class KafkaBasePanel extends BasePanel {
       ISchemaRegistryService schemaRegistryService,
       KafkaAdminService kafkaAdminService,
       ComponentFactory componentFactory,
-      I18nService i18nService) {
+      I18nService i18nService,
+      ActorSystem actorSystem) {
     super(componentFactory, i18nService);
     this.clientList = clientList;
     this.schemaRegistryService = schemaRegistryService;
     this.kafkaAdminService = kafkaAdminService;
+    this.actorSystem = actorSystem;
   }
 
   protected void asyncRetrieveTopics() {

@@ -12,8 +12,6 @@ public class KajToolsApp {
 
   public void showWindow(String title) {
 
-    ActorSystem system = ActorSystem.create("kaj-actor-system");
-
     if (title != null) {
       mainFrame.setTitle(title);
     }

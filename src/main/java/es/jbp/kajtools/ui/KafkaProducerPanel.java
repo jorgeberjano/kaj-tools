@@ -1,5 +1,6 @@
 package es.jbp.kajtools.ui;
 
+import akka.actor.ActorSystem;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
@@ -105,8 +106,9 @@ public class KafkaProducerPanel extends KafkaBasePanel {
       ISchemaRegistryService schemaRegistryService,
       KafkaAdminService kafkaAdmin,
       ComponentFactory componentFactory,
-      I18nService i18nService) {
-    super(clientList, schemaRegistryService, kafkaAdmin, componentFactory, i18nService);
+      I18nService i18nService,
+      ActorSystem actorSystem) {
+    super(clientList, schemaRegistryService, kafkaAdmin, componentFactory, i18nService, actorSystem);
     this.schemaRegistryService = schemaRegistryService;
 
     $$$setupUI$$$();
@@ -162,6 +164,8 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     IntStream.rangeClosed(1, MAXIMUM_QUANTITY).forEach(quantityComboBox::addItem);
 
     enableTextSearch(searchTextField, valueEditor, keyEditor, headersEditor, variablesEditor);
+
+
   }
 
   private void findTopic() {
