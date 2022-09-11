@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="es.jbp.kajtools.ui.RSyntaxPanel">
+  <grid id="27dc6" binding="mainPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+    <constraints>
+      <xy x="20" y="20" width="500" height="400"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <scrollpane id="c3957" class="org.fife.ui.rtextarea.RTextScrollPane" binding="scrollPane" custom-create="true">
+        <constraints border-constraint="Center"/>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="a4193" class="org.fife.ui.rsyntaxtextarea.RSyntaxTextArea" binding="syntaxTextArea" custom-create="true">
+            <constraints/>
+            <properties/>
+          </component>
+        </children>
+      </scrollpane>
+      <grid id="d6cb6" layout-manager="BorderLayout" hgap="0" vgap="0">
+        <constraints border-constraint="South"/>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="45fbc" class="javax.swing.JLabel">
+            <constraints border-constraint="West"/>
+            <properties>
+              <icon value="images/search.png"/>
+              <text value=""/>
+            </properties>
+          </component>
+          <component id="4490" class="javax.swing.JTextField" binding="searchTextField">
+            <constraints border-constraint="Center"/>
+            <properties>
+              <text value=""/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+    </children>
+  </grid>
+</form>

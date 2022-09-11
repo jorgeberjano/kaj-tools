@@ -1,0 +1,16 @@
+{
+  "nombre": "pepe",
+  "direccion": {
+    "via": "rue del percebe",
+    "numero": 13
+  },
+  "puntuacion": 33.33333,
+  "half": 50,
+  "numero": 20,
+  "hola": "mundo",
+  "holamundo": "hola mundo",
+  "entero19": 19,
+  "real19": 19.5,
+  "string19": "19.0 es diecinueve",
+  "variable": "valor"
+}

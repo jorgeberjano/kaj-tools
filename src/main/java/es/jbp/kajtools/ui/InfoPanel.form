@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="es.jbp.kajtools.ui.InfoPanel">
+  <grid id="27dc6" binding="mainPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+    <constraints>
+      <xy x="20" y="20" width="500" height="400"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <scrollpane id="8eebd">
+        <constraints border-constraint="Center"/>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="8107c" class="javax.swing.JTextPane" binding="infoTextPane" custom-create="true">
+            <constraints/>
+            <properties>
+              <background color="-13948117"/>
+              <caretColor color="-1"/>
+              <editable value="false"/>
+              <font name="Consolas" size="12"/>
+              <foreground color="-1"/>
+              <text value=""/>
+            </properties>
+            <clientProperties>
+              <charset class="java.lang.String" value=""/>
+            </clientProperties>
+          </component>
+        </children>
+      </scrollpane>
+      <grid id="26c3e" layout-manager="BorderLayout" hgap="0" vgap="0">
+        <constraints border-constraint="South"/>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="68ff8" class="javax.swing.JLabel">
+            <constraints border-constraint="West"/>
+            <properties>
+              <icon value="images/search.png"/>
+              <text value=""/>
+            </properties>
+          </component>
+          <component id="8121a" class="javax.swing.JTextField" binding="searchTextField">
+            <constraints border-constraint="Center"/>
+            <properties>
+              <text value=""/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+    </children>
+  </grid>
+</form>

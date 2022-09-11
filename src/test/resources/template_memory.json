@@ -1,0 +1,8 @@
+{
+  "identifier": ${set("uuid_aleatorio", uuid())},
+  "random": ${set("x", rand(100) / 10)},
+  "country": ${set("pais", fileLine("sample/countries.txt"))},
+  "identifier_bis": ${get("uuid_aleatorio")},
+  "random_bis": ${get("x")},
+  "country_bis": ${get("pais")}
+}
