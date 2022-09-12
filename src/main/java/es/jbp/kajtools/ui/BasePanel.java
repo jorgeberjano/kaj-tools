@@ -42,12 +42,12 @@ public abstract class BasePanel implements InfoReportable, SearchablePanel {
 
   private final Map<String, InfoDocument> linksMap = new HashMap<>();
 
-  protected ComponentFactory componentFactory;
+  protected UiComponentCreator componentFactory;
   protected final I18nService i18nService;
 
   private String currentDirectory;
 
-  protected BasePanel(ComponentFactory componentFactory, I18nService i18nService) {
+  protected BasePanel(UiComponentCreator componentFactory, I18nService i18nService) {
     this.componentFactory = componentFactory;
     this.i18nService = i18nService;
     currentDirectory = new File(System.getProperty("user.home")).getPath();

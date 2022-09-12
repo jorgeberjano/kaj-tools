@@ -3,6 +3,7 @@ package es.jbp.kajtools.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.google.gson.Gson;
@@ -14,17 +15,26 @@ import java.util.Map;
 
 public class JsonUtils {
 
+  private static ObjectMapper objectMapper;
+
+  {
+    objectMapper = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .configure(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES, false)
+            .configure(DeserializationFeature.FAIL_ON_NUMBERS_FOR_ENUMS, false)
+            .configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false)
+            .setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+  }
+
   private JsonUtils() {
   }
 
-  private static ObjectMapper getObjectMapper() {
-    return new ObjectMapper()
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        .configure(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES, false)
-        .configure(DeserializationFeature.FAIL_ON_NUMBERS_FOR_ENUMS, false)
-        .configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false)
-        .setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+  public static void setObjectMapper(ObjectMapper objectMapper) {
+    JsonUtils.objectMapper = objectMapper;
+  }
 
+  private static ObjectMapper getObjectMapper() {
+    return objectMapper;
   }
 
   public static <T> T createFromJson(String json, Class<T> valueType) throws IOException {
@@ -36,7 +46,7 @@ public class JsonUtils {
   }
 
   public static String toJson(Object object) throws JsonProcessingException {
-    return getObjectMapper().writeValueAsString(object);
+    return getObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(object);
   }
 
   public static boolean isArray(String json) {
@@ -47,14 +57,11 @@ public class JsonUtils {
     if (json == null) {
       return null;
     }
-    Gson gson = new GsonBuilder()
-        .setPrettyPrinting()
-        .serializeNulls()
-        .create();
+
     try {
-      JsonElement jsonElement = gson.fromJson(json, JsonElement.class);
-      return gson.toJson(jsonElement);
-    } catch (Exception e) {
+      JsonNode jsonNode = getObjectMapper().readTree(json);
+      return toJson(jsonNode);
+    } catch (JsonProcessingException e) {
       return json;
     }
   }

@@ -47,7 +47,7 @@ public abstract class KafkaBasePanel extends BasePanel {
   protected KafkaBasePanel(List<IMessageClient> clientList,
       ISchemaRegistryService schemaRegistryService,
       KafkaAdminService kafkaAdminService,
-      ComponentFactory componentFactory,
+      UiComponentCreator componentFactory,
       I18nService i18nService) {
     super(componentFactory, i18nService);
     this.clientList = clientList;

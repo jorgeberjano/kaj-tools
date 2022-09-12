@@ -15,6 +15,7 @@ import es.jbp.kajtools.schemaregistry.ISchemaRegistryService;
 import es.jbp.kajtools.schemaregistry.ISchemaRegistryService.SubjectType;
 import es.jbp.kajtools.ui.InfoDocument.Type;
 import es.jbp.kajtools.ui.interfaces.InfoReportable;
+import es.jbp.kajtools.util.JsonUtils;
 import es.jbp.kajtools.util.ResourceUtil;
 import es.jbp.kajtools.util.TemplateExecutor;
 import java.awt.BorderLayout;
@@ -104,7 +105,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
   public KafkaProducerPanel(List<IMessageClient> clientList,
       ISchemaRegistryService schemaRegistryService,
       KafkaAdminService kafkaAdmin,
-      ComponentFactory componentFactory,
+      UiComponentCreator componentFactory,
       I18nService i18nService) {
     super(clientList, schemaRegistryService, kafkaAdmin, componentFactory, i18nService);
     this.schemaRegistryService = schemaRegistryService;
@@ -450,7 +451,8 @@ public class KafkaProducerPanel extends KafkaBasePanel {
       enqueueMessage(InfoReportable.buildErrorMessage("El esquema del " + objectName + " registrado es null"));
       return SchemaCheckStatus.NOT_CHECKED;
     }
-
+    registeredSchema = JsonUtils.formatJson(registeredSchema);
+    avroSchema = JsonUtils.formatJson(avroSchema);
     if (!registeredSchema.equals(avroSchema)) {
       enqueueMessage(InfoReportable.buildErrorMessage("Los esquemas del " + objectName + " no coinciden"));
       enqueueTextDifferences("AVRO", avroSchema, "Schema Registry", registeredSchema);

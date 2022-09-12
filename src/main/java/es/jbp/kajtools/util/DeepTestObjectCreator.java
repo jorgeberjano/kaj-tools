@@ -1,11 +1,17 @@
 package es.jbp.kajtools.util;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashSet;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.apache.avro.reflect.ReflectData;
 import org.apache.commons.lang3.StringUtils;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
@@ -21,12 +27,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
+
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 
 /**
  * Clase para crear objetos en profundidad con valores arbitrarios
+ *
  * @author Jorge Berjano
  */
 public class DeepTestObjectCreator {
@@ -78,6 +86,10 @@ public class DeepTestObjectCreator {
                 return new java.math.BigDecimal(99);
             } else if (clazz.isEnum()) {
                 return clazz.getEnumConstants()[0];
+            } else if (LocalDate.class.equals(clazz)) {
+                return LocalDate.now();
+            } else if (LocalDateTime.class.equals(clazz)) {
+                return LocalDateTime.now();
             } else if (isAvroGenerated(clazz)) {
                 return createAvroObject(clazz, attributeName);
             } else {
@@ -224,7 +236,7 @@ public class DeepTestObjectCreator {
         return createObject(clazz, attributeName);
     }
 
-    private boolean isAvroGenerated(Class clazz) {
+    private static boolean isAvroGenerated(Class clazz) {
         Annotation annotationAvroGenerated = clazz.getAnnotation(org.apache.avro.specific.AvroGenerated.class);
         return annotationAvroGenerated != null;
     }
@@ -266,12 +278,12 @@ public class DeepTestObjectCreator {
         return collection;
     }
 
-    private Object createArrayObject(Type type, String attributeName) {        
+    private Object createArrayObject(Type type, String attributeName) {
         if (type instanceof Class) {
             Class elementType = ((Class) type).getComponentType();
-            Object array =  Array.newInstance(elementType, ELEMENT_COUNT);
+            Object array = Array.newInstance(elementType, ELEMENT_COUNT);
             int length = Array.getLength(array);
-            for (int i = 0; i < length; i++) {        
+            for (int i = 0; i < length; i++) {
                 Object element = createObject(elementType, attributeName + "[]");
                 Array.set(array, i, element);
             }
@@ -316,7 +328,7 @@ public class DeepTestObjectCreator {
         }
     }
 
-    public String getJsonFromObject(Object obj) {
+    public String getJsonFromObject(Object obj) throws JsonProcessingException {
         if (obj == null) {
             return "{}";
         }
@@ -334,13 +346,15 @@ public class DeepTestObjectCreator {
 //                return new JsonPrimitive(value.getValue());
 //            }
 //        };
-        Gson gson = new GsonBuilder()
-            .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-            .setPrettyPrinting()
-            .serializeNulls()
-//            .registerTypeAdapter(bigDecimalType, bigDecimalSerializer)
-            .create();
-        return gson.toJson(obj);
+        return JsonUtils.toJson(obj);
+
+//        Gson gson = new GsonBuilder()
+//            .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+//            .setPrettyPrinting()
+//            .serializeNulls()
+////            .registerTypeAdapter(bigDecimalType, bigDecimalSerializer)
+//            .create();
+//        return gson.toJson(obj);
     }
 
     public List<String> getErrors() {
@@ -357,8 +371,8 @@ public class DeepTestObjectCreator {
             return null;
         }
         ObjectMapper objectMapper = new ObjectMapper()
-            .setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
-            .configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
+                .setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
+                .configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
 
         Object object;
         try {
@@ -437,7 +451,7 @@ public class DeepTestObjectCreator {
         }
         Class clazz = object.getClass();
         if (!isAvroGenerated(clazz)) {
-            return "";
+            return extractAvroSchemaFromPojo(object);
         }
         Method buildMethod;
         try {
@@ -460,5 +474,10 @@ public class DeepTestObjectCreator {
             reportError("El método getSchema() de " + clazz.getName() + " no devuelve un objeto de clase Schema", null);
             return "";
         }
+    }
+
+    private String extractAvroSchemaFromPojo(Object object) {
+        var schema = ReflectData.get().getSchema(object.getClass());
+        return schema.toString(true);
     }
 }

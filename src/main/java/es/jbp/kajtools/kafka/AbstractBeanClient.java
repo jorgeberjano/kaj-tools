@@ -1,51 +1,49 @@
 package es.jbp.kajtools.kafka;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Lists;
 import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.IMessageClient;
 import es.jbp.kajtools.KajException;
-import es.jbp.kajtools.util.AvroUtils;
 import es.jbp.kajtools.util.DeepTestObjectCreator;
 import es.jbp.kajtools.util.JsonUtils;
 import es.jbp.kajtools.util.ResourceUtil;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
-import java.io.IOException;
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.reflect.ReflectData;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
+import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
+import org.springframework.util.concurrent.ListenableFutureCallback;
+import tech.allegro.schema.json2avro.converter.JsonAvroConverter;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
-public abstract class AbstractClient<K, V> implements IMessageClient {
+public abstract class AbstractBeanClient<K, V> implements IMessageClient {
 
   private final Class<K> keyType;
   private final Class<V> valueType;
+  private final Schema keySchema;
+  private final Schema valueSchema;
 
-  protected AbstractClient(Class<K> keyType, Class<V> valueType) {
+  protected AbstractBeanClient(Class<K> keyType, Class<V> valueType) {
     this.keyType = keyType;
     this.valueType = valueType;
+
+    keySchema = ReflectData.get().getSchema(keyType);
+    valueSchema = ReflectData.get().getSchema(valueType);
   }
 
   @Override
@@ -60,71 +58,55 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
 
   @Override
   public void sendFromJson(Environment environment, String topic, String keyJson, String valueJson, String headers)
-      throws KajException {
+          throws KajException {
 
-    try (Producer<K, V> producer = createProducer(environment)) {
-      sendDataFromJson(producer, topic, keyJson, valueJson, headers);
+    GenericRecord key;
+    try {
+      K k = JsonUtils.createFromJson(keyJson, keyType);
+      key = toGenericRecord(k, keyType, keySchema);
+    } catch (Exception ex) {
+      throw new KajException("Error al crear el GenericRecord de la Key. Causa: " + ex.getMessage());
+    }
+    GenericRecord value;
+    try {
+      V v = JsonUtils.createFromJson(valueJson, valueType);
+      value = toGenericRecord(v, valueType, valueSchema);
+    } catch (Exception ex) {
+      throw new KajException("Error al crear el GenericRecord del Value. Causa: " + ex.getMessage());
+    }
+
+    KafkaTemplate<GenericRecord, GenericRecord> senderTemplate;
+    try {
+      senderTemplate = createTemplate(environment);
+    } catch (Exception ex) {
+      throw new KajException("Error al crear el Template de Kafka. Causa: " + ex.getMessage());
+    }
+    try {
+      var futureResult = senderTemplate.send(topic, key, value);
+
+      futureResult.addCallback(new ListenableFutureCallback<SendResult<GenericRecord, GenericRecord>>() {
+        @Override
+        public void onFailure(Throwable throwable) {
+          System.err.println(throwable);
+        }
+
+        @Override
+        public void onSuccess(SendResult<GenericRecord, GenericRecord> genericRecordGenericRecordSendResult) {
+          System.out.println("ENVIO CORRECTO!!!");
+        }
+      });
+      //var result = futureResult.get();
+      //var record = result.getProducerRecord();
+
     } catch (Throwable ex) {
-      throw new KajException("No se ha podido realizar el envío. ", ex);
+      throw new KajException("Error al enviar el mensaje al topic.", ex);
     }
   }
 
-  private Producer<K, V> createProducer(Environment environment) {
-    return new KafkaProducer<>(createProducerProperties(environment));
+  private KafkaTemplate<GenericRecord, GenericRecord> createTemplate(Environment environment) {
+    return new KafkaTemplate<>(
+            new DefaultKafkaProducerFactory<>(createProducerProperties(environment)));
   }
-
-  private void sendDataFromJson(Producer<K, V> producer, String topic,
-      String keyJson, String valueJson, String headers) throws KajException {
-    List<K> keyList;
-    if (JsonUtils.isArray(keyJson)) {
-      keyList = buildKeyListFromJson(keyJson);
-    } else {
-      keyList = Collections.singletonList(buildKeyFromJson(keyJson));
-    }
-    List<V> valueList;
-    if (JsonUtils.isArray(keyJson)) {
-      valueList = buildValueListFromJson(valueJson);
-    } else {
-      valueList = Collections.singletonList(buildValueFromJson(valueJson));
-    }
-    Properties headersProperties = new Properties();
-    try {
-      headersProperties.load(new StringReader(headers));
-    } catch (IOException e) {
-      throw new KajException("No se han podido parsear las cabeceras", e);
-    }
-    sendDataList(producer, topic, keyList, valueList, headersProperties);
-  }
-
-  protected void sendDataList(Producer<K, V> producer, String topic, List<K> keyList, List<V> valueList,
-      Properties headers)
-      throws KajException {
-    int n = Math.min(keyList.size(), valueList.size());
-
-    for (int i = 0; i < n; i++) {
-      sendData(producer, topic, keyList.get(i), valueList.get(i), headers);
-    }
-  }
-
-  private void sendData(Producer<K, V> producer, String topic, K key, V value, Properties headers)
-      throws KajException {
-    final ProducerRecord<K, V> producerRecord = new ProducerRecord<>(topic, key, value);
-
-    headers.forEach((key1, value1) -> producerRecord.headers().add(Objects.toString(key1),
-        Objects.toString(value1).getBytes(StandardCharsets.UTF_8)));
-
-    Future<RecordMetadata> futureResponse = producer.send(producerRecord);
-
-    RecordMetadata recordMetadata = null;
-    try {
-      recordMetadata = futureResponse.get();
-    } catch (Exception e) {
-      throw new KajException(e.getMessage());
-    }
-    // TODO: hacer algo con los metadatos
-    System.out.println("Response metadata" + recordMetadata);
-  }
-
 
   @Override
   public String getValueSchema(String json) throws KajException {
@@ -154,31 +136,11 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
     }
   }
 
-  protected List<K> buildKeyListFromJson(String keyArrayJson) throws KajException {
-    try {
-      return JsonUtils.createFromJson(keyArrayJson, new TypeReference<List<K>>() {
-      });
-    } catch (Exception ex) {
-      throw new KajException(
-          "No se puede generar la lista de Keys desde el JSON", ex);
-    }
-  }
-
   private V buildValueFromJson(String valueJson) throws KajException {
     try {
       return JsonUtils.createFromJson(valueJson, valueType);
     } catch (Exception ex) {
       throw new KajException("No se puede generar el Value desde el JSON", ex);
-    }
-  }
-
-  protected List<V> buildValueListFromJson(String valueArrayJson) throws KajException {
-    try {
-      return JsonUtils.createFromJson(valueArrayJson, new TypeReference<List<V>>() {
-      });
-    } catch (Exception ex) {
-      throw new KajException(
-          "No se puede generar la lista de Values desde el JSON", ex);
     }
   }
 
@@ -228,6 +190,12 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
 
     putNotNull(props, ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
     putNotNull(props, ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
+
+    //props.put(KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG, true);
+
+    props.put(ProducerConfig.TRANSACTION_TIMEOUT_CONFIG, 4000);
+    props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 4000);
+    props.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 6000);
 
     return props;
   }
@@ -296,4 +264,23 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
     }
   }
 
+  private <T> GenericRecord toGenericRecord(T object, Class<T> clazz, Schema schema) throws IOException {
+
+//    ReflectDatumWriter<T> datumWriter = new ReflectDatumWriter<T>(schema);
+//    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+//    Encoder keyEncoder = EncoderFactory.get().binaryEncoder(outputStream, null);
+//    datumWriter.write(object, keyEncoder);
+//    keyEncoder.flush();
+//    ReflectDatumReader<GenericRecord> reader = new ReflectDatumReader<>(schema);
+//    return reader.read(null,
+//            DecoderFactory.get().binaryDecoder(outputStream.toByteArray(),null));
+
+    String json = JsonUtils.toJson(object);
+    JsonAvroConverter avroConverter = new JsonAvroConverter();
+    GenericData.Record record = avroConverter.convertToGenericDataRecord(json.getBytes(), schema);
+    return record;
+  }
+
+
 }
+

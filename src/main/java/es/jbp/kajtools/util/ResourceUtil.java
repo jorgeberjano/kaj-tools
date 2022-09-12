@@ -3,12 +3,8 @@ package es.jbp.kajtools.util;
 import es.jbp.kajtools.ui.JsonGeneratorPanel;
 import io.micrometer.core.instrument.util.IOUtils;
 import io.micrometer.core.instrument.util.StringUtils;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+
+import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -36,13 +32,15 @@ public class ResourceUtil {
 
   public static List<String> readResourceStringList(String resourceName) {
 
-    InputStream inputStream = JsonGeneratorPanel.class.getClassLoader()
-        .getResourceAsStream(resourceName);
-    if (inputStream == null) {
+    try (InputStream inputStream = JsonGeneratorPanel.class.getClassLoader().getResourceAsStream(resourceName)) {
+      if (inputStream == null) {
+        return Collections.emptyList();
+      }
+      return new BufferedReader(new InputStreamReader(inputStream,
+              StandardCharsets.UTF_8)).lines().collect(Collectors.toList());
+    } catch (IOException ex) {
       return Collections.emptyList();
     }
-    return new BufferedReader(new InputStreamReader(inputStream,
-        StandardCharsets.UTF_8)).lines().collect(Collectors.toList());
   }
 
   public static InputStream getResourceStream(String resourceName) {

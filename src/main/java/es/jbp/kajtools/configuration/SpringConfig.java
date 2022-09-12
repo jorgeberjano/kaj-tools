@@ -6,7 +6,7 @@ import es.jbp.kajtools.IMessageClient;
 import es.jbp.kajtools.KajToolsApp;
 import es.jbp.kajtools.i18n.I18nService;
 import es.jbp.kajtools.kafka.KafkaAdminService;
-import es.jbp.kajtools.ui.ComponentFactory;
+import es.jbp.kajtools.ui.UiComponentCreator;
 import es.jbp.kajtools.ui.KafkaProducerPanel;
 import es.jbp.kajtools.ui.MainForm;
 import es.jbp.kajtools.schemaregistry.SchemaRegistryService;
@@ -28,8 +28,6 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class SpringConfig {
-  @Autowired
-  private ComponentFactory componentFactory;
 
   @Autowired
   private SchemaRegistryService schemaRegistryService;
@@ -78,7 +76,7 @@ public class SpringConfig {
   }
 
   @Bean MainForm mainForm() {
-    return new MainForm(componentFactory, schemaRegistryService, kafkaAdminService, clientList, i18nService);
+    return new MainForm(new UiComponentCreator(theme()), schemaRegistryService, kafkaAdminService, clientList, i18nService);
   }
 
   @Bean

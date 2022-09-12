@@ -23,7 +23,7 @@ public class MainForm {
 
   private final SchemaRegistryService schemaRegistryService;
   private final KafkaAdminService kafkaAdmin;
-  private final ComponentFactory componentFactory;
+  private final UiComponentCreator componentFactory;
   private final List<IMessageClient> clientList;
   private final I18nService i18nService;
 
@@ -36,11 +36,11 @@ public class MainForm {
   private JPanel panelConsumer;
   private JPanel panelScript;
 
-  public MainForm(ComponentFactory componentFactory,
-      SchemaRegistryService schemaRegistryService,
-      KafkaAdminService kafkaAdmin,
-      List<IMessageClient> clientList,
-      I18nService i18nService) {
+  public MainForm(UiComponentCreator componentFactory,
+                  SchemaRegistryService schemaRegistryService,
+                  KafkaAdminService kafkaAdmin,
+                  List<IMessageClient> clientList,
+                  I18nService i18nService) {
     this.componentFactory = componentFactory;
     this.schemaRegistryService = schemaRegistryService;
     this.kafkaAdmin = kafkaAdmin;

@@ -105,7 +105,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   public SchemaRegistryPanel(List<IMessageClient> clientList,
       SchemaRegistryService schemaRegistryService,
       KafkaAdminService kafkaAdminService,
-      ComponentFactory componentFactory,
+      UiComponentCreator componentFactory,
       I18nService i18nService) {
     super(clientList, schemaRegistryService, kafkaAdminService, componentFactory, i18nService);
 

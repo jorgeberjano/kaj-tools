@@ -78,7 +78,7 @@ public class ScriptPanel extends KafkaBasePanel {
   public ScriptPanel(List<IMessageClient> clientList,
       ISchemaRegistryService schemaRegistryService,
       KafkaAdminService kafkaAdmin,
-      ComponentFactory componentFactory,
+      UiComponentCreator componentFactory,
       I18nService i18nService) {
     super(clientList, schemaRegistryService, kafkaAdmin, componentFactory, i18nService);
 

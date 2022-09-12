@@ -7,7 +7,6 @@ import java.awt.Window;
 import java.util.Optional;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
-import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -18,7 +17,7 @@ import org.fife.ui.rtextarea.RTextScrollPane;
 
 public class RSyntaxPanel implements DialogueablePanel, SearchablePanel {
 
-  private final ComponentFactory componentFactory;
+  private final UiComponentCreator componentFactory;
   private RTextScrollPane scrollPane;
   private RSyntaxTextArea syntaxTextArea;
   @Getter
@@ -28,7 +27,7 @@ public class RSyntaxPanel implements DialogueablePanel, SearchablePanel {
 
 
 
-  public RSyntaxPanel(ComponentFactory componentFactory) {
+  public RSyntaxPanel(UiComponentCreator componentFactory) {
     this.componentFactory = componentFactory;
 
     $$$setupUI$$$();

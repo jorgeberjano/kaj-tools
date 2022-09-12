@@ -125,7 +125,7 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
   public KafkaConsumerPanel(List<IMessageClient> clientList,
       SchemaRegistryService schemaRegistryService,
       KafkaAdminService kafkaInvestigator,
-      ComponentFactory componentFactory,
+      UiComponentCreator componentFactory,
       I18nService i18nService) {
 
     super(clientList, schemaRegistryService, kafkaInvestigator, componentFactory, i18nService);
