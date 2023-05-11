@@ -10,6 +10,10 @@ public interface ISchemaRegistryService {
     key, value
   }
 
+  List<String> getSubjects(Environment environment) throws KajException;
+
+  void deleteSubject(String subject, Environment environment) throws KajException;
+
   default String getTopicKeySchema(String topic, Environment environment) throws KajException {
     return getLatestTopicSchema(topic, SubjectType.key, environment);
   }

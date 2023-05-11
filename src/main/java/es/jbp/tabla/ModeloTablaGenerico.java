@@ -1,6 +1,8 @@
 package es.jbp.tabla;
 
 import es.jbp.kajtools.reflexion.Reflexion;
+import org.apache.commons.lang3.StringUtils;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -109,7 +111,11 @@ public class ModeloTablaGenerico<T> extends ModeloTablaAbstracto {
             return null;
         }
 
-        return obtenerValorAtributo(fila, atributo);
+        if (StringUtils.isBlank(atributo)) {
+            return fila.toString();
+        } else {
+            return obtenerValorAtributo(fila, atributo);
+        }
     }
 
     @Override

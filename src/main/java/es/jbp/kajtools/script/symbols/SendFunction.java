@@ -30,7 +30,7 @@ public class SendFunction extends AbstractFunction {
     try {
       kafkaGenericClient.sendFromJson(context.getEnvironment(environment), topic, key, value, headers);
     } catch (KajException e) {
-      throw new ExpressionException("No se pudo enviar el mensaje al topid " + topic, e);
+      throw new ExpressionException("No se pudo enviar el mensaje al topic " + topic, e);
     }
     context.getInfoReportable().enqueueMessage(InfoReportable.buildSuccessfulMessage("Mensaje enviado al topic " + topic));
 

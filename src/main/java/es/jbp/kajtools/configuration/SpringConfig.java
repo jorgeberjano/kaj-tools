@@ -6,6 +6,7 @@ import es.jbp.kajtools.IMessageClient;
 import es.jbp.kajtools.KajToolsApp;
 import es.jbp.kajtools.i18n.I18nService;
 import es.jbp.kajtools.kafka.KafkaAdminService;
+import es.jbp.kajtools.ksqldb.KSqlDbService;
 import es.jbp.kajtools.ui.UiComponentCreator;
 import es.jbp.kajtools.ui.KafkaProducerPanel;
 import es.jbp.kajtools.ui.MainForm;
@@ -13,9 +14,15 @@ import es.jbp.kajtools.schemaregistry.SchemaRegistryService;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Locale;
+import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.LookAndFeel;
@@ -40,6 +47,9 @@ public class SpringConfig {
 
   @Autowired
   private I18nService i18nService;
+
+  @Autowired
+  private KSqlDbService kSqlDbService;
 
   @Bean
   public JFrame mainFrame() {
@@ -76,7 +86,12 @@ public class SpringConfig {
   }
 
   @Bean MainForm mainForm() {
-    return new MainForm(new UiComponentCreator(theme()), schemaRegistryService, kafkaAdminService, clientList, i18nService);
+    return new MainForm(new UiComponentCreator(theme()),
+            schemaRegistryService,
+            kafkaAdminService,
+            clientList,
+            i18nService,
+            kSqlDbService);
   }
 
   @Bean

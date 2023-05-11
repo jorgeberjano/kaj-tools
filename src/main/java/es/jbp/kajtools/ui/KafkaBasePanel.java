@@ -82,8 +82,6 @@ public abstract class KafkaBasePanel extends BasePanel {
 
   protected abstract void showConnectionStatus(Boolean b);
 
-  protected abstract Environment getEnvironment();
-
   protected ModeloTablaGenerico<TopicItem> createTopicModel(boolean update) {
     ModeloTablaGenerico<TopicItem> tableModel = new ModeloTablaGenerico<>();
     tableModel.agregarColumna("name", "Topic", 200);
@@ -93,14 +91,6 @@ public abstract class KafkaBasePanel extends BasePanel {
     }
     tableModel.setListaObjetos(topics);
     return tableModel;
-  }
-
-  protected Optional<JTextComponent> getUmpteenthEditor(int index, JTextComponent... editors) {
-    if (editors.length > index) {
-      return Optional.of(editors[index]);
-    } else {
-      return Optional.empty();
-    }
   }
 
   protected TopicItem selectTopic() {

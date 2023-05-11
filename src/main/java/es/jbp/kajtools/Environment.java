@@ -21,6 +21,7 @@ public class Environment {
     private String sslTruststoreLocation;
     private String sslTruststorePassword;
     private String saslJaasConfig;
+    private String urlKSqlDbServer;
 
     @Override public String toString() {
         return name;

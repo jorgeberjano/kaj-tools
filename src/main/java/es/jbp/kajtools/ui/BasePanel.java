@@ -1,6 +1,7 @@
 package es.jbp.kajtools.ui;
 
 import es.jbp.expressions.ExpressionException;
+import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.i18n.I18nService;
 import es.jbp.kajtools.ui.InfoDocument.Type;
 import es.jbp.kajtools.ui.interfaces.DialogueablePanel;
@@ -29,6 +30,8 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.text.JTextComponent;
+
 import org.apache.commons.lang3.StringUtils;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
@@ -54,6 +57,8 @@ public abstract class BasePanel implements InfoReportable, SearchablePanel {
   }
 
   protected abstract Component getContentPane();
+
+  protected abstract Environment getEnvironment();
 
   public void initialize() {
     InfoTextPane textPane = getInfoTextPane();
@@ -117,8 +122,16 @@ public abstract class BasePanel implements InfoReportable, SearchablePanel {
   }
 
   protected RSyntaxTextArea createJsonEditor() {
+    return createEditor(SyntaxConstants.SYNTAX_STYLE_JSON);
+  }
+
+  protected RSyntaxTextArea createSqlEditor() {
+    return createEditor(SyntaxConstants.SYNTAX_STYLE_SQL);
+  }
+
+  protected RSyntaxTextArea createEditor(String syntaxStyle) {
     final RSyntaxTextArea jsonEditor = componentFactory.createSyntaxEditor();
-    jsonEditor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JSON);
+    jsonEditor.setSyntaxEditingStyle(syntaxStyle);
     jsonEditor.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
@@ -173,6 +186,7 @@ public abstract class BasePanel implements InfoReportable, SearchablePanel {
   }
 
   protected void stopAsyncTasks() {
+    if (abortTasks.get())
     printMessage(InfoReportable.buildErrorMessage("Se aborta la ejecución"));
     abortTasks.set(true);
   }
@@ -319,6 +333,14 @@ public abstract class BasePanel implements InfoReportable, SearchablePanel {
     String key = UUID.randomUUID().toString();
     addLink(key, infoDocument);
     getInfoTextPane().printLink(key, infoDocument);
+  }
+
+  protected Optional<JTextComponent> getUmpteenthEditor(int index, JTextComponent... editors) {
+    if (editors.length > index) {
+      return Optional.of(editors[index]);
+    } else {
+      return Optional.empty();
+    }
   }
 
 }

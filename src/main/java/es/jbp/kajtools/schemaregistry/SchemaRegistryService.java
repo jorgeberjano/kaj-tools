@@ -3,6 +3,7 @@ package es.jbp.kajtools.schemaregistry;
 import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.KajException;
 import es.jbp.kajtools.util.JsonUtils;
+
 import java.io.IOException;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
@@ -22,6 +23,7 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.json.JSONArray;
@@ -29,166 +31,185 @@ import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 
 @Service
+@AllArgsConstructor
 public class SchemaRegistryService implements ISchemaRegistryService {
 
-  private static final Object SUBJECT_PATH = "subjects/";
+    private static final Object SUBJECT_PATH = "subjects/";
 
-  private SSLContext sslContext;
+    private SSLContext sslContext;
 
-  @PostConstruct
-  public void init() {
-    // Se crea un TrustManager que no valida la cadena de certificados
-    TrustManager[] trustAllCerts = new TrustManager[]{
-        new X509TrustManager() {
-          public X509Certificate[] getAcceptedIssuers() {
-            return null;
-          }
+//    @PostConstruct
+//    public void init() {
+//        // Se crea un TrustManager que no valida la cadena de certificados
+//        TrustManager[] trustAllCerts = new TrustManager[]{
+//                new X509TrustManager() {
+//                    public X509Certificate[] getAcceptedIssuers() {
+//                        return null;
+//                    }
+//
+//                    public void checkClientTrusted(X509Certificate[] certs, String authType) {
+//                    }
+//
+//                    public void checkServerTrusted(X509Certificate[] certs, String authType) {
+//                    }
+//                }
+//        };
+//        try {
+//            sslContext = SSLContext.getInstance("SSL");
+//            sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+//
+//            HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
+//        } catch (Exception ignored) {
+//        }
+//    }
 
-          public void checkClientTrusted(X509Certificate[] certs, String authType) {
-          }
+    public List<String> getSubjects(Environment environment) throws KajException {
+        String url = environment.getUrlSchemaRegistry()
+                + SUBJECT_PATH;
 
-          public void checkServerTrusted(X509Certificate[] certs, String authType) {
-          }
+        var response = sendGetRequest(url, environment);
+        if (response.body() == null) {
+            return Collections.emptyList();
         }
-    };
-    try {
-      sslContext = SSLContext.getInstance("SSL");
-      sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
-
-      HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
-    } catch (Exception e) {
+        Iterable<Object> iterable = new JSONArray(response.body());
+        return StreamSupport.stream(iterable.spliterator(), false)
+                .map(Object::toString)
+                .collect(Collectors.toList());
     }
-  }
 
-  public String getLatestSubjectSchema(String subjectName, Environment environment)
-      throws KajException {
-
-    StringBuilder urlBuilder = new StringBuilder(environment.getUrlSchemaRegistry());
-    urlBuilder.append(SUBJECT_PATH);
-    urlBuilder.append(subjectName);
-    urlBuilder.append("/versions/latest");
-
-    return getSchema(environment, urlBuilder.toString());
-  }
-
-  public List<String> getSubjectSchemaVersions(String subjectName, Environment environment) throws KajException {
-    String url = environment.getUrlSchemaRegistry()
-        + SUBJECT_PATH
-        + subjectName
-        + "/versions";
-    try {
-      HttpRequest request = HttpRequest.newBuilder()
-          .uri(new URI(url))
-          .GET()
-          .build();
-
-      HttpResponse<String> response = getHttpClient(environment).send(request, BodyHandlers.ofString());
-      if (response.statusCode() != 200) {
-        throw new KajException("Respuesta de Schema Registry: " + response.body());
-      }
-      if (response.body() == null) {
-        return Collections.emptyList();
-      }
-      JSONArray respJson = new JSONArray(response.body());
-      Iterable<Object> iterable = respJson::iterator;
-      return StreamSupport.stream(iterable.spliterator(), false)
-          .map(Object::toString)
-          .collect(Collectors.toList());
-    } catch (URISyntaxException | IOException | InterruptedException e) {
-      throw new KajException("No se ha podido obtener el esquema", e);
+    public void deleteSubject(String subjectName, Environment environment) throws KajException {
+        String url = environment.getUrlSchemaRegistry() + SUBJECT_PATH + subjectName;
+        sendDeleteRequest(url, environment);
+        sendDeleteRequest(url + "?permanent=true", environment);
     }
-  }
 
-  public void deleteSubjectSchemaVersion(String subjectName, String version,
-      Environment environment) throws KajException {
+    public String getLatestSubjectSchema(String subjectName, Environment environment)
+            throws KajException {
 
-    String url = environment.getUrlSchemaRegistry() + SUBJECT_PATH + subjectName + "/versions/" + version;
+        String urlBuilder = environment.getUrlSchemaRegistry()
+                + SUBJECT_PATH
+                + subjectName
+                + "/versions/latest";
 
-    try {
-      HttpRequest request = HttpRequest.newBuilder()
-          .uri(new URI(url))
-          .DELETE()
-          .build();
-      getHttpClient(environment).send(request, BodyHandlers.discarding());
-
-      HttpResponse<String> response = getHttpClient(environment).send(request, BodyHandlers.ofString());
-      if (response.statusCode() != 200) {
-        throw new KajException("Respuesta de Schema Registry: " + response.body());
-      }
-
-    } catch (URISyntaxException | IOException | InterruptedException ex) {
-      throw new KajException("No se ha podido borrar la version " + version + " de " + subjectName, ex);
+        return getSchema(environment, urlBuilder);
     }
-  }
 
-  public String getSubjectSchemaVersion(String subjectName, String version, Environment environment)
-      throws KajException {
-    String url = environment.getUrlSchemaRegistry()
-        + SUBJECT_PATH
-        + subjectName
-        + "/versions/"
-        + version;
-    return getSchema(environment, url);
-  }
-
-  private String getSchema(Environment environment, String url) throws KajException {
-
-    try {
-      HttpRequest request = HttpRequest.newBuilder()
-          .uri(new URI(url))
-          .GET()
-          .build();
-
-      HttpResponse<String> response = getHttpClient(environment).send(request, BodyHandlers.ofString());
-      if (response.statusCode() != 200) {
-        throw new KajException("Respuesta de Schema Registry: " + response.body());
-      }
-      if (response.body() == null) {
-        return "";
-      }
-      JSONObject respJson = new JSONObject(response.body());
-      return respJson.get("schema").toString();
-    } catch (URISyntaxException | IOException | InterruptedException e) {
-      throw new KajException("No se ha podido obtener el esquema", e);
+    public List<String> getSubjectSchemaVersions(String subjectName, Environment environment) throws KajException {
+        String url = environment.getUrlSchemaRegistry()
+                + SUBJECT_PATH
+                + subjectName
+                + "/versions";
+        var response = sendGetRequest(url, environment);
+        if (response.body() == null) {
+            return Collections.emptyList();
+        }
+        JSONArray respJson = new JSONArray(response.body());
+        Iterable<Object> iterable = respJson::iterator;
+        return StreamSupport.stream(iterable.spliterator(), false)
+                .map(Object::toString)
+                .collect(Collectors.toList());
     }
-  }
 
-  private HttpClient getHttpClient(Environment environment) {
-    return HttpClient.newBuilder()
-        .authenticator(getAuthenticator(environment))
-        .sslContext(sslContext)
-        .build();
-  }
+    public void deleteSubjectSchemaVersion(String subjectName, String version,
+                                           Environment environment) throws KajException {
 
-  private Authenticator getAuthenticator(final Environment environment) {
-    return new Authenticator() {
-      @Override
-      protected PasswordAuthentication getPasswordAuthentication() {
-        return new PasswordAuthentication(environment.getUserSchemaRegistry(),
-            environment.getPasswordSchemaRegistry().toCharArray());
-      }
-    };
-  }
-
-  @Data
-  @AllArgsConstructor
-  private static class PostSchemaBody {
-
-    private String schema;
-  }
-
-  public void writeSubjectSchema(String subjectName, Environment environment, String jsonSchema) throws KajException {
-
-    String url = environment.getUrlSchemaRegistry() + SUBJECT_PATH + subjectName + "/versions";
-
-    try {
-      HttpRequest request = HttpRequest.newBuilder()
-          .uri(new URI(url))
-          .POST(HttpRequest.BodyPublishers.ofString(JsonUtils.toJson(new PostSchemaBody(jsonSchema))))
-          .build();
-      getHttpClient(environment).send(request, BodyHandlers.discarding());
-    } catch (URISyntaxException | IOException | InterruptedException e) {
-      throw new KajException("No se ha podido grabar el esquema", e);
+        String url = environment.getUrlSchemaRegistry() + SUBJECT_PATH + subjectName + "/versions/" + version;
+        sendDeleteRequest(url, environment);
+        sendDeleteRequest(url + "?permanent=true", environment);
     }
-  }
+
+    public String getSubjectSchemaVersion(String subjectName, String version, Environment environment)
+            throws KajException {
+        String url = environment.getUrlSchemaRegistry()
+                + SUBJECT_PATH
+                + subjectName
+                + "/versions/"
+                + version;
+        return getSchema(environment, url);
+    }
+
+    private String getSchema(Environment environment, String url) throws KajException {
+
+        HttpResponse<String> response = sendGetRequest(url, environment);
+        if (response.body() == null) {
+            return "";
+        }
+        JSONObject respJson = new JSONObject(response.body());
+        return respJson.get("schema").toString();
+    }
+
+    private HttpClient getHttpClient(Environment environment) {
+        return HttpClient.newBuilder()
+                .authenticator(getAuthenticator(environment))
+                .sslContext(sslContext)
+                .build();
+    }
+
+    private Authenticator getAuthenticator(final Environment environment) {
+        return new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(environment.getUserSchemaRegistry(),
+                        environment.getPasswordSchemaRegistry().toCharArray());
+            }
+        };
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class PostSchemaBody {
+
+        private String schema;
+    }
+
+    public void writeSubjectSchema(String subjectName, Environment environment, String jsonSchema) throws KajException {
+
+        String url = environment.getUrlSchemaRegistry() + SUBJECT_PATH + subjectName + "/versions";
+
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(new URI(url))
+                    .POST(HttpRequest.BodyPublishers.ofString(JsonUtils.toJson(new PostSchemaBody(jsonSchema))))
+                    .build();
+            getHttpClient(environment).send(request, BodyHandlers.discarding());
+        } catch (URISyntaxException | IOException | InterruptedException e) {
+            throw new KajException("No se ha podido grabar el esquema", e);
+        }
+    }
+
+
+    private HttpResponse<String> sendGetRequest(String url, Environment environment) throws KajException {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(new URI(url))
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = getHttpClient(environment).send(request, BodyHandlers.ofString());
+            if (response.statusCode() != 200) {
+                throw new KajException("Respuesta de Schema Registry: " + response.body());
+            }
+            return response;
+        } catch (URISyntaxException | IOException | InterruptedException e) {
+            throw new KajException("No se han podido obtener los subjects ", e);
+        }
+    }
+
+    private HttpResponse<String> sendDeleteRequest(String url, Environment environment) throws KajException {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(new URI(url))
+                    .DELETE()
+                    .build();
+            getHttpClient(environment).send(request, BodyHandlers.discarding());
+
+            HttpResponse<String> response = getHttpClient(environment).send(request, BodyHandlers.ofString());
+            if (response.statusCode() != 200) {
+                throw new KajException("Respuesta de Schema Registry: " + response.body());
+            }
+            return response;
+        } catch (URISyntaxException | IOException | InterruptedException e) {
+            throw new KajException("No se han podido obtener los subjects ", e);
+        }
+    }
 }

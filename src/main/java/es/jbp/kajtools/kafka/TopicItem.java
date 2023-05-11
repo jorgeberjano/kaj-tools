@@ -1,9 +1,7 @@
 package es.jbp.kajtools.kafka;
 
-import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Singular;
 
 @Data
 @Builder

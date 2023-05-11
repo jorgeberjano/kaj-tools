@@ -10,6 +10,7 @@ import es.jbp.kajtools.configuration.Configuration;
 import es.jbp.kajtools.IMessageClient;
 import es.jbp.kajtools.i18n.I18nService;
 import es.jbp.kajtools.kafka.KafkaAdminService;
+import es.jbp.kajtools.kafka.TopicItem;
 import es.jbp.kajtools.ui.interfaces.InfoReportable;
 import es.jbp.kajtools.util.JsonUtils;
 import es.jbp.kajtools.schemaregistry.SchemaRegistryService;
@@ -21,14 +22,8 @@ import java.awt.Font;
 import java.awt.Insets;
 import java.awt.Point;
 import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.ResourceBundle;
 import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -52,6 +47,8 @@ import javax.swing.JTextPane;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.StyleContext;
+
+import es.jbp.tabla.ModeloTablaGenerico;
 import lombok.Data;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
@@ -78,6 +75,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   private JButton getSchemasButton;
   private JLabel dangerLabel;
   private JButton writeSchemaButton;
+  private JButton buttonFindSubject;
   private RSyntaxTextArea schemaEditor;
   private JPopupMenu versionsPopupMenu;
 
@@ -87,6 +85,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
   private String currentVersion;
   private List<String> versions;
   private Map<String, SchemaInfo> schemas;
+  private List<String> subjects;
 
   @Data
   private class SchemaInfo {
@@ -116,7 +115,7 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     dangerLabel.setVisible(false);
 
     // Combo Entorno
-    Configuration.getEnvironmentList().stream().forEach(comboEnvironment::addItem);
+    Configuration.getEnvironmentList().forEach(comboEnvironment::addItem);
     comboEnvironment.addActionListener(e -> {
       boolean local = getEnvironment().getName().toLowerCase().contains("local");
       dangerLabel.setVisible(!local);
@@ -134,6 +133,8 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
       schemas = null;
       clearVersionList();
     });
+
+    buttonFindSubject.addActionListener(e -> findSubject());
 
     cleanButton.addActionListener(e -> cleanEditor());
     copyButton.addActionListener(e -> copyToClipboard());
@@ -166,6 +167,67 @@ public class SchemaRegistryPanel extends KafkaBasePanel {
     writeSchemaButton.addActionListener(e -> asyncWriteSchema());
 
     enableTextSearch(searchTextField, schemaEditor);
+  }
+
+  private void findSubject() {
+    String subject = selectSubject();
+    if (subject != null) {
+      comboSchemaSubject.getEditor().setItem(subject);
+    }
+  }
+  protected String selectSubject() {
+
+    final TableSelectorPanel<String> tableSelectorPanel = new TableSelectorPanel<>(this::createSubjectModel);
+    JPopupMenu popupMenu = new JPopupMenu() {
+      @Override
+      public void show(Component invoker, int x, int y) {
+        int row = tableSelectorPanel.getTable().rowAtPoint(new Point(x, y));
+        if (row >= 0) {
+          tableSelectorPanel.getTable().getSelectionModel().setSelectionInterval(row, row);
+          super.show(invoker, x, y);
+        }
+      }
+    };
+
+    var deleteActionListener = new JMenuItem("Borrar");
+    deleteActionListener.addActionListener(e -> asyncDeleteSubject(tableSelectorPanel));
+    popupMenu.add(deleteActionListener);
+    tableSelectorPanel.setTablePopupMenu(popupMenu);
+
+    showInModalDialog(tableSelectorPanel, "Subjects", null);
+
+    return tableSelectorPanel.getAcceptedItem();
+  }
+
+  private void asyncDeleteSubject(TableSelectorPanel<String> tableSelectorPanel) {
+      String subject = tableSelectorPanel.getSelectedItem();
+      if (subject == null) {
+        return;
+      }
+      try {
+        schemaRegistryService.deleteSubject(subject, getEnvironment());
+      } catch (Exception ex) {
+        printException(ex);
+      }
+  }
+
+  protected ModeloTablaGenerico<String> createSubjectModel(boolean update) {
+    ModeloTablaGenerico<String> tableModel = new ModeloTablaGenerico<>();
+    tableModel.agregarColumna("", "Subject", 200);
+    if (update || subjects == null) {
+      retrieveSubjects(getEnvironment());
+    }
+    tableModel.setListaObjetos(subjects);
+    return tableModel;
+  }
+
+  protected void retrieveSubjects(Environment environment) {
+    try {
+      subjects = schemaRegistryService.getSubjects(environment);
+    } catch (KajException ex) {
+      subjects = new ArrayList<>();
+      printException(ex);
+    }
   }
 
   private void showSelectedSchemaVersion() {

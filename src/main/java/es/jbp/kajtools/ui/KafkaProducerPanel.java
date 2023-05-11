@@ -284,7 +284,7 @@ public class KafkaProducerPanel extends KafkaBasePanel {
     } else if (status == SchemaCheckStatus.NOT_EQUALS) {
       message = "El esquema del AVRO no coincide con el del Schema Registry";
     } else if (status == SchemaCheckStatus.NOT_CHECKED) {
-      message = "No se pudo comprobar el esquema. No debería enviar un evento al entorno DEVELOP sin antes comprobarlo";
+      message = "No se pudo comprobar el esquema. No debería enviar un evento al entorno " + environment.getName() + " sin antes comprobarlo";
     } else {
       JOptionPane.showMessageDialog(contentPane,
           "Topic: " + topic + "\n" +
