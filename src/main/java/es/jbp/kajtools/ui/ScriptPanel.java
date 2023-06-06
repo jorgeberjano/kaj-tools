@@ -52,383 +52,347 @@ import org.fife.ui.rtextarea.RTextScrollPane;
 
 public class ScriptPanel extends KafkaBasePanel {
 
-  private final ScriptSimbolFactory scriptSymbolFactory = new ScriptSimbolFactory();
-  private final TemplateExecutor scriptTemplateExecutor = new TemplateExecutor(scriptSymbolFactory);
+    private final ScriptSimbolFactory scriptSymbolFactory = new ScriptSimbolFactory();
+    private final TemplateExecutor scriptTemplateExecutor = new TemplateExecutor(scriptSymbolFactory);
 
-  @Getter
-  private JPanel contentPane;
-  private JButton buttonExecute;
-  private JTabbedPane tabbedPane;
-  private JPanel tabInfo;
-  private JPanel tabScript;
-  @Getter
-  private InfoTextPane infoTextPane;
-  private JButton cleanButton;
-  private JButton copyButton;
-  @Getter
-  private JTextField searchTextField;
-  private RTextScrollPane scriptScrollPane;
-  private JButton buttonStop;
-  private JComboBox comboScript;
-  private JButton buttonOpenFileScript;
-  private RSyntaxTextArea scriptEditor;
+    @Getter
+    private JPanel contentPane;
+    private JButton buttonExecute;
+    private JTabbedPane tabbedPane;
+    private JPanel tabInfo;
+    private JPanel tabScript;
+    @Getter
+    private InfoTextPane infoTextPane;
+    private JButton cleanButton;
+    private JButton copyButton;
+    @Getter
+    private JTextField searchTextField;
+    private RTextScrollPane scriptScrollPane;
+    private JButton buttonStop;
+    private JComboBox comboScript;
+    private JButton buttonOpenFileScript;
+    private RSyntaxTextArea scriptEditor;
 
-  private ScriptCompiler scriptCompiler = new ScriptCompiler(scriptSymbolFactory);
+    private ScriptCompiler scriptCompiler = new ScriptCompiler(scriptSymbolFactory);
 
-  public ScriptPanel(List<IMessageClient> clientList,
-      ISchemaRegistryService schemaRegistryService,
-      KafkaAdminService kafkaAdmin,
-      UiComponentCreator componentFactory,
-      I18nService i18nService) {
-    super(clientList, schemaRegistryService, kafkaAdmin, componentFactory, i18nService);
+    public ScriptPanel(List<IMessageClient> clientList,
+                       ISchemaRegistryService schemaRegistryService,
+                       KafkaAdminService kafkaAdmin,
+                       UiComponentCreator componentFactory) {
+        super(clientList, schemaRegistryService, kafkaAdmin, componentFactory);
 
-    $$$setupUI$$$();
+        $$$setupUI$$$();
 
-    super.initialize();
+        super.initialize();
 
-    buttonExecute.addActionListener(e -> asyncExecute());
+        buttonExecute.addActionListener(e -> asyncExecute());
 
-    buttonStop.addActionListener(e -> stopAsyncTasks());
+        buttonStop.addActionListener(e -> stopAsyncTasks());
 
-    cleanButton.addActionListener(e -> cleanEditor());
-    copyButton.addActionListener(e -> copyToClipboard());
+        cleanButton.addActionListener(e -> cleanEditor());
+        copyButton.addActionListener(e -> copyToClipboard());
 
-    enableTextSearch(searchTextField, scriptEditor);
+        enableTextSearch(searchTextField, scriptEditor);
 
-    List<String> availableScripts = ResourceUtil.getResourceFileNames("")
-        .stream()
-        .filter(s -> s.toLowerCase().endsWith(".kajscript"))
-        .collect(Collectors.toList());
-    comboScript.addItem("");
-    availableScripts.forEach(comboScript::addItem);
+        List<String> availableScripts = ResourceUtil.getResourceFileNames("")
+                .stream()
+                .filter(s -> s.toLowerCase().endsWith(".kajscript"))
+                .collect(Collectors.toList());
+        comboScript.addItem("");
+        availableScripts.forEach(comboScript::addItem);
 
-    comboScript.addActionListener(e -> loadResourceForScript());
-    buttonOpenFileScript.addActionListener(e -> openFileForScript());
-  }
-
-  @Override
-  protected void showConnectionStatus(Boolean b) {
-
-  }
-
-  @Override
-  protected Environment getEnvironment() {
-    return null;
-  }
-
-  private void openFileForScript() {
-    File file = chooseAndReadFile();
-    if (file != null) {
-      loadTextFromFile(file, scriptEditor);
+        comboScript.addActionListener(e -> loadResourceForScript());
+        buttonOpenFileScript.addActionListener(e -> openFileForScript());
     }
-  }
 
-  private void asyncExecute() {
-    String scriptCode = scriptEditor.getText();
-    GenericClient genericClient = (GenericClient) clientList.stream()
-        .filter(GenericClient.class::isInstance)
-        .findFirst()
-        .orElse(null);
+    @Override
+    protected void showConnectionStatus(Boolean b) {
 
-    if (genericClient == null) {
-      printMessage(InfoReportable.buildErrorMessage("No se ha definido ningún GenericClient"));
-      return;
     }
-    ExecutionContext context = ExecutionContext.builder()
-        .environments(Configuration.getEnvironmentList()
-            .stream()
-            .collect(Collectors.toMap(Environment::getName, Function.identity())))
-        .kafkaGenericClient(genericClient)
-        .templateExecutor(scriptTemplateExecutor)
-        .infoReportable(this)
-        .abort(abortTasks)
-        .build();
 
-    scriptSymbolFactory.setContext(context);
-
-    ScriptNode scriptNode;
-    try {
-      scriptNode = scriptCompiler.compile(scriptCode);
-    } catch (ScriptCompilerException e) {
-      printMessage(InfoReportable.buildErrorMessage("El script tiene errores"));
-      printException(e);
-      return;
+    @Override
+    protected Environment getEnvironment() {
+        return null;
     }
-    buttonExecute.setEnabled(false);
-    buttonStop.setEnabled(true);
-    printMessage(InfoReportable.buildActionMessage("Ejecución de script iniciada"));
-    executeAsyncTask(() -> executeScript(scriptNode, context));
-  }
 
-  private void loadResourceForScript() {
-    String path = Optional.ofNullable(comboScript.getSelectedItem()).map(Object::toString).orElse("");
-    loadTextFromResource(path, scriptEditor);
-  }
-
-  private Void executeScript(ScriptNode scriptNode, ExecutionContext context) {
-
-    try {
-      scriptNode.execute(context);
-      enqueueMessage(InfoReportable.buildSuccessfulMessage("El script se ha ejecutado correctamente"));
-    } catch (ScriptExecutionException e) {
-      enqueueMessage(InfoReportable.buildErrorMessage("No de ha podido ejecutar el script"));
-      enqueueException(e);
-    }
-    SwingUtilities.invokeLater(() -> {
-      buttonStop.setEnabled(false);
-    });
-    return null;
-  }
-
-  /**
-   * Method generated by IntelliJ IDEA GUI Designer >>> IMPORTANT!! <<< DO NOT edit this method OR call it in your
-   * code!
-   *
-   * @noinspection ALL
-   */
-  private void $$$setupUI$$$() {
-    createUIComponents();
-    contentPane = new JPanel();
-    contentPane.setLayout(new GridLayoutManager(5, 2, new Insets(10, 10, 10, 10), -1, -1));
-    final JPanel panel1 = new JPanel();
-    panel1.setLayout(new GridLayoutManager(1, 4, new Insets(0, 0, 0, 0), -1, -1));
-    contentPane.add(panel1, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
-        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, 1, null, null, null, 0, false));
-    buttonExecute = new JButton();
-    buttonExecute.setIcon(new ImageIcon(getClass().getResource("/images/execute.png")));
-    this.$$$loadButtonText$$$(buttonExecute, this.$$$getMessageFromBundle$$$("messages", "button.execute"));
-    panel1.add(buttonExecute,
-        new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-            GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-    final Spacer spacer1 = new Spacer();
-    panel1.add(spacer1, new GridConstraints(0, 2, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
-        GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
-    buttonStop = new JButton();
-    buttonStop.setEnabled(false);
-    buttonStop.setIcon(new ImageIcon(getClass().getResource("/images/stop.png")));
-    buttonStop.setText("");
-    buttonStop.setToolTipText(this.$$$getMessageFromBundle$$$("messages", "tooltip.stop.script"));
-    panel1.add(buttonStop, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
-        GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-    final JPanel panel2 = new JPanel();
-    panel2.setLayout(new GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), -1, -1));
-    contentPane.add(panel2,
-        new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-            GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(615, 40), null, 0, false));
-    final JLabel label1 = new JLabel();
-    this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages", "label.script"));
-    panel2.add(label1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE,
-        GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-    comboScript = new JComboBox();
-    panel2.add(comboScript,
-        new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL,
-            GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-    buttonOpenFileScript = new JButton();
-    Font buttonOpenFileScriptFont = this.$$$getFont$$$(null, -1, -1, buttonOpenFileScript.getFont());
-    if (buttonOpenFileScriptFont != null) {
-      buttonOpenFileScript.setFont(buttonOpenFileScriptFont);
-    }
-    buttonOpenFileScript.setIcon(new ImageIcon(getClass().getResource("/images/folder.png")));
-    buttonOpenFileScript.setText("");
-    buttonOpenFileScript.setToolTipText(this.$$$getMessageFromBundle$$$("messages", "tooltip.open.script.file"));
-    panel2.add(buttonOpenFileScript,
-        new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
-            GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, new Dimension(24, 24),
-            new Dimension(24, 24), new Dimension(24, 24), 0, false));
-    final JPanel panel3 = new JPanel();
-    panel3.setLayout(new BorderLayout(0, 0));
-    contentPane.add(panel3, new GridConstraints(4, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
-        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
-        null, null, null, 0, false));
-    final JLabel label2 = new JLabel();
-    label2.setIcon(new ImageIcon(getClass().getResource("/images/search.png")));
-    label2.setText("");
-    panel3.add(label2, BorderLayout.WEST);
-    searchTextField = new JTextField();
-    searchTextField.setText("");
-    panel3.add(searchTextField, BorderLayout.CENTER);
-    final JPanel panel4 = new JPanel();
-    panel4.setLayout(new BorderLayout(0, 0));
-    contentPane.add(panel4, new GridConstraints(2, 0, 2, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
-        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
-    tabbedPane = new JTabbedPane();
-    panel4.add(tabbedPane, BorderLayout.CENTER);
-    tabInfo = new JPanel();
-    tabInfo.setLayout(new BorderLayout(0, 0));
-    tabbedPane.addTab(this.$$$getMessageFromBundle$$$("messages", "tab.info"), tabInfo);
-    final JScrollPane scrollPane1 = new JScrollPane();
-    tabInfo.add(scrollPane1, BorderLayout.CENTER);
-    infoTextPane = new InfoTextPane();
-    infoTextPane.setBackground(new Color(-13948117));
-    infoTextPane.setCaretColor(new Color(-1));
-    infoTextPane.setEditable(false);
-    infoTextPane.setEnabled(true);
-    Font infoTextPaneFont = this.$$$getFont$$$(null, -1, -1, infoTextPane.getFont());
-    if (infoTextPaneFont != null) {
-      infoTextPane.setFont(infoTextPaneFont);
-    }
-    infoTextPane.setForeground(new Color(-1));
-    scrollPane1.setViewportView(infoTextPane);
-    tabScript = new JPanel();
-    tabScript.setLayout(new BorderLayout(0, 0));
-    tabbedPane.addTab(this.$$$getMessageFromBundle$$$("messages", "tab.script"), tabScript);
-    tabScript.add(scriptScrollPane, BorderLayout.CENTER);
-    final JPanel panel5 = new JPanel();
-    panel5.setLayout(new GridLayoutManager(4, 1, new Insets(0, 0, 0, 0), -1, -1));
-    panel4.add(panel5, BorderLayout.EAST);
-    cleanButton = new JButton();
-    cleanButton.setIcon(new ImageIcon(getClass().getResource("/images/rubber.png")));
-    cleanButton.setText("");
-    cleanButton.setToolTipText("Limpiar");
-    panel5.add(cleanButton, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
-        GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-    copyButton = new JButton();
-    copyButton.setIcon(new ImageIcon(getClass().getResource("/images/copy.png")));
-    copyButton.setText("");
-    copyButton.setToolTipText(this.$$$getMessageFromBundle$$$("messages", "tooltip.copy.clipboard"));
-    panel5.add(copyButton, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE,
-        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED,
-        null, null, null, 0, false));
-    final Spacer spacer2 = new Spacer();
-    panel5.add(spacer2, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1,
-        GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
-    final Spacer spacer3 = new Spacer();
-    panel5.add(spacer3, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_NONE, 1,
-        GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(-1, 30), null, 0, false));
-  }
-
-  /**
-   * @noinspection ALL
-   */
-  private Font $$$getFont$$$(String fontName, int style, int size, Font currentFont) {
-    if (currentFont == null) {
-      return null;
-    }
-    String resultName;
-    if (fontName == null) {
-      resultName = currentFont.getName();
-    } else {
-      Font testFont = new Font(fontName, Font.PLAIN, 10);
-      if (testFont.canDisplay('a') && testFont.canDisplay('1')) {
-        resultName = fontName;
-      } else {
-        resultName = currentFont.getName();
-      }
-    }
-    Font font = new Font(resultName, style >= 0 ? style : currentFont.getStyle(),
-        size >= 0 ? size : currentFont.getSize());
-    boolean isMac = System.getProperty("os.name", "").toLowerCase(Locale.ENGLISH).startsWith("mac");
-    Font fontWithFallback = isMac ? new Font(font.getFamily(), font.getStyle(), font.getSize())
-        : new StyleContext().getFont(font.getFamily(), font.getStyle(), font.getSize());
-    return fontWithFallback instanceof FontUIResource ? fontWithFallback : new FontUIResource(fontWithFallback);
-  }
-
-  private static Method $$$cachedGetBundleMethod$$$ = null;
-
-  private String $$$getMessageFromBundle$$$(String path, String key) {
-    ResourceBundle bundle;
-    try {
-      Class<?> thisClass = this.getClass();
-      if ($$$cachedGetBundleMethod$$$ == null) {
-        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
-        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
-      }
-      bundle = (ResourceBundle) $$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
-    } catch (Exception e) {
-      bundle = ResourceBundle.getBundle(path);
-    }
-    return bundle.getString(key);
-  }
-
-  /**
-   * @noinspection ALL
-   */
-  private void $$$loadLabelText$$$(JLabel component, String text) {
-    StringBuffer result = new StringBuffer();
-    boolean haveMnemonic = false;
-    char mnemonic = '\0';
-    int mnemonicIndex = -1;
-    for (int i = 0; i < text.length(); i++) {
-      if (text.charAt(i) == '&') {
-        i++;
-        if (i == text.length()) {
-          break;
+    private void openFileForScript() {
+        File file = chooseAndReadFile();
+        if (file != null) {
+            loadTextFromFile(file, scriptEditor);
         }
-        if (!haveMnemonic && text.charAt(i) != '&') {
-          haveMnemonic = true;
-          mnemonic = text.charAt(i);
-          mnemonicIndex = result.length();
+    }
+
+    private void asyncExecute() {
+        String scriptCode = scriptEditor.getText();
+        GenericClient genericClient = (GenericClient) clientList.stream()
+                .filter(GenericClient.class::isInstance)
+                .findFirst()
+                .orElse(null);
+
+        if (genericClient == null) {
+            printMessage(InfoReportable.buildErrorMessage("No se ha definido ningún GenericClient"));
+            return;
         }
-      }
-      result.append(text.charAt(i));
-    }
-    component.setText(result.toString());
-    if (haveMnemonic) {
-      component.setDisplayedMnemonic(mnemonic);
-      component.setDisplayedMnemonicIndex(mnemonicIndex);
-    }
-  }
+        ExecutionContext context = ExecutionContext.builder()
+                .environments(Configuration.getEnvironmentList()
+                        .stream()
+                        .collect(Collectors.toMap(Environment::getName, Function.identity())))
+                .kafkaGenericClient(genericClient)
+                .templateExecutor(scriptTemplateExecutor)
+                .infoReportable(this)
+                .abort(abortTasks)
+                .build();
 
-  /**
-   * @noinspection ALL
-   */
-  private void $$$loadButtonText$$$(AbstractButton component, String text) {
-    StringBuffer result = new StringBuffer();
-    boolean haveMnemonic = false;
-    char mnemonic = '\0';
-    int mnemonicIndex = -1;
-    for (int i = 0; i < text.length(); i++) {
-      if (text.charAt(i) == '&') {
-        i++;
-        if (i == text.length()) {
-          break;
+        scriptSymbolFactory.setContext(context);
+
+        ScriptNode scriptNode;
+        try {
+            scriptNode = scriptCompiler.compile(scriptCode);
+        } catch (ScriptCompilerException e) {
+            printMessage(InfoReportable.buildErrorMessage("El script tiene errores"));
+            printException(e);
+            return;
         }
-        if (!haveMnemonic && text.charAt(i) != '&') {
-          haveMnemonic = true;
-          mnemonic = text.charAt(i);
-          mnemonicIndex = result.length();
+        buttonExecute.setEnabled(false);
+        buttonStop.setEnabled(true);
+        printMessage(InfoReportable.buildActionMessage("Ejecución de script iniciada"));
+        executeAsyncTask(() -> executeScript(scriptNode, context));
+    }
+
+    private void loadResourceForScript() {
+        String path = Optional.ofNullable(comboScript.getSelectedItem()).map(Object::toString).orElse("");
+        loadTextFromResource(path, scriptEditor);
+    }
+
+    private Void executeScript(ScriptNode scriptNode, ExecutionContext context) {
+
+        try {
+            scriptNode.execute(context);
+            enqueueMessage(InfoReportable.buildSuccessfulMessage("El script se ha ejecutado correctamente"));
+        } catch (ScriptExecutionException e) {
+            enqueueMessage(InfoReportable.buildErrorMessage("No de ha podido ejecutar el script"));
+            enqueueException(e);
         }
-      }
-      result.append(text.charAt(i));
+        SwingUtilities.invokeLater(() -> {
+            buttonStop.setEnabled(false);
+        });
+        return null;
     }
-    component.setText(result.toString());
-    if (haveMnemonic) {
-      component.setMnemonic(mnemonic);
-      component.setDisplayedMnemonicIndex(mnemonicIndex);
+
+    /**
+     * Method generated by IntelliJ IDEA GUI Designer
+     * >>> IMPORTANT!! <<<
+     * DO NOT edit this method OR call it in your code!
+     *
+     * @noinspection ALL
+     */
+    private void $$$setupUI$$$() {
+        createUIComponents();
+        contentPane = new JPanel();
+        contentPane.setLayout(new GridLayoutManager(5, 2, new Insets(10, 10, 10, 10), -1, -1));
+        final JPanel panel1 = new JPanel();
+        panel1.setLayout(new GridLayoutManager(1, 4, new Insets(0, 0, 0, 0), -1, -1));
+        contentPane.add(panel1, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, 1, null, null, null, 0, false));
+        buttonExecute = new JButton();
+        buttonExecute.setIcon(new ImageIcon(getClass().getResource("/images/execute.png")));
+        this.$$$loadButtonText$$$(buttonExecute, this.$$$getMessageFromBundle$$$("messages", "button.execute"));
+        panel1.add(buttonExecute, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final Spacer spacer1 = new Spacer();
+        panel1.add(spacer1, new GridConstraints(0, 2, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+        buttonStop = new JButton();
+        buttonStop.setEnabled(false);
+        buttonStop.setIcon(new ImageIcon(getClass().getResource("/images/stop.png")));
+        buttonStop.setText("");
+        buttonStop.setToolTipText(this.$$$getMessageFromBundle$$$("messages", "tooltip.stop.script"));
+        panel1.add(buttonStop, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JPanel panel2 = new JPanel();
+        panel2.setLayout(new GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), -1, -1));
+        contentPane.add(panel2, new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(615, 40), null, 0, false));
+        final JLabel label1 = new JLabel();
+        this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages", "label.script"));
+        panel2.add(label1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        comboScript = new JComboBox();
+        panel2.add(comboScript, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        buttonOpenFileScript = new JButton();
+        Font buttonOpenFileScriptFont = this.$$$getFont$$$(null, -1, -1, buttonOpenFileScript.getFont());
+        if (buttonOpenFileScriptFont != null) buttonOpenFileScript.setFont(buttonOpenFileScriptFont);
+        buttonOpenFileScript.setIcon(new ImageIcon(getClass().getResource("/images/folder.png")));
+        buttonOpenFileScript.setText("");
+        buttonOpenFileScript.setToolTipText(this.$$$getMessageFromBundle$$$("messages", "tooltip.open.script.file"));
+        panel2.add(buttonOpenFileScript, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, new Dimension(24, 24), new Dimension(24, 24), new Dimension(24, 24), 0, false));
+        final JPanel panel3 = new JPanel();
+        panel3.setLayout(new BorderLayout(0, 0));
+        contentPane.add(panel3, new GridConstraints(4, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label2 = new JLabel();
+        label2.setIcon(new ImageIcon(getClass().getResource("/images/search.png")));
+        label2.setText("");
+        panel3.add(label2, BorderLayout.WEST);
+        searchTextField = new JTextField();
+        searchTextField.setText("");
+        panel3.add(searchTextField, BorderLayout.CENTER);
+        final JPanel panel4 = new JPanel();
+        panel4.setLayout(new BorderLayout(0, 0));
+        contentPane.add(panel4, new GridConstraints(2, 0, 2, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        tabbedPane = new JTabbedPane();
+        panel4.add(tabbedPane, BorderLayout.CENTER);
+        tabInfo = new JPanel();
+        tabInfo.setLayout(new BorderLayout(0, 0));
+        tabbedPane.addTab(this.$$$getMessageFromBundle$$$("messages", "tab.info"), tabInfo);
+        final JScrollPane scrollPane1 = new JScrollPane();
+        tabInfo.add(scrollPane1, BorderLayout.CENTER);
+        infoTextPane = new InfoTextPane();
+        infoTextPane.setBackground(new Color(-13948117));
+        infoTextPane.setCaretColor(new Color(-1));
+        infoTextPane.setEditable(false);
+        infoTextPane.setEnabled(true);
+        Font infoTextPaneFont = this.$$$getFont$$$(null, -1, -1, infoTextPane.getFont());
+        if (infoTextPaneFont != null) infoTextPane.setFont(infoTextPaneFont);
+        infoTextPane.setForeground(new Color(-1));
+        scrollPane1.setViewportView(infoTextPane);
+        tabScript = new JPanel();
+        tabScript.setLayout(new BorderLayout(0, 0));
+        tabbedPane.addTab(this.$$$getMessageFromBundle$$$("messages", "tab.script"), tabScript);
+        tabScript.add(scriptScrollPane, BorderLayout.CENTER);
+        final JPanel panel5 = new JPanel();
+        panel5.setLayout(new GridLayoutManager(4, 1, new Insets(0, 0, 0, 0), -1, -1));
+        panel4.add(panel5, BorderLayout.EAST);
+        cleanButton = new JButton();
+        cleanButton.setIcon(new ImageIcon(getClass().getResource("/images/rubber.png")));
+        cleanButton.setText("");
+        cleanButton.setToolTipText("Limpiar");
+        panel5.add(cleanButton, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        copyButton = new JButton();
+        copyButton.setIcon(new ImageIcon(getClass().getResource("/images/copy.png")));
+        copyButton.setText("");
+        copyButton.setToolTipText(this.$$$getMessageFromBundle$$$("messages", "tooltip.copy.clipboard"));
+        panel5.add(copyButton, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final Spacer spacer2 = new Spacer();
+        panel5.add(spacer2, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        final Spacer spacer3 = new Spacer();
+        panel5.add(spacer3, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_NONE, 1, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(-1, 30), null, 0, false));
     }
-  }
 
-  /**
-   * @noinspection ALL
-   */
-  public JComponent $$$getRootComponent$$$() {
-    return contentPane;
-  }
+    /**
+     * @noinspection ALL
+     */
+    private Font $$$getFont$$$(String fontName, int style, int size, Font currentFont) {
+        if (currentFont == null) return null;
+        String resultName;
+        if (fontName == null) {
+            resultName = currentFont.getName();
+        } else {
+            Font testFont = new Font(fontName, Font.PLAIN, 10);
+            if (testFont.canDisplay('a') && testFont.canDisplay('1')) {
+                resultName = fontName;
+            } else {
+                resultName = currentFont.getName();
+            }
+        }
+        Font font = new Font(resultName, style >= 0 ? style : currentFont.getStyle(), size >= 0 ? size : currentFont.getSize());
+        boolean isMac = System.getProperty("os.name", "").toLowerCase(Locale.ENGLISH).startsWith("mac");
+        Font fontWithFallback = isMac ? new Font(font.getFamily(), font.getStyle(), font.getSize()) : new StyleContext().getFont(font.getFamily(), font.getStyle(), font.getSize());
+        return fontWithFallback instanceof FontUIResource ? fontWithFallback : new FontUIResource(fontWithFallback);
+    }
 
-  private void createUIComponents() {
-    scriptEditor = createJsonEditor();
-    scriptScrollPane = componentFactory.createEditorScroll(scriptEditor);
-  }
+    private static Method $$$cachedGetBundleMethod$$$ = null;
 
-  @Override
-  public Optional<JTextComponent> getCurrentEditor() {
-    int index = tabbedPane.getSelectedIndex();
-    return getUmpteenthEditor(index, infoTextPane, scriptEditor);
-  }
+    private String $$$getMessageFromBundle$$$(String path, String key) {
+        ResourceBundle bundle;
+        try {
+            Class<?> thisClass = this.getClass();
+            if ($$$cachedGetBundleMethod$$$ == null) {
+                Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
+                $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
+            }
+            bundle = (ResourceBundle) $$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
+        } catch (Exception e) {
+            bundle = ResourceBundle.getBundle(path);
+        }
+        return bundle.getString(key);
+    }
 
-  public InfoTextPane getInfoTextPane() {
-    return (InfoTextPane) infoTextPane;
-  }
+    /**
+     * @noinspection ALL
+     */
+    private void $$$loadLabelText$$$(JLabel component, String text) {
+        StringBuffer result = new StringBuffer();
+        boolean haveMnemonic = false;
+        char mnemonic = '\0';
+        int mnemonicIndex = -1;
+        for (int i = 0; i < text.length(); i++) {
+            if (text.charAt(i) == '&') {
+                i++;
+                if (i == text.length()) break;
+                if (!haveMnemonic && text.charAt(i) != '&') {
+                    haveMnemonic = true;
+                    mnemonic = text.charAt(i);
+                    mnemonicIndex = result.length();
+                }
+            }
+            result.append(text.charAt(i));
+        }
+        component.setText(result.toString());
+        if (haveMnemonic) {
+            component.setDisplayedMnemonic(mnemonic);
+            component.setDisplayedMnemonicIndex(mnemonicIndex);
+        }
+    }
 
-  @Override
-  protected void asyncTaskFinished() {
-    super.asyncTaskFinished();
-    buttonExecute.setEnabled(true);
-    buttonStop.setEnabled(false);
-  }
+    /**
+     * @noinspection ALL
+     */
+    private void $$$loadButtonText$$$(AbstractButton component, String text) {
+        StringBuffer result = new StringBuffer();
+        boolean haveMnemonic = false;
+        char mnemonic = '\0';
+        int mnemonicIndex = -1;
+        for (int i = 0; i < text.length(); i++) {
+            if (text.charAt(i) == '&') {
+                i++;
+                if (i == text.length()) break;
+                if (!haveMnemonic && text.charAt(i) != '&') {
+                    haveMnemonic = true;
+                    mnemonic = text.charAt(i);
+                    mnemonicIndex = result.length();
+                }
+            }
+            result.append(text.charAt(i));
+        }
+        component.setText(result.toString());
+        if (haveMnemonic) {
+            component.setMnemonic(mnemonic);
+            component.setDisplayedMnemonicIndex(mnemonicIndex);
+        }
+    }
+
+    /**
+     * @noinspection ALL
+     */
+    public JComponent $$$getRootComponent$$$() {
+        return contentPane;
+    }
+
+    private void createUIComponents() {
+        scriptEditor = createJsonEditor();
+        scriptScrollPane = componentFactory.createEditorScroll(scriptEditor);
+    }
+
+    @Override
+    public Optional<JTextComponent> getCurrentEditor() {
+        int index = tabbedPane.getSelectedIndex();
+        return getUmpteenthEditor(index, infoTextPane, scriptEditor);
+    }
+
+    public InfoTextPane getInfoTextPane() {
+        return (InfoTextPane) infoTextPane;
+    }
+
+    @Override
+    protected void asyncTaskFinished() {
+        super.asyncTaskFinished();
+        buttonExecute.setEnabled(true);
+        buttonStop.setEnabled(false);
+    }
 
 }
 

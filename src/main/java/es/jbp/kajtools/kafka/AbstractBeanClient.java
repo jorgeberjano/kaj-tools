@@ -63,14 +63,14 @@ public abstract class AbstractBeanClient<K, V> implements IMessageClient {
 
         GenericRecord key;
         try {
-            K k = JsonUtils.createFromJson(keyJson, keyType);
+            K k = JsonUtils.instance.deserializeFromString(keyJson, keyType);
             key = toGenericRecord(k, keyType, keySchema);
         } catch (Exception ex) {
             throw new KajException("Error al crear el GenericRecord de la Key. Causa: " + ex.getMessage());
         }
         GenericRecord value;
         try {
-            V v = JsonUtils.createFromJson(valueJson, valueType);
+            V v = JsonUtils.instance.deserializeFromString(valueJson, valueType);
             value = toGenericRecord(v, valueType, valueSchema);
         } catch (Exception ex) {
             throw new KajException("Error al crear el GenericRecord del Value. Causa: " + ex.getMessage());
@@ -131,7 +131,7 @@ public abstract class AbstractBeanClient<K, V> implements IMessageClient {
 
     protected K buildKeyFromJson(String keyJson) throws KajException {
         try {
-            return JsonUtils.createFromJson(keyJson, keyType);
+            return JsonUtils.instance.deserializeFromString(keyJson, keyType);
         } catch (Exception ex) {
             throw new KajException("No se puede generar el Key desde el JSON", ex);
         }
@@ -139,7 +139,7 @@ public abstract class AbstractBeanClient<K, V> implements IMessageClient {
 
     private V buildValueFromJson(String valueJson) throws KajException {
         try {
-            return JsonUtils.createFromJson(valueJson, valueType);
+            return JsonUtils.instance.deserializeFromString(valueJson, valueType);
         } catch (Exception ex) {
             throw new KajException("No se puede generar el Value desde el JSON", ex);
         }
@@ -165,12 +165,12 @@ public abstract class AbstractBeanClient<K, V> implements IMessageClient {
     private final List<String> availableHeaders = getAvailableResources("headers.properties");
 
     private List<String> getAvailableResources(String endingWith) {
-        return ResourceUtil.getResourceFileNames(getFolder())
+        return ResourceUtil.getResourceFileNames(getResourcesPath())
                 .stream().filter(s -> s.toLowerCase().endsWith(endingWith))
                 .collect(Collectors.toList());
     }
 
-    public String getFolder() {
+    public String getResourcesPath() {
         return "";
     }
 
@@ -272,7 +272,7 @@ public abstract class AbstractBeanClient<K, V> implements IMessageClient {
     }
 
     private <T> GenericRecord toGenericRecord(T object, Class<T> clazz, Schema schema) throws IOException {
-        String json = object instanceof SpecificRecord ? object.toString() : JsonUtils.toJson(object);
+        String json = object instanceof SpecificRecord ? object.toString() : JsonUtils.instance.serialize(object);
         JsonAvroConverter avroConverter = new JsonAvroConverter();
         GenericData.Record record = avroConverter.convertToGenericDataRecord(json.getBytes(), schema);
         return record;

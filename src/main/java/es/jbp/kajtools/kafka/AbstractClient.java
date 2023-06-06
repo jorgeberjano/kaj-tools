@@ -145,7 +145,7 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
 
   protected K buildKeyFromJson(String keyJson) throws KajException {
     try {
-      return JsonUtils.createFromJson(keyJson, keyType);
+      return JsonUtils.instance.deserializeFromString(keyJson, keyType);
     } catch (Exception ex) {
       throw new KajException("No se puede generar el Key desde el JSON", ex);
     }
@@ -153,7 +153,7 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
 
   protected List<K> buildKeyListFromJson(String keyArrayJson) throws KajException {
     try {
-      return JsonUtils.createFromJson(keyArrayJson, new TypeReference<List<K>>() {
+      return JsonUtils.instance.deserializeFromString(keyArrayJson, new TypeReference<List<K>>() {
       });
     } catch (Exception ex) {
       throw new KajException(
@@ -163,7 +163,7 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
 
   private V buildValueFromJson(String valueJson) throws KajException {
     try {
-      return JsonUtils.createFromJson(valueJson, valueType);
+      return JsonUtils.instance.deserializeFromString(valueJson, valueType);
     } catch (Exception ex) {
       throw new KajException("No se puede generar el Value desde el JSON", ex);
     }
@@ -171,7 +171,7 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
 
   protected List<V> buildValueListFromJson(String valueArrayJson) throws KajException {
     try {
-      return JsonUtils.createFromJson(valueArrayJson, new TypeReference<List<V>>() {
+      return JsonUtils.instance.deserializeFromString(valueArrayJson, new TypeReference<List<V>>() {
       });
     } catch (Exception ex) {
       throw new KajException(
@@ -199,12 +199,12 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
   private final List<String> availableHeaders = getAvailableResources("headers.properties");
 
   private List<String> getAvailableResources(String endingWith) {
-    return ResourceUtil.getResourceFileNames(getFolder())
+    return ResourceUtil.getResourceFileNames(getResourcesPath())
         .stream().filter(s -> s.toLowerCase().endsWith(endingWith))
         .collect(Collectors.toList());
   }
 
-  public String getFolder() {
+  public String getResourcesPath() {
     return "";
   }
 
@@ -240,6 +240,13 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
     props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 100);
     props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
     props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+
+    //props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "10");
+    //props.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, "1");
+    //commit.interval.ms: 0
+    //max.poll.records: 1
+
+    //props.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "1");
 
     return props;
   }

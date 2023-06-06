@@ -1,74 +1,63 @@
 package es.jbp.kajtools.util;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.*;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
-import java.io.IOException;
+
 import java.util.Map;
 
-public class JsonUtils {
+public class JsonUtils extends SerializationUtils {
 
-  private static ObjectMapper objectMapper;
+    public static final JsonUtils instance = new JsonUtils();
+    private ObjectMapper mapper;
 
-  {
-    objectMapper = new ObjectMapper()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            .configure(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES, false)
-            .configure(DeserializationFeature.FAIL_ON_NUMBERS_FOR_ENUMS, false)
-            .configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false)
-            .setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
-  }
-
-  private JsonUtils() {
-  }
-
-  public static void setObjectMapper(ObjectMapper objectMapper) {
-    JsonUtils.objectMapper = objectMapper;
-  }
-
-  private static ObjectMapper getObjectMapper() {
-    return objectMapper;
-  }
-
-  public static <T> T createFromJson(String json, Class<T> valueType) throws IOException {
-    return getObjectMapper().readValue(json, valueType);
-  }
-
-  public static <T> T createFromJson(String json, TypeReference<T> valueType) throws IOException {
-    return getObjectMapper().readValue(json, valueType);
-  }
-
-  public static String toJson(Object object) throws JsonProcessingException {
-    return getObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(object);
-  }
-
-  public static boolean isArray(String json) {
-    return json.trim().startsWith("[");
-  }
-
-  public static String formatJson(String json) {
-    if (json == null) {
-      return null;
+    public void setObjectMapper(ObjectMapper mapper) {
+        this.mapper = mapper;
     }
 
-    try {
-      JsonNode jsonNode = getObjectMapper().readTree(json);
-      return toJson(jsonNode);
-    } catch (JsonProcessingException e) {
-      return json;
+    public static String formatJson(String json) {
+        return instance.format(json);
     }
-  }
 
-  public static Map<String, Object> toMap(String json) {
-    Gson gson = new Gson();
-    return gson.fromJson(json, new TypeToken<Map<String, Object>>() {
-    }.getType());
-  }
+    public static boolean isArray(String json) {
+        return json.trim().startsWith("[");
+    }
+
+    private JsonUtils() {
+        mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    }
+
+    public ObjectMapper getObjectMapper() {
+        return mapper;
+    }
+
+    public ObjectWriter getObjectWriter() {
+        return mapper.writerWithDefaultPrettyPrinter();
+    }
+
+    public String format(String json) {
+        if (json == null) {
+            return null;
+        }
+
+        try {
+            JsonNode jsonNode = getObjectMapper().readTree(json);
+            return serialize(jsonNode);
+        } catch (JsonProcessingException e) {
+            return json;
+        }
+    }
+
+    public Map<String, Object> toMap(String json) {
+        Gson gson = new Gson();
+        return gson.fromJson(json, new TypeToken<Map<String, Object>>() {
+        }.getType());
+    }
+
 }

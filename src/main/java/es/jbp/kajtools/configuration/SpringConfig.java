@@ -1,37 +1,21 @@
 package es.jbp.kajtools.configuration;
 
-import com.formdev.flatlaf.FlatDarculaLaf;
-import com.formdev.flatlaf.FlatLightLaf;
 import es.jbp.kajtools.IMessageClient;
 import es.jbp.kajtools.KajToolsApp;
 import es.jbp.kajtools.i18n.I18nService;
 import es.jbp.kajtools.kafka.KafkaAdminService;
 import es.jbp.kajtools.ksqldb.KSqlDbService;
-import es.jbp.kajtools.ui.UiComponentCreator;
-import es.jbp.kajtools.ui.KafkaProducerPanel;
-import es.jbp.kajtools.ui.MainForm;
 import es.jbp.kajtools.schemaregistry.SchemaRegistryService;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.security.cert.X509Certificate;
-import java.util.List;
-import java.util.Locale;
-import javax.annotation.PostConstruct;
-import javax.imageio.ImageIO;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.LookAndFeel;
-import javax.swing.UIManager;
-import javax.swing.WindowConstants;
+import es.jbp.kajtools.ui.MainForm;
+import es.jbp.kajtools.ui.UiComponentCreator;
 import org.fife.ui.rsyntaxtextarea.Theme;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
 
 @Configuration
 public class SpringConfig {
@@ -52,57 +36,13 @@ public class SpringConfig {
   private KSqlDbService kSqlDbService;
 
   @Bean
-  public JFrame mainFrame() {
-
-    try {
-      UIManager.setLookAndFeel(lookAndFeel());
-    } catch (Exception ex) {
-      System.err.println("Failed to initialize FlatLaf");
-    }
-    Locale.setDefault(Locale.ENGLISH);
-    UIManager.put("OptionPane.yesButtonText", "Sí");
-
-    ImageIcon icono = null;
-    try {
-      URL url = KafkaProducerPanel.class.getResource("/images/icon.png");
-      if (url != null) {
-        icono = new ImageIcon(ImageIO.read(url));
-      }
-    } catch (IOException e) {
-      System.err.println("No de ha podido cargar el icono de la aplicación");
-    }
-
-    JFrame frame = new JFrame("MainForm");
-    frame.setTitle("KAJ Tools");
-    if (icono != null) {
-      frame.setIconImage(icono.getImage());
-    }
-    frame.setContentPane(mainForm().getContentPane());
-    frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-    frame.pack();
-    frame.setLocationRelativeTo(null);
-    frame.setSize(1000, 600);
-    return frame;
-  }
-
-  @Bean MainForm mainForm() {
+  public MainForm mainForm() {
     return new MainForm(new UiComponentCreator(theme()),
             schemaRegistryService,
             kafkaAdminService,
             clientList,
             i18nService,
             kSqlDbService);
-  }
-
-  @Bean
-  public LookAndFeel lookAndFeel() {
-    boolean light = es.jbp.kajtools.configuration.Configuration.isLightTheme();
-    try {
-      return light ? new FlatLightLaf() : new FlatDarculaLaf();
-    } catch (Exception ex) {
-      System.err.println("Failed to initialize FlatLaf");
-      return null;
-    }
   }
 
   @Bean
@@ -117,4 +57,40 @@ public class SpringConfig {
     }
     return null;
   }
+
+//  @Bean
+//  public JFrame mainFrame() {
+//
+//    try {
+//      UIManager.setLookAndFeel(lookAndFeel());
+//    } catch (Exception ex) {
+//      System.err.println("Failed to initialize FlatLaf");
+//    }
+//    Locale.setDefault(Locale.ENGLISH);
+//    UIManager.put("OptionPane.yesButtonText", "Sí");
+//
+//    ImageIcon icono = null;
+//    try {
+//      URL url = KafkaProducerPanel.class.getResource("/images/icon.png");
+//      if (url != null) {
+//        icono = new ImageIcon(ImageIO.read(url));
+//      }
+//    } catch (IOException e) {
+//      System.err.println("No de ha podido cargar el icono de la aplicación");
+//    }
+//
+//    JFrame frame = new JFrame("MainForm");
+//    frame.setTitle("KAJ Tools");
+//    if (icono != null) {
+//      frame.setIconImage(icono.getImage());
+//    }
+//    frame.setContentPane(mainForm().getContentPane());
+//    frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+//    frame.pack();
+//    frame.setLocationRelativeTo(null);
+//    frame.setSize(1000, 600);
+//    return frame;
+//  }
+
+
 }

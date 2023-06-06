@@ -31,7 +31,7 @@ public interface IMessageClient {
 
   String getValueClassName();
 
-  String getFolder();
+  String getResourcesPath();
 
   String getDomain();
 

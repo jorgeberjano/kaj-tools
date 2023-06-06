@@ -15,7 +15,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.commons.collections4.ListUtils;
 
 public class ResourceUtil {
   public static String readFileString(File file) throws FileNotFoundException {

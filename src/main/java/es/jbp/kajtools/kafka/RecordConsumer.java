@@ -122,7 +122,7 @@ public class RecordConsumer<K, V> implements ConsumerRebalanceListener {
     var errors = new ArrayList<String>();
     if (!keyType.equals(GenericRecord.class)) {
       try {
-        JsonUtils.createFromJson(jsonKey, keyType);
+        JsonUtils.instance.deserializeFromString(jsonKey, keyType);
       } catch (IOException e) {
         errors.add("El key no es compatible con el AVRO\n" + e.getMessage());
       }
@@ -130,7 +130,7 @@ public class RecordConsumer<K, V> implements ConsumerRebalanceListener {
 
     if (!valueType.equals(GenericRecord.class)) {
       try {
-        JsonUtils.createFromJson(jsonValue, valueType);
+        JsonUtils.instance.deserializeFromString(jsonValue, valueType);
       } catch (IOException e) {
         errors.add("El value no es compatible con el AVRO\n" + e.getMessage());
       }

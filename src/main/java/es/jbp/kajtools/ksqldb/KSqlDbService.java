@@ -38,14 +38,14 @@ public class KSqlDbService {
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(new URI(url))
-                    .POST(HttpRequest.BodyPublishers.ofString(JsonUtils.toJson(command)))
+                    .POST(HttpRequest.BodyPublishers.ofString(JsonUtils.instance.serialize(command)))
                     .build();
             var response = getHttpClient(environment).send(request, handler);
             return KSqlScriptResult.builder()
                     .ok(response.statusCode() == HttpStatus.OK.value())
                     .response(response.body())
                     .build();
-            //    return JsonUtils.createFromJson(response.body(), KSqlErrorResponse.class);
+            //    return JsonUtils.instance.deserializeFromString(response.body(), KSqlErrorResponse.class);
         } catch (URISyntaxException | IOException | InterruptedException e) {
             throw new KajException("No se ha podido ejecutar el script", e);
         }

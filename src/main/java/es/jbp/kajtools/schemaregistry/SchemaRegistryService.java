@@ -169,7 +169,7 @@ public class SchemaRegistryService implements ISchemaRegistryService {
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(new URI(url))
-                    .POST(HttpRequest.BodyPublishers.ofString(JsonUtils.toJson(new PostSchemaBody(jsonSchema))))
+                    .POST(HttpRequest.BodyPublishers.ofString(JsonUtils.instance.serialize(new PostSchemaBody(jsonSchema))))
                     .build();
             getHttpClient(environment).send(request, BodyHandlers.discarding());
         } catch (URISyntaxException | IOException | InterruptedException e) {

@@ -55,7 +55,7 @@ public class TemplateTest {
 
         String actual = textTemplate.process(template);
 
-        Map<String, Object> map = JsonUtils.toMap(actual);
+        Map<String, Object> map = JsonUtils.instance.toMap(actual);
         assertEquals(map.get("identifier"), map.get("identifier_bis"));
         assertEquals(map.get("random"), map.get("random_bis"));
         assertEquals(map.get("country"), map.get("country_bis"));
@@ -69,7 +69,7 @@ public class TemplateTest {
 
         for (long i = 0; i < 10; i++) {
             String actual = templateExecutor.processTemplate(template);
-            Map<String, Object> map = JsonUtils.toMap(actual);
+            Map<String, Object> map = JsonUtils.instance.toMap(actual);
             assertEquals(BigInteger.valueOf(i), new BigDecimal(Objects.toString(map.get("index"))).toBigInteger());
             assertEquals(BigInteger.valueOf(i), new BigDecimal(Objects.toString(map.get("counter"))).toBigInteger());
             templateExecutor.avanceCounters();
@@ -79,7 +79,7 @@ public class TemplateTest {
 
         for (long i = 0; i < 10; i++) {
             String actual = templateExecutor.processTemplate(template);
-            Map<String, Object> map = JsonUtils.toMap(actual);
+            Map<String, Object> map = JsonUtils.instance.toMap(actual);
             assertEquals(BigInteger.valueOf(i), new BigDecimal(Objects.toString(map.get("index"))).toBigInteger());
             assertEquals(BigInteger.valueOf(i + 10),
                 new BigDecimal(Objects.toString(map.get("counter"))).toBigInteger());

@@ -51,7 +51,7 @@ public class ScriptMessageFilter implements MessageFilter {
     Object result;
     try {
       Map<String, String> headersMap = rec.getHeaders().stream().collect(Collectors.toMap(HeaderItem::getKey, HeaderItem::getValue));
-      String jsonHeaders = JsonUtils.toJson(headersMap);
+      String jsonHeaders = JsonUtils.instance.serialize(headersMap);
       String datetime = rec.getDateTime().format(dateTimeFormatter);
       result = invocableFunction.invokeFunction("satisfy", rec.getKey(), rec.getValue(), jsonHeaders, rec.getPartition(),
           rec.getOffset(), datetime);

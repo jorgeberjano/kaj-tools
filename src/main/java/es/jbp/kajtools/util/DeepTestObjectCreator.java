@@ -335,26 +335,10 @@ public class DeepTestObjectCreator {
 
         if (isAvroGenerated(obj.getClass())) {
             String json = obj.toString();
-            return JsonUtils.formatJson(json);
+            return JsonUtils.instance.formatJson(json);
         }
 
-//        Type bigDecimalType = new TypeToken<BigDecimal>() {}.getType();
-//        JsonSerializer<BigDecimal> bigDecimalSerializer = new JsonSerializer<BigDecimal>() {
-//            @Override
-//            public JsonElement serialize(BigDecimal value, Type type,
-//                JsonSerializationContext jsonSerializationContext) {
-//                return new JsonPrimitive(value.getValue());
-//            }
-//        };
-        return JsonUtils.toJson(obj);
-
-//        Gson gson = new GsonBuilder()
-//            .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-//            .setPrettyPrinting()
-//            .serializeNulls()
-////            .registerTypeAdapter(bigDecimalType, bigDecimalSerializer)
-//            .create();
-//        return gson.toJson(obj);
+        return JsonUtils.instance.serialize(obj);
     }
 
     public List<String> getErrors() {

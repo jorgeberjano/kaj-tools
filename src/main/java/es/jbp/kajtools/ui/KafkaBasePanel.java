@@ -47,13 +47,14 @@ public abstract class KafkaBasePanel extends BasePanel {
   protected KafkaBasePanel(List<IMessageClient> clientList,
       ISchemaRegistryService schemaRegistryService,
       KafkaAdminService kafkaAdminService,
-      UiComponentCreator componentFactory,
-      I18nService i18nService) {
-    super(componentFactory, i18nService);
+      UiComponentCreator componentFactory) {
+    super(componentFactory);
     this.clientList = clientList;
     this.schemaRegistryService = schemaRegistryService;
     this.kafkaAdminService = kafkaAdminService;
   }
+
+  protected abstract Environment getEnvironment();
 
   protected void asyncRetrieveTopics() {
 

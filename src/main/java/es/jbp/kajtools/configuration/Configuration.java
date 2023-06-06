@@ -39,7 +39,7 @@ public class Configuration {
             });
   }
 
-  public static void loadVariablesProperties() throws IOException {
+  public static void loadVariablesProperties() {
     variablesProperties = ResourceUtil.readResourceString("variables.properties");
   }
 }

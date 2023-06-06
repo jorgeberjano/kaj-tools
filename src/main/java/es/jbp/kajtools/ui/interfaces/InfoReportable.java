@@ -9,7 +9,7 @@ import javax.swing.SwingUtilities;
 public interface InfoReportable {
 
   InfoTextPane getInfoTextPane();
-  //void addLink(String key, InfoDocument value);
+
   void printMessage(InfoMessage infoMessage);
   void printLink(InfoDocument infoDocument);
 
