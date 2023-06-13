@@ -10,6 +10,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public abstract class SerializationUtils {
 
@@ -54,6 +56,10 @@ public abstract class SerializationUtils {
         return getObjectMapper().readValue(inputStream, valueType);
     }
 
+//    public <T> T deserializeFromPath(Path path, Class<T> valueType) throws IOException {
+//        var inputStream = Files.newInputStream(path);
+//        return getObjectMapper().readValue(inputStream, valueType);
+//    }
 
     public String serialize(Object object) throws JsonProcessingException {
         return getObjectWriter().writeValueAsString(object);

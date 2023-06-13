@@ -12,12 +12,22 @@ import java.util.stream.Stream;
 
 public class FileUtils {
 
-    public static List<String> listFilesInFolder(String folder) throws IOException {
+    public static List<Path> listFilesInFolder(String folder) throws IOException {
+
         try (Stream<Path> stream = Files.list(Paths.get(folder))) {
             return stream
                     .filter(file -> !Files.isDirectory(file))
-                    //.map(Path::getFileName)
-                    .map(Path::toString)
+                    .collect(Collectors.toList());
+        }
+    }
+
+    public static List<Path> findFilesInFolder(String folder, int maxDepth, String mask) throws IOException {
+
+        try (Stream<Path> stream = Files.find(Path.of(folder),maxDepth,
+                (path, basicFileAttributes) -> path.toFile().getName().matches(mask)
+        )) {
+            return stream
+                    .filter(file -> !Files.isDirectory(file))
                     .collect(Collectors.toList());
         }
     }
