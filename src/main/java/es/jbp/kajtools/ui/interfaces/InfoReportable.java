@@ -13,6 +13,9 @@ public interface InfoReportable {
   void printMessage(InfoMessage infoMessage);
   void printLink(InfoDocument infoDocument);
 
+  default void update() {
+  }
+
   default void enqueueLink(InfoDocument infoDocument) {
     SwingUtilities.invokeLater(() -> {
       printLink(infoDocument);
