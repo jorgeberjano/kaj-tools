@@ -18,10 +18,9 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JDialog;
@@ -342,6 +341,18 @@ public abstract class BasePanel implements InfoReportable, SearchablePanel {
         }
     }
 
+    public Map<String, String> createVariableMap(String text) {
+        Properties properties = new Properties();
+        try {
+            properties.load(new StringReader(text));
+        } catch (IOException e) {
+            printMessage(InfoReportable.buildErrorMessage("No se han podido cargar las variables"));
+            printException(e);
+        }
+        Map<String, String> variables = new HashMap<>();
+        properties.forEach((k, v) -> variables.put(Objects.toString(k), Objects.toString(v)));
+        return variables;
+    }
 }
 
 

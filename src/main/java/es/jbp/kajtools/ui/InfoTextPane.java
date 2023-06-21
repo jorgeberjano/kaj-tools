@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import javax.swing.JTextPane;
-import javax.swing.SwingUtilities;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
@@ -17,6 +16,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 public class InfoTextPane extends JTextPane {
 
+  private static final int MAX_LENGTH_CONTENT = 10000;
   private static Font monospaceFont;
   private static final int FONT_SIZE = 14;
 
@@ -65,7 +65,11 @@ public class InfoTextPane extends JTextPane {
 
   public void printString(String text, AttributeSet attr) {
     var doc = getStyledDocument();
+
     try {
+      if (doc.getLength() > MAX_LENGTH_CONTENT + text.length()) {
+        doc.remove(0, text.length());
+      }
       doc.insertString(doc.getLength(), text, attr);
       setCaretPosition(doc.getLength());
     } catch (BadLocationException ex) {

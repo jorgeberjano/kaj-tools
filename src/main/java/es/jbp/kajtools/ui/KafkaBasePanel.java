@@ -196,18 +196,4 @@ public abstract class KafkaBasePanel extends BasePanel {
       printException(ex);
     }
   }
-
-  public Map<String, String> createVariableMap(String text) {
-    Properties properties = new Properties();
-    try {
-      properties.load(new StringReader(text));
-    } catch (IOException e) {
-      printMessage(InfoReportable.buildErrorMessage("No se han podido cargar las variables"));
-      printException(e);
-    }
-    Map<String, String> variables = new HashMap<>();
-    properties.forEach((k, v) -> variables.put(Objects.toString(k), Objects.toString(v)));
-    return variables;
-  }
-
 }
