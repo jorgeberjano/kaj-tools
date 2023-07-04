@@ -30,6 +30,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
 
 import org.apache.commons.lang3.StringUtils;
@@ -220,7 +221,15 @@ public abstract class BasePanel implements InfoReportable, SearchablePanel {
     }
 
     protected void copyToClipboard() {
-        getCurrentEditor().ifPresent(editor -> copyToClipboard(editor.getText()));
+        getCurrentEditor()
+                .map(JTextComponent::getDocument)
+                .ifPresent(doc -> {
+                    try {
+                        copyToClipboard(doc.getText(0, doc.getLength()));
+                    } catch (BadLocationException e) {
+
+                    }
+                });
     }
 
     protected void showLinkContent(String key) {

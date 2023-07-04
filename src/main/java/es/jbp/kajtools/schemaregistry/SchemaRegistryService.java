@@ -3,7 +3,13 @@ package es.jbp.kajtools.schemaregistry;
 import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.KajException;
 import es.jbp.kajtools.util.JsonUtils;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.springframework.stereotype.Service;
 
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
@@ -13,22 +19,10 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
-import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import javax.annotation.PostConstruct;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
@@ -37,31 +31,6 @@ public class SchemaRegistryService implements ISchemaRegistryService {
     private static final Object SUBJECT_PATH = "subjects/";
 
     private SSLContext sslContext;
-
-//    @PostConstruct
-//    public void init() {
-//        // Se crea un TrustManager que no valida la cadena de certificados
-//        TrustManager[] trustAllCerts = new TrustManager[]{
-//                new X509TrustManager() {
-//                    public X509Certificate[] getAcceptedIssuers() {
-//                        return null;
-//                    }
-//
-//                    public void checkClientTrusted(X509Certificate[] certs, String authType) {
-//                    }
-//
-//                    public void checkServerTrusted(X509Certificate[] certs, String authType) {
-//                    }
-//                }
-//        };
-//        try {
-//            sslContext = SSLContext.getInstance("SSL");
-//            sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
-//
-//            HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
-//        } catch (Exception ignored) {
-//        }
-//    }
 
     public List<String> getSubjects(Environment environment) throws KajException {
         String url = environment.getUrlSchemaRegistry()
