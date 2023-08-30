@@ -1,8 +1,10 @@
 package es.jbp.kajtools.util;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,7 +25,7 @@ public class FileUtils {
 
     public static List<Path> findFilesInFolder(String folder, int maxDepth, String mask) throws IOException {
 
-        try (Stream<Path> stream = Files.find(Path.of(folder),maxDepth,
+        try (Stream<Path> stream = Files.find(Path.of(folder), maxDepth,
                 (path, basicFileAttributes) -> path.toFile().getName().matches(mask)
         )) {
             return stream
@@ -36,5 +38,10 @@ public class FileUtils {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
             writer.write(content);
         }
+    }
+
+    public static String loadFile(String fileName) throws IOException {
+        byte[] encoded = Files.readAllBytes(Paths.get(fileName));
+        return new String(encoded, StandardCharsets.UTF_8);
     }
 }
