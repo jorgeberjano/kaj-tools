@@ -20,7 +20,7 @@ public class TemplateTest {
     TextTemplate textTemplate = new TextTemplate();
 
     @Test
-    public void test() throws ExpressionException {
+    void test() throws ExpressionException {
         String template = ResourceUtil.readResourceString("template.json");
         String expected = ResourceUtil.readResourceString("expected.json");
 
@@ -31,7 +31,7 @@ public class TemplateTest {
     }
 
     @Test
-    public void testUUID() throws ExpressionException {
+    void testUUID() throws ExpressionException {
         String template = ResourceUtil.readResourceString("template2.json");
         textTemplate.declareVariableValues(Collections.singletonMap("variable", "valor"));
 
@@ -40,7 +40,7 @@ public class TemplateTest {
     }
 
     @Test
-    public void testFormat() throws ExpressionException {
+    void testFormat() throws ExpressionException {
         String template = ResourceUtil.readResourceString("template2.json");
 
         String encoded = textTemplate.encodeBeforeFormatting(template);
@@ -50,7 +50,7 @@ public class TemplateTest {
     }
 
     @Test
-    public void testMemory() throws ExpressionException {
+    void testMemory() throws ExpressionException {
         String template = ResourceUtil.readResourceString("template_memory.json");
 
         String actual = textTemplate.process(template);
@@ -62,7 +62,7 @@ public class TemplateTest {
     }
 
     @Test
-    public void testCounters() throws ExpressionException {
+    void testCounters() throws ExpressionException {
         String template = ResourceUtil.readResourceString("template_counters.json");
 
         TemplateExecutor templateExecutor = new TemplateExecutor();

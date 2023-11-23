@@ -78,7 +78,7 @@ public class ExpressionsTest {
     }
 
     @Test
-    public void testOperators() throws ExpressionException {
+    void testOperators() throws ExpressionException {
         evaluar("2 + 5", BigInteger.valueOf(7));
         evaluar("1-1  ", BigInteger.ZERO);
         evaluar(" 1 or  0.0 ", true);
@@ -86,7 +86,7 @@ public class ExpressionsTest {
     }
 
     @Test
-    public void testVariables() throws ExpressionException {
+    void testVariables() throws ExpressionException {
         evaluar("pepe + juan", BigInteger.valueOf(8));
         evaluar("pepe  - juan  ", BigInteger.ZERO);
         evaluar(" func(1, 23) ", BigInteger.valueOf(2));
@@ -94,7 +94,7 @@ public class ExpressionsTest {
     }
 
     @Test
-    public void testFunctions() throws ExpressionException {
+    void testFunctions() throws ExpressionException {
         evaluar(" func(func(1), func(\"2\"), func(0.0)) ", BigInteger.valueOf(3));
     }
 

@@ -1,11 +1,15 @@
 package es.jbp.kajtools.util;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.util.DefaultIndenter;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.*;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import java.io.IOException;
 import java.util.Map;
 
 public class JsonUtils extends SerializationUtils {
@@ -37,8 +41,35 @@ public class JsonUtils extends SerializationUtils {
         return mapper;
     }
 
+    public static class MyPrettyPrinter extends DefaultPrettyPrinter {
+
+        public MyPrettyPrinter() {
+            super(createBase());
+        }
+
+        private static DefaultPrettyPrinter createBase() {
+            var base = new DefaultPrettyPrinter();
+            var indenter = new DefaultIndenter("  ", DefaultIndenter.SYS_LF);
+            base.indentObjectsWith(indenter);
+            base.indentArraysWith(indenter);
+            return base;
+        }
+
+        @Override
+        public DefaultPrettyPrinter createInstance() {
+
+            return new MyPrettyPrinter();
+        }
+
+        @Override
+        public void writeObjectFieldValueSeparator(JsonGenerator jg) throws IOException {
+            jg.writeRaw(": ");
+        }
+    }
+
     public ObjectWriter getObjectWriter() {
-        return mapper.writerWithDefaultPrettyPrinter();
+
+        return mapper.writer(new MyPrettyPrinter());
     }
 
     public String format(String json) {

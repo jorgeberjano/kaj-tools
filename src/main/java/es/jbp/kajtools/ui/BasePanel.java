@@ -1,8 +1,6 @@
 package es.jbp.kajtools.ui;
 
 import es.jbp.expressions.ExpressionException;
-import es.jbp.kajtools.Environment;
-import es.jbp.kajtools.i18n.I18nService;
 import es.jbp.kajtools.ui.InfoDocument.Type;
 import es.jbp.kajtools.ui.interfaces.DialogueablePanel;
 import es.jbp.kajtools.ui.interfaces.InfoReportable;
@@ -10,9 +8,15 @@ import es.jbp.kajtools.ui.interfaces.SearchablePanel;
 import es.jbp.kajtools.util.JsonUtils;
 import es.jbp.kajtools.util.ResourceUtil;
 import es.jbp.kajtools.util.TemplateExecutor;
+import org.apache.commons.lang3.StringUtils;
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 
-import java.awt.Component;
-import java.awt.Toolkit;
+import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.JTextComponent;
+import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyAdapter;
@@ -23,19 +27,6 @@ import java.io.StringReader;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.swing.JDialog;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.JTextComponent;
-
-import org.apache.commons.lang3.StringUtils;
-import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
-import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 
 public abstract class BasePanel implements InfoReportable, SearchablePanel {
 
