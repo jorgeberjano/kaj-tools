@@ -1,13 +1,8 @@
 package es.jbp.expressions;
 
-import java.math.BigInteger;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
+import java.math.BigInteger;
 import java.util.List;
 
 /**
@@ -78,7 +73,7 @@ public class ExpressionsTest {
     }
 
     @Test
-    void testOperators() throws ExpressionException {
+    public void testOperators() throws ExpressionException {
         evaluar("2 + 5", BigInteger.valueOf(7));
         evaluar("1-1  ", BigInteger.ZERO);
         evaluar(" 1 or  0.0 ", true);
@@ -86,7 +81,7 @@ public class ExpressionsTest {
     }
 
     @Test
-    void testVariables() throws ExpressionException {
+    public void testVariables() throws ExpressionException {
         evaluar("pepe + juan", BigInteger.valueOf(8));
         evaluar("pepe  - juan  ", BigInteger.ZERO);
         evaluar(" func(1, 23) ", BigInteger.valueOf(2));
@@ -94,7 +89,7 @@ public class ExpressionsTest {
     }
 
     @Test
-    void testFunctions() throws ExpressionException {
+    public void testFunctions() throws ExpressionException {
         evaluar(" func(func(1), func(\"2\"), func(0.0)) ", BigInteger.valueOf(3));
     }
 

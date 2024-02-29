@@ -22,8 +22,6 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.SendResult;
-import org.springframework.util.concurrent.ListenableFutureCallback;
 import tech.allegro.schema.json2avro.converter.JsonAvroConverter;
 
 import java.io.IOException;
@@ -85,19 +83,27 @@ public abstract class AbstractBeanClient<K, V> implements IMessageClient {
         try {
             var futureResult = senderTemplate.send(topic, key, value);
 
-            futureResult.addCallback(new ListenableFutureCallback<SendResult<GenericRecord, GenericRecord>>() {
-                @Override
-                public void onFailure(Throwable throwable) {
-                    System.err.println(throwable);
-                }
+            futureResult.whenComplete(
+                    (genericRecordGenericRecordSendResult, throwable) -> {
+                        if (throwable != null) {
+                            System.err.println(throwable);
+                        } else {
+                            System.out.println("ENVIO CORRECTO!!!");
+                        }
+                    }
+            );
 
-                @Override
-                public void onSuccess(SendResult<GenericRecord, GenericRecord> genericRecordGenericRecordSendResult) {
-                    System.out.println("ENVIO CORRECTO!!!");
-                }
-            });
-            //var result = futureResult.get();
-            //var record = result.getProducerRecord();
+//            futureResult.addCallback(new ListenableFutureCallback<SendResult<GenericRecord, GenericRecord>>() {
+//                @Override
+//                public void onFailure(Throwable throwable) {
+//                    System.err.println(throwable);
+//                }
+//
+//                @Override
+//                public void onSuccess(SendResult<GenericRecord, GenericRecord> genericRecordGenericRecordSendResult) {
+//                    System.out.println("ENVIO CORRECTO!!!");
+//                }
+//            });
 
         } catch (Throwable ex) {
             throw new KajException("Error al enviar el mensaje al topic.", ex);
