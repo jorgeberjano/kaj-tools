@@ -1,30 +1,22 @@
 package es.jbp.kajtools.kafka;
 
 import es.jbp.kajtools.util.JsonUtils;
+import lombok.AllArgsConstructor;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.kafka.clients.consumer.*;
+import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.Headers;
+
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import lombok.AllArgsConstructor;
-import org.apache.avro.generic.GenericRecord;
-import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
-import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.header.Header;
-import org.apache.kafka.common.header.Headers;
 
 @AllArgsConstructor
 public class RecordConsumer<K, V> implements ConsumerRebalanceListener {
@@ -120,7 +112,7 @@ public class RecordConsumer<K, V> implements ConsumerRebalanceListener {
     var jsonValue = String.valueOf(rec.value());
 
     var errors = new ArrayList<String>();
-    if (!keyType.equals(GenericRecord.class)) {
+      if (!keyType.equals(GenericRecord.class) && !keyType.equals(String.class)) {
       try {
         JsonUtils.instance.deserializeFromString(jsonKey, keyType);
       } catch (IOException e) {
@@ -128,7 +120,7 @@ public class RecordConsumer<K, V> implements ConsumerRebalanceListener {
       }
     }
 
-    if (!valueType.equals(GenericRecord.class)) {
+      if (!valueType.equals(GenericRecord.class) && !valueType.equals(String.class)) {
       try {
         JsonUtils.instance.deserializeFromString(jsonValue, valueType);
       } catch (IOException e) {
@@ -154,7 +146,7 @@ public class RecordConsumer<K, V> implements ConsumerRebalanceListener {
   private List<HeaderItem> toHeaderItems(Headers headers) {
     return StreamSupport.stream(headers.spliterator(), false)
         .map(this::toHeaderItem)
-        .collect(Collectors.toList());
+            .toList();
   }
 
   private HeaderItem toHeaderItem(Header header) {

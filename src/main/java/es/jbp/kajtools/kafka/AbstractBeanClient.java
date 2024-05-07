@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 public abstract class AbstractBeanClient<K, V> implements IMessageClient {
 
@@ -173,7 +172,7 @@ public abstract class AbstractBeanClient<K, V> implements IMessageClient {
     private List<String> getAvailableResources(String endingWith) {
         return ResourceUtil.getResourceFileNames(getResourcesPath())
                 .stream().filter(s -> s.toLowerCase().endsWith(endingWith))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public String getResourcesPath() {

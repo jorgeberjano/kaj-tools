@@ -21,7 +21,6 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 @Service
@@ -43,7 +42,7 @@ public class SchemaRegistryService implements ISchemaRegistryService {
         Iterable<Object> iterable = new JSONArray(response.body());
         return StreamSupport.stream(iterable.spliterator(), false)
                 .map(Object::toString)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public void deleteSubject(String subjectName, Environment environment) throws KajException {
@@ -76,7 +75,7 @@ public class SchemaRegistryService implements ISchemaRegistryService {
         Iterable<Object> iterable = respJson::iterator;
         return StreamSupport.stream(iterable.spliterator(), false)
                 .map(Object::toString)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public void deleteSubjectSchemaVersion(String subjectName, String version,

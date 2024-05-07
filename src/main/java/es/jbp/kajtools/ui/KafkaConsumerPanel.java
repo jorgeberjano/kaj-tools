@@ -9,14 +9,7 @@ import es.jbp.kajtools.KajException;
 import es.jbp.kajtools.configuration.Configuration;
 import es.jbp.kajtools.filter.MessageFilter;
 import es.jbp.kajtools.filter.ScriptMessageFilter;
-import es.jbp.kajtools.i18n.I18nService;
-import es.jbp.kajtools.kafka.ConsumerFeedback;
-import es.jbp.kajtools.kafka.GenericClient;
-import es.jbp.kajtools.kafka.HeaderItem;
-import es.jbp.kajtools.kafka.KafkaAdminService;
-import es.jbp.kajtools.kafka.RecordItem;
-import es.jbp.kajtools.kafka.RewindPolicy;
-import es.jbp.kajtools.kafka.TopicItem;
+import es.jbp.kajtools.kafka.*;
 import es.jbp.kajtools.schemaregistry.SchemaRegistryService;
 import es.jbp.kajtools.ui.InfoDocument.Type;
 import es.jbp.kajtools.ui.interfaces.InfoReportable;
@@ -24,50 +17,24 @@ import es.jbp.kajtools.util.JsonUtils;
 import es.jbp.tabla.ColoreadorFila;
 import es.jbp.tabla.ModeloTablaGenerico;
 import es.jbp.tabla.TablaGenerica;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Insets;
-import java.lang.reflect.Method;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.ResourceBundle;
-import java.util.stream.Collectors;
-import javax.swing.AbstractButton;
-import javax.swing.BorderFactory;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.ListSelectionModel;
-import javax.swing.SwingUtilities;
-import javax.swing.border.TitledBorder;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.plaf.FontUIResource;
-import javax.swing.text.JTextComponent;
-import javax.swing.text.StyleContext;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
 import org.springframework.util.CollectionUtils;
+
+import javax.swing.*;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.plaf.FontUIResource;
+import javax.swing.text.JTextComponent;
+import javax.swing.text.StyleContext;
+import java.awt.*;
+import java.lang.reflect.Method;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.*;
 
 public class KafkaConsumerPanel extends KafkaBasePanel {
 
@@ -203,7 +170,7 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
     private Void checkFilterTableMessages() {
         recordTableModel.getListaObjetos().forEach(r -> checkFilter(r, showFilter));
         SwingUtilities.invokeLater(() -> {
-            recordTableModel.filtrar(lista -> lista.stream().filter(RecordItem::isMatchFilter).collect(Collectors.toList()));
+            recordTableModel.filtrar(lista -> lista.stream().filter(RecordItem::isMatchFilter).toList());
         });
         return null;
     }
@@ -242,6 +209,8 @@ public class KafkaConsumerPanel extends KafkaBasePanel {
         jsonEditorKey.setCaretPosition(0);
         jsonEditorValue.setText(JsonUtils.formatJson(selected.getValue()));
         jsonEditorValue.setCaretPosition(0);
+
+        findText(true, true);
 
         headersTableModel.setListaObjetos(selected.getHeaders());
         headersTableModel.actualizar();

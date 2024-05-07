@@ -3,21 +3,19 @@ package es.jbp.kajtools.kafka;
 import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.IMessageClient;
 import es.jbp.kajtools.KajException;
-import es.jbp.kajtools.util.JsonGenericRecordReader;
 import es.jbp.kajtools.schemaregistry.SchemaRegistryService;
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import es.jbp.kajtools.util.JsonGenericRecordReader;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
-import org.springframework.util.concurrent.ListenableFuture;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Stream;
 
 @Component
 public class GenericClient extends AbstractClient<GenericRecord, GenericRecord> {
@@ -37,19 +35,19 @@ public class GenericClient extends AbstractClient<GenericRecord, GenericRecord> 
   public List<String> getAvailableValues() {
     return Stream.concat(Stream.of(""),
         producerList.stream().map(IMessageClient::getAvailableValues).flatMap(Collection::stream))
-        .collect(Collectors.toList());
+            .toList();
   }
 
   @Override
   public List<String> getAvailableKeys() {
     return Stream.concat(Stream.of(""),
         producerList.stream().map(IMessageClient::getAvailableKeys).flatMap(Collection::stream))
-        .collect(Collectors.toList());
+            .toList();
   }
 
   @Override
   public List<String> getAvailableTopics() {
-    return producerList.stream().map(IMessageClient::getDefaultTopic).collect(Collectors.toList());
+      return producerList.stream().map(IMessageClient::getDefaultTopic).toList();
   }
 
   @Override

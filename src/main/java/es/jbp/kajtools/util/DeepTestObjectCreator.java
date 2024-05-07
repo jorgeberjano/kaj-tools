@@ -1,36 +1,19 @@
 package es.jbp.kajtools.util;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.HashSet;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.apache.avro.reflect.ReflectData;
-import org.apache.commons.lang3.StringUtils;
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
-import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Array;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Stack;
-import java.util.stream.Collectors;
-
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import org.apache.avro.reflect.ReflectData;
+import org.apache.commons.lang3.StringUtils;
+
+import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Clase para crear objetos en profundidad con valores arbitrarios
@@ -309,7 +292,7 @@ public class DeepTestObjectCreator {
             return "test";
         }
         String[] splitArray = name.split("(?=\\p{Upper})");
-        List<String> splitList = Arrays.stream(splitArray).map(e -> e.toLowerCase()).collect(Collectors.toList());
+        List<String> splitList = Arrays.stream(splitArray).map(e -> e.toLowerCase()).toList();
         Set<String> splitSet = Arrays.stream(splitArray).map(e -> e.toLowerCase()).collect(Collectors.toSet());
 
         if (splitSet.contains("date")) {
@@ -392,7 +375,7 @@ public class DeepTestObjectCreator {
 
         Constructor constructor = constructors[0];
         Class[] parameterClasses = constructor.getParameterTypes();
-        Object[] parameters = Arrays.stream(parameterClasses).map(c -> createObject(c, null)).collect(Collectors.toList()).toArray();
+        Object[] parameters = Arrays.stream(parameterClasses).map(c -> createObject(c, null)).toList().toArray();
         try {
             return constructor.newInstance(parameters);
         } catch (Exception ex) {

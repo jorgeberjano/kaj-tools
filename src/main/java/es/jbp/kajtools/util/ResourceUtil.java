@@ -13,7 +13,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ResourceUtil {
@@ -36,7 +35,7 @@ public class ResourceUtil {
         return Collections.emptyList();
       }
       return new BufferedReader(new InputStreamReader(inputStream,
-              StandardCharsets.UTF_8)).lines().collect(Collectors.toList());
+              StandardCharsets.UTF_8)).lines().toList();
     } catch (IOException ex) {
       return Collections.emptyList();
     }
@@ -86,7 +85,7 @@ public class ResourceUtil {
       return paths
           .filter(Files::isRegularFile)
           .map(path -> path.toString().substring(basePathLength))
-          .collect(Collectors.toList());
+              .toList();
     } catch (Throwable e) {
       e.printStackTrace();
       return Collections.emptyList();

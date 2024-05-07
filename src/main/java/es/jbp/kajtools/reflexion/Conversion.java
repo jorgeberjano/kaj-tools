@@ -1,17 +1,13 @@
 package es.jbp.kajtools.reflexion;
 
-import java.awt.Color;
+import org.apache.commons.lang3.StringUtils;
+
+import java.awt.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Blob;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Scanner;
-import java.util.Set;
-import java.util.stream.Collectors;
-import org.apache.commons.lang3.StringUtils;
+import java.util.*;
 
 /**
  * Utilidades para conversión.
@@ -384,7 +380,7 @@ public class Conversion {
     String elementos[] = texto.split(separador);
     return Arrays.asList(elementos).stream().map((elemento) -> {
       return elemento.trim();
-    }).collect(Collectors.toList());
+    }).toList();
   }
 
   /**

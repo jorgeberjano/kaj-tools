@@ -3,13 +3,11 @@ package es.jbp.tabla;
 import es.jbp.kajtools.reflexion.Reflexion;
 import org.apache.commons.lang3.StringUtils;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * Modelo genérico para tablas.
@@ -166,7 +164,7 @@ public class ModeloTablaGenerico<T> extends ModeloTablaAbstracto {
     }
 
     public void filtrarPorPredicado(Predicate<T> filtro) {
-        listaActual = listaCompleta.stream().filter(filtro).collect(Collectors.toList());
+        listaActual = listaCompleta.stream().filter(filtro).toList();
         actualizar();
     }
 

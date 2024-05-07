@@ -1,18 +1,12 @@
 package es.jbp.kajtools.script;
 
 import es.jbp.kajtools.script.exception.ScriptCompilerException;
-import es.jbp.kajtools.script.nodes.IfNode;
-import es.jbp.kajtools.script.nodes.LoopNode;
-import es.jbp.kajtools.script.nodes.ScriptNode;
-import es.jbp.kajtools.script.nodes.SequenceNode;
-import es.jbp.kajtools.script.nodes.SetVariableNode;
-import es.jbp.kajtools.script.nodes.DoNode;
-import es.jbp.kajtools.script.nodes.WhileNode;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+import es.jbp.kajtools.script.nodes.*;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class ScriptCompiler {
 
@@ -28,7 +22,7 @@ public class ScriptCompiler {
 
     List<String> codeLineList = Arrays.stream(codeLines)
         .filter(this::hasCommand)
-        .collect(Collectors.toList());
+            .toList();
 
 
     SequenceNode rootNode = new SequenceNode(0);

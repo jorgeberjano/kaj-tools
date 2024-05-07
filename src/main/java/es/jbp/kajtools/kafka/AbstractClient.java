@@ -11,28 +11,19 @@ import es.jbp.kajtools.util.ResourceUtil;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
-import java.io.IOException;
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.clients.producer.*;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 public abstract class AbstractClient<K, V> implements IMessageClient {
@@ -198,10 +189,30 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
   @Getter(lazy = true)
   private final List<String> availableHeaders = getAvailableResources("headers.properties");
 
-  private List<String> getAvailableResources(String endingWith) {
-    return ResourceUtil.getResourceFileNames(getResourcesPath())
-        .stream().filter(s -> s.toLowerCase().endsWith(endingWith))
-        .collect(Collectors.toList());
+  static Map<String, Object> createCommonProperties(Environment environment) {
+    Map<String, Object> props = new HashMap<>();
+
+    putNotNull(props, AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, environment.getBootstrapServers());
+
+    putNotNull(props, ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, environment.getBootstrapServers());
+
+    putNotNull(props, AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
+        environment.getUrlSchemaRegistry());
+    putNotNull(props, AbstractKafkaSchemaSerDeConfig.AUTO_REGISTER_SCHEMAS,
+        environment.isAutoRegisterSchemas());
+
+    if (!Objects.isNull(environment.getUserSchemaRegistry())) {
+      putNotNull(props, AbstractKafkaSchemaSerDeConfig.BASIC_AUTH_CREDENTIALS_SOURCE, "USER_INFO");
+      putNotNull(props, AbstractKafkaSchemaSerDeConfig.USER_INFO_CONFIG,
+          environment.getUserSchemaRegistry() + ":" + environment.getPasswordSchemaRegistry());
+    }
+    putNotNull(props, "security.protocol", environment.getSecurityProtocol());
+    putNotNull(props, "sasl.mechanism", environment.getSaslMechanism());
+    putNotNull(props, "sasl.jaas.config", environment.getSaslJaasConfig());
+    putNotNull(props, "ssl.truststore.password", environment.getSslTruststorePassword());
+    putNotNull(props, "ssl.truststore.location", ResourceUtil.getResourcePath(environment.getSslTruststoreLocation()));
+
+    return props;
   }
 
   public String getResourcesPath() {
@@ -251,36 +262,16 @@ public abstract class AbstractClient<K, V> implements IMessageClient {
     return props;
   }
 
-  public static Map<String, Object> createCommonProperties(Environment environment) {
-    Map<String, Object> props = new HashMap<>();
-
-    putNotNull(props, AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, environment.getBootstrapServers());
-
-    putNotNull(props, ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, environment.getBootstrapServers());
-
-    putNotNull(props, AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG,
-        environment.getUrlSchemaRegistry());
-    putNotNull(props, AbstractKafkaSchemaSerDeConfig.AUTO_REGISTER_SCHEMAS,
-        environment.isAutoRegisterSchemas());
-
-    if (!Objects.isNull(environment.getUserSchemaRegistry())) {
-      putNotNull(props, AbstractKafkaSchemaSerDeConfig.BASIC_AUTH_CREDENTIALS_SOURCE, "USER_INFO");
-      putNotNull(props, AbstractKafkaSchemaSerDeConfig.USER_INFO_CONFIG,
-          environment.getUserSchemaRegistry() + ":" + environment.getPasswordSchemaRegistry());
-    }
-    putNotNull(props, "security.protocol", environment.getSecurityProtocol());
-    putNotNull(props, "sasl.mechanism", environment.getSaslMechanism());
-    putNotNull(props, "sasl.jaas.config", environment.getSaslJaasConfig());
-    putNotNull(props, "ssl.truststore.password", environment.getSslTruststorePassword());
-    putNotNull(props, "ssl.truststore.location", ResourceUtil.getResourcePath(environment.getSslTruststoreLocation()));
-
-    return props;
-  }
-
-  private static void putNotNull(Map<String, Object> props, String key, Object value) {
+  static void putNotNull(Map<String, Object> props, String key, Object value) {
     if (value != null) {
       props.put(key, value);
     }
+  }
+
+  private List<String> getAvailableResources(String endingWith) {
+    return ResourceUtil.getResourceFileNames(getResourcesPath())
+        .stream().filter(s -> s.toLowerCase().endsWith(endingWith))
+            .toList();
   }
 
   @Override

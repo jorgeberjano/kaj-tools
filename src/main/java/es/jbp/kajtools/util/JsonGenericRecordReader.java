@@ -1,25 +1,20 @@
 package es.jbp.kajtools.util;
 
-import static java.util.stream.Collectors.toList;
-
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
 import org.apache.avro.AvroRuntimeException;
 import org.apache.avro.AvroTypeException;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecordBuilder;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.function.Function;
 
 public class JsonGenericRecordReader {
 	private static final Object INCOMPATIBLE = new Object();
@@ -113,7 +108,7 @@ public class JsonGenericRecordReader {
 	}
 
 	private List<Object> readArray(Field field, Schema schema, List<Object> items, Deque<String> path) {
-		return items.stream().map(item -> read(field, schema.getElementType(), item, path, false)).collect(toList());
+        return items.stream().map(item -> read(field, schema.getElementType(), item, path, false)).toList();
 	}
 
 	private Map<String, Object> readMap(Field field, Schema schema, Map<String, Object> map,

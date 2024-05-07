@@ -2,27 +2,17 @@ package es.jbp.kajtools.kafka;
 
 import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.KajException;
-import java.time.Duration;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.Config;
-import org.apache.kafka.clients.admin.CreateTopicsResult;
-import org.apache.kafka.clients.admin.DeleteTopicsResult;
-import org.apache.kafka.clients.admin.DescribeConfigsResult;
-import org.apache.kafka.clients.admin.KafkaAdminClient;
-import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.config.ConfigResource;
 import org.springframework.stereotype.Service;
+
+import java.time.Duration;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
 
 @Service
 public class KafkaAdminService {
@@ -34,7 +24,7 @@ public class KafkaAdminService {
       return topics.entrySet().stream()
           .map(this::buildTopicItem)
           .sorted((t1, t2) -> StringUtils.compare(t1.getName(), t2.getName()))
-          .collect(Collectors.toList());
+              .toList();
     } catch (Exception ex) {
       throw new KajException("No se ha podido obtener la lista de topics", ex);
     }

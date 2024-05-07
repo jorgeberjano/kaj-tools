@@ -6,7 +6,6 @@ import com.intellij.uiDesigner.core.Spacer;
 import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.IMessageClient;
 import es.jbp.kajtools.configuration.Configuration;
-import es.jbp.kajtools.i18n.I18nService;
 import es.jbp.kajtools.kafka.GenericClient;
 import es.jbp.kajtools.kafka.KafkaAdminService;
 import es.jbp.kajtools.schemaregistry.ISchemaRegistryService;
@@ -19,11 +18,15 @@ import es.jbp.kajtools.script.nodes.ScriptNode;
 import es.jbp.kajtools.ui.interfaces.InfoReportable;
 import es.jbp.kajtools.util.ResourceUtil;
 import es.jbp.kajtools.util.TemplateExecutor;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Insets;
+import lombok.Getter;
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rtextarea.RTextScrollPane;
+
+import javax.swing.*;
+import javax.swing.plaf.FontUIResource;
+import javax.swing.text.JTextComponent;
+import javax.swing.text.StyleContext;
+import java.awt.*;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -32,23 +35,6 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.swing.AbstractButton;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
-import javax.swing.plaf.FontUIResource;
-import javax.swing.text.JTextComponent;
-import javax.swing.text.StyleContext;
-import lombok.Getter;
-import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
-import org.fife.ui.rtextarea.RTextScrollPane;
 
 public class ScriptPanel extends KafkaBasePanel {
 
@@ -97,7 +83,7 @@ public class ScriptPanel extends KafkaBasePanel {
         List<String> availableScripts = ResourceUtil.getResourceFileNames("")
                 .stream()
                 .filter(s -> s.toLowerCase().endsWith(".kajscript"))
-                .collect(Collectors.toList());
+                .toList();
         comboScript.addItem("");
         availableScripts.forEach(comboScript::addItem);
 

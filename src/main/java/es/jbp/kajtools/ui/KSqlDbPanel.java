@@ -6,7 +6,6 @@ import com.intellij.uiDesigner.core.Spacer;
 import es.jbp.kajtools.Environment;
 import es.jbp.kajtools.KajException;
 import es.jbp.kajtools.configuration.Configuration;
-import es.jbp.kajtools.i18n.I18nService;
 import es.jbp.kajtools.ksqldb.KSqlDbService;
 import es.jbp.kajtools.ui.interfaces.InfoReportable;
 import es.jbp.kajtools.util.ResourceUtil;
@@ -21,9 +20,8 @@ import javax.swing.text.StyleContext;
 import java.awt.*;
 import java.io.File;
 import java.lang.reflect.Method;
-import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
 
 public class KSqlDbPanel extends BasePanel {
 
@@ -72,7 +70,7 @@ public class KSqlDbPanel extends BasePanel {
         List<String> availableScripts = ResourceUtil.getResourceFileNames("")
                 .stream()
                 .filter(s -> s.toLowerCase().endsWith(".ksql"))
-                .collect(Collectors.toList());
+                .toList();
         comboScript.addItem("");
         availableScripts.forEach(comboScript::addItem);
 
