@@ -93,7 +93,7 @@ public abstract class BasePanel implements InfoReportable, SearchablePanel {
         }
     }
 
-    private String extractCause(Throwable ex) {
+    protected String extractCause(Throwable ex) {
         StringBuilder result = new StringBuilder();
         Throwable cause = ex.getCause();
         for (int i = 0; cause != null && i < 10; i++) {

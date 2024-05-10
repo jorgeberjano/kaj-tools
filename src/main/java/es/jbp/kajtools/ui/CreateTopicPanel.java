@@ -79,11 +79,11 @@ public class CreateTopicPanel implements DialogueablePanel {
         panelForm.setLayout(new BorderLayout(0, 0));
         panelForm.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10), null, TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
         final JPanel panel1 = new JPanel();
-        panel1.setLayout(new FormLayout("fill:max(d;4px):noGrow,left:4dlu:noGrow,fill:d:grow", "center:max(d;4px):noGrow,top:4dlu:noGrow,center:max(d;4px):noGrow,top:4dlu:noGrow,center:max(d;4px):noGrow"));
+        panel1.setLayout(new com.jgoodies.forms.layout.FormLayout("fill:max(d;4px):noGrow,left:4dlu:noGrow,fill:d:grow", "center:max(d;4px):noGrow,top:4dlu:noGrow,center:max(d;4px):noGrow,top:4dlu:noGrow,center:max(d;4px):noGrow"));
         panelForm.add(panel1, BorderLayout.CENTER);
         final JLabel label1 = new JLabel();
         this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages", "label.partitions"));
-        CellConstraints cc = new CellConstraints();
+        com.jgoodies.forms.layout.CellConstraints cc = new com.jgoodies.forms.layout.CellConstraints();
         panel1.add(label1, cc.xy(1, 3));
         final JLabel label2 = new JLabel();
         this.$$$loadLabelText$$$(label2, this.$$$getMessageFromBundle$$$("messages", "label.replicas"));
@@ -92,11 +92,11 @@ public class CreateTopicPanel implements DialogueablePanel {
         this.$$$loadLabelText$$$(label3, this.$$$getMessageFromBundle$$$("messages", "label.topic"));
         panel1.add(label3, cc.xy(1, 1));
         textFieldTopic = new JTextField();
-        panel1.add(textFieldTopic, cc.xy(3, 1, CellConstraints.FILL, CellConstraints.DEFAULT));
+        panel1.add(textFieldTopic, cc.xy(3, 1, com.jgoodies.forms.layout.CellConstraints.FILL, com.jgoodies.forms.layout.CellConstraints.DEFAULT));
         textFieldPartitions = new JTextField();
-        panel1.add(textFieldPartitions, cc.xy(3, 3, CellConstraints.FILL, CellConstraints.DEFAULT));
+        panel1.add(textFieldPartitions, cc.xy(3, 3, com.jgoodies.forms.layout.CellConstraints.FILL, com.jgoodies.forms.layout.CellConstraints.DEFAULT));
         textFieldReplicas = new JTextField();
-        panel1.add(textFieldReplicas, cc.xy(3, 5, CellConstraints.FILL, CellConstraints.DEFAULT));
+        panel1.add(textFieldReplicas, cc.xy(3, 5, com.jgoodies.forms.layout.CellConstraints.FILL, com.jgoodies.forms.layout.CellConstraints.DEFAULT));
         final JPanel panel2 = new JPanel();
         panel2.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
         panelForm.add(panel2, BorderLayout.SOUTH);
