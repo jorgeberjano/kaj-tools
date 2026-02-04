@@ -8,6 +8,7 @@ import es.jbp.kajtools.ui.interfaces.SearchablePanel;
 import es.jbp.kajtools.util.JsonUtils;
 import es.jbp.kajtools.util.ResourceUtil;
 import es.jbp.kajtools.util.TemplateExecutor;
+import es.jbp.kajtools.util.XmlUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
@@ -111,6 +112,10 @@ public abstract class BasePanel implements InfoReportable, SearchablePanel {
 
     protected RSyntaxTextArea createJsonEditor() {
         return createEditor(SyntaxConstants.SYNTAX_STYLE_JSON);
+    }
+
+    protected RSyntaxTextArea createXmlEditor() {
+        return createEditor(SyntaxConstants.SYNTAX_STYLE_XML);
     }
 
     protected RSyntaxTextArea createSqlEditor() {
@@ -243,6 +248,12 @@ public abstract class BasePanel implements InfoReportable, SearchablePanel {
                 jsonPanel.setContent(JsonUtils.instance.formatJson(infoDocument.plainText()), SyntaxConstants.SYNTAX_STYLE_JSON);
                 showDialog(jsonPanel, title, modal, parent);
                 break;
+            case XML:
+                var xmlPanel = new RSyntaxPanel(componentFactory);
+                xmlPanel.setContent(XmlUtils.instance.formatXml(infoDocument.plainText()), SyntaxConstants.SYNTAX_STYLE_XML);
+                showDialog(xmlPanel, title, modal, parent);
+                break;
+
             case PROPERTIES:
                 var propertiesPanel = new RSyntaxPanel(componentFactory);
                 propertiesPanel.setContent(infoDocument.plainText(), SyntaxConstants.SYNTAX_STYLE_PROPERTIES_FILE);

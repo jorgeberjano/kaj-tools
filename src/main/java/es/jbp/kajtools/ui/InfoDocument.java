@@ -1,10 +1,11 @@
 package es.jbp.kajtools.ui;
 
-import java.util.List;
-import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Singular;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @Builder
@@ -13,6 +14,7 @@ public class InfoDocument {
   public enum Type {
     INFO,
     JSON,
+    XML,
     PROPERTIES,
     DIFF
   }

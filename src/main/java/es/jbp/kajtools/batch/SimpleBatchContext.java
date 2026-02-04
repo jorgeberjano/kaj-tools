@@ -107,6 +107,14 @@ public class SimpleBatchContext implements BatchContext {
         }
     }
 
+    public void link(String linkText, String text, InfoDocument.Type type) {
+        infoReportable.enqueueLink(InfoDocument.builder()
+                .type(type)
+                .title(linkText)
+                .left(new InfoMessage(text, InfoMessage.Type.TRACE))
+                .build());
+    }
+
     private String extractExceptionInfo(Throwable e) {
         StringWriter out = new StringWriter();
         PrintWriter writer = new PrintWriter(out);
