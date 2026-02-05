@@ -96,6 +96,10 @@ public class SimpleBatchContext implements BatchContext {
         infoReportable.enqueueMessage(InfoReportable.buildTraceMessage(trace));
     }
 
+    public void rawText(String text) {
+        infoReportable.enqueueMessage(InfoReportable.buildTraceMessage(text));
+    }
+
     public void error(String text, Throwable e) {
         infoReportable.enqueueMessage(InfoReportable.buildErrorMessage(text));
         if (e != null) {
