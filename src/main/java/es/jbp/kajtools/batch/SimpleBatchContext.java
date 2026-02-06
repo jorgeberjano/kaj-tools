@@ -6,6 +6,7 @@ import es.jbp.kajtools.ui.interfaces.InfoReportable;
 import es.jbp.kajtools.util.FileUtils;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -18,7 +19,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-
+@Slf4j
 @RequiredArgsConstructor
 public class SimpleBatchContext implements BatchContext {
     private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
@@ -92,8 +93,9 @@ public class SimpleBatchContext implements BatchContext {
     }
 
     public void trace(String text) {
-        String trace = LocalDateTime.now().format(formatter) + " - " + text;
-        infoReportable.enqueueMessage(InfoReportable.buildTraceMessage(trace));
+        String message = LocalDateTime.now().format(formatter) + " - " + text;
+        infoReportable.enqueueMessage(InfoReportable.buildTraceMessage(message));
+        log.trace(message);
     }
 
     public void rawText(String text) {
@@ -101,13 +103,17 @@ public class SimpleBatchContext implements BatchContext {
     }
 
     public void error(String text, Throwable e) {
-        infoReportable.enqueueMessage(InfoReportable.buildErrorMessage(text));
+        var message =  LocalDateTime.now().format(formatter) + " - " + text;
+        infoReportable.enqueueMessage(InfoReportable.buildErrorMessage(message));
+        log.error(message);
         if (e != null) {
+            var info = extractExceptionInfo(e);
             infoReportable.enqueueLink(InfoDocument.builder()
                     .type(InfoDocument.Type.INFO)
                     .title("Exception")
-                    .left(new InfoMessage(extractExceptionInfo(e), InfoMessage.Type.TRACE))
+                    .left(new InfoMessage(info, InfoMessage.Type.TRACE))
                     .build());
+            log.info(info);
         }
     }
 
@@ -117,6 +123,8 @@ public class SimpleBatchContext implements BatchContext {
                 .title(linkText)
                 .left(new InfoMessage(text, InfoMessage.Type.TRACE))
                 .build());
+        log.info(linkText);
+        log.trace(text);
     }
 
     private String extractExceptionInfo(Throwable e) {
